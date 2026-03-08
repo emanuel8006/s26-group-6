@@ -657,7 +657,7 @@ export default function Home() {
         <section className="features scroll-section">
           <div className="features-header">
             <h2>Everything you need to eat smarter</h2>
-            <p>Stop guessing and start planning. Your dining dollars deserve better.</p>
+            <p>Stop guessing and start planning.</p>
           </div>
           <div className="features-grid">
             <div className="card-3d" data-emoji="💰" data-tilt="-8" data-hue="130" data-sat="55" data-light="38"><div className="card-3d-inner feature-card"><h3><span className="highlight-wrap">Dining Dollars Tracker<span className="highlight-bg"></span></span></h3><p>See exactly where your money is going: restaurants, groceries, or on-campus spots. Stay on pace all semester.</p></div></div>
@@ -685,7 +685,7 @@ export default function Home() {
         </section>
         <section className="team-section scroll-section">
           <h2>Meet the Team</h2>
-          <p>Students building for students.</p>
+          <p>We're a group of freshmen trying to help fellow students manage their meals better.</p>
           <div className="team-grid">
             {[1,2,3,4,5].map((n,i) => {
               const tilts = [-4,7,-9,6,-3], hues = [215,285,30,160,0], sats = [55,45,60,50,60], lights = [52,50,50,45,50];
@@ -697,12 +697,12 @@ export default function Home() {
         <section className="mission-section scroll-section">
           <div className="mission-inner">
             <h2>Ready to eat smarter?</h2>
-            <p>Join thousands of students who've taken control of their dining plan. It takes 5 minutes to set up.</p>
+            <p>It takes 5 minutes or less to set up.</p>
             <a href="/login" className="btn btn-white btn-lg zoom-trigger" data-route="/login"><span>Create Free Account →</span></a>
           </div>
         </section>
         <footer className="scroll-section">
-          <p>© 2025 NomNom &nbsp;|&nbsp; <a href="#">Contact</a></p>
+          <p>© 2026 NomNom &nbsp;|&nbsp; <a href="#">Contact</a></p>
         </footer>
       </div>
     </div>

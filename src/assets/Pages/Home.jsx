@@ -476,7 +476,7 @@ export default function Home() {
       pa.style.opacity = '0'; pa.style.transition = 'fill 0.2s ease, opacity 0.3s ease';
       const tx = document.createElementNS('http://www.w3.org/2000/svg','text');
       tx.textContent = P5_LBL[wi]; tx.setAttribute('fill','#fff');
-      tx.setAttribute('font-family',"'Bebas Neue', sans-serif"); tx.setAttribute('font-size','13');
+      tx.setAttribute('font-family',"'Chicle', serif"); tx.setAttribute('font-size','18');
       tx.setAttribute('letter-spacing','0.1em'); tx.setAttribute('text-anchor','middle');
       tx.setAttribute('dominant-baseline','middle'); tx.style.pointerEvents = 'none';
       tx.style.opacity = '0'; tx.style.transition = 'opacity 0.3s ease, font-size 0.2s ease'; tx.style.userSelect = 'none';
@@ -512,7 +512,7 @@ export default function Home() {
       for (let i = 0; i < P5_N; i++) {
         const w = p5W[i];
         if (p5Open) { w.path.style.opacity='1'; w.path.style.transitionDelay=(i*0.05)+'s'; w.text.style.opacity='1'; w.text.style.transitionDelay=(i*0.05+0.08)+'s'; w.g.style.pointerEvents='all'; }
-        else { w.path.style.opacity='0'; w.path.style.transitionDelay=((P5_N-1-i)*0.03)+'s'; w.text.style.opacity='0'; w.text.style.transitionDelay='0s'; w.g.style.pointerEvents='none'; w.g.style.transform='scale(1)'; w.path.setAttribute('fill','#1a1a1a'); w.text.setAttribute('font-size','13'); }
+        else { w.path.style.opacity='0'; w.path.style.transitionDelay=((P5_N-1-i)*0.03)+'s'; w.text.style.opacity='0'; w.text.style.transitionDelay='0s'; w.g.style.pointerEvents='none'; w.g.style.transform='scale(1)'; w.path.setAttribute('fill','#1a1a1a'); w.text.setAttribute('font-size','18'); }
       }
     }
     function togP5() { p5Open=!p5Open; p5Trig.classList.toggle('open',p5Open); p5Back.classList.toggle('open',p5Open); posP5(); }
@@ -544,10 +544,10 @@ export default function Home() {
           p5Svg.offsetHeight; reordering = false;
           for (let j = 0; j < P5_N; j++) {
             const diff = Math.abs(j - i);
-            if (diff === 0) { p5W[j].path.setAttribute('fill','#D42B2B'); p5W[j].text.setAttribute('font-size','15'); }
-            else if (diff === 1) { p5W[j].g.style.transform='scale(1.09)'; p5W[j].path.setAttribute('fill','#2d2d2d'); p5W[j].text.setAttribute('font-size','13'); }
-            else if (diff === 2) { p5W[j].g.style.transform='scale(1.03)'; p5W[j].path.setAttribute('fill','#222'); p5W[j].text.setAttribute('font-size','13'); }
-            else { p5W[j].g.style.transform='scale(1)'; p5W[j].path.setAttribute('fill','#1a1a1a'); p5W[j].text.setAttribute('font-size','13'); }
+            if (diff === 0) { p5W[j].path.setAttribute('fill','#D42B2B'); p5W[j].text.setAttribute('font-size','21'); }
+            else if (diff === 1) { p5W[j].g.style.transform='scale(1.09)'; p5W[j].path.setAttribute('fill','#2d2d2d'); p5W[j].text.setAttribute('font-size','18'); }
+            else if (diff === 2) { p5W[j].g.style.transform='scale(1.03)'; p5W[j].path.setAttribute('fill','#222'); p5W[j].text.setAttribute('font-size','18'); }
+            else { p5W[j].g.style.transform='scale(1)'; p5W[j].path.setAttribute('fill','#1a1a1a'); p5W[j].text.setAttribute('font-size','18'); }
           }
           pulseIdx = i; pulseStart = performance.now(); pulseRAF2 = requestAnimationFrame(runPulse);
         });
@@ -555,7 +555,7 @@ export default function Home() {
           if (!p5Open || reordering) return; stopPulse();
           for (let j = 0; j < P5_N; j++) { p5Svg.appendChild(p5W[j].g); p5W[j].g.style.transition = 'transform 0.3s cubic-bezier(0.34,1.56,0.64,1)'; }
           p5Svg.offsetHeight;
-          for (let j = 0; j < P5_N; j++) { p5W[j].g.style.transform='scale(1)'; p5W[j].path.setAttribute('fill','#1a1a1a'); p5W[j].text.setAttribute('font-size','13'); }
+          for (let j = 0; j < P5_N; j++) { p5W[j].g.style.transform='scale(1)'; p5W[j].path.setAttribute('fill','#1a1a1a'); p5W[j].text.setAttribute('font-size','18'); }
         });
         p5W[i].g.addEventListener('click', () => { closeP5(); navigate(P5_ROUTES[i]); });
       })(hi);
@@ -632,8 +632,8 @@ export default function Home() {
             <h1 className="sketch-1">Make your<br/><em>dining plan</em><br/><span className="hero-red">actually make sense.</span></h1>
             <p className="sketch-2">Track dining dollars, manage swipes, and discover the best food on campus, all in one place.</p>
             <div className="hero-ctas sketch-3">
-              <div className="btn-3d-wrap"><a href="/dashboard" className="btn btn-white btn-lg zoom-trigger" data-route="/dashboard"><span>Let's Start Budgeting</span></a></div>
-              <div className="btn-3d-wrap"><a href="/food-good" className="btn btn-outline btn-lg zoom-trigger" data-route="/food-good"><span>Is Food Good? →</span></a></div>
+              <a href="/dashboard" className="btn btn-white btn-lg zoom-trigger" data-route="/dashboard"><span>Let's Start Budgeting</span></a>
+              <a href="/food-good" className="btn btn-outline btn-lg zoom-trigger" data-route="/food-good"><span>Is Food Good? →</span></a>
             </div>
           </div>
           <div className="photo-reel-wrapper">
@@ -673,7 +673,7 @@ export default function Home() {
             <div className="collage-text">
               <h2>Our Mission</h2>
               <p>College dining plans are expensive and confusing. Students consistently overspend early in the semester or waste money at the end. NomNom was built to change that, giving every student the clarity to eat well, spend wisely, and enjoy campus food without the stress.</p>
-              <div className="btn-3d-wrap"><a href="/login" className="btn btn-primary zoom-trigger" data-route="/login"><span>Get Started Free</span></a></div>
+              <a href="/login" className="btn btn-primary zoom-trigger" data-route="/login"><span>Get Started Free</span></a>
             </div>
             <div className="collage-grid">
               <div className="card-3d" data-emoji="🍽️" data-tilt="-7" data-hue="0" data-sat="65" data-light="50"><div className="card-3d-inner collage-item"><div className="food-label"><span className="highlight-wrap">Dining Meal Plans<span className="highlight-bg"></span></span></div></div></div>
@@ -698,7 +698,7 @@ export default function Home() {
           <div className="mission-inner">
             <h2>Ready to eat smarter?</h2>
             <p>Join thousands of students who've taken control of their dining plan. It takes 5 minutes to set up.</p>
-            <div className="btn-3d-wrap"><a href="/login" className="btn btn-white btn-lg zoom-trigger" data-route="/login"><span>Create Free Account →</span></a></div>
+            <a href="/login" className="btn btn-white btn-lg zoom-trigger" data-route="/login"><span>Create Free Account →</span></a>
           </div>
         </section>
         <footer className="scroll-section">

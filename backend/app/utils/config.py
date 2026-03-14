@@ -1,3 +1,6 @@
+"""
+This file loads environment vars from the .env
+"""
 import os
 from dotenv import load_dotenv
 

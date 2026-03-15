@@ -1,3 +1,6 @@
+"""
+This file loads environment vars from the .env
+"""
 import os
 from typing import Optional
 from dotenv import load_dotenv, find_dotenv

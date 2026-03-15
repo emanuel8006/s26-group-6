@@ -1,12 +1,13 @@
 import React, { useEffect, useRef } from 'react';
-import { usePageTransition } from '../components/CorkBoardTransition';
+import { useNavigate } from 'react-router-dom';
 import callumPhoto from '../callum.jpg';
 import './Home.css';
 
 export default function Home() {
   const wrapperRef = useRef(null);
-  const navigateTo = usePageTransition();
+  const navigate = useNavigate();
   const cleanupRef = useRef(null);
+  const runTransRef = useRef(null);
 
   useEffect(() => {
     if (!wrapperRef.current) return;
@@ -221,7 +222,7 @@ export default function Home() {
     /* ═══ LOGO ═══ */
     const logoFonts = ["Playfair Display, serif","Abril Fatface, serif","Permanent Marker, cursive","Bebas Neue, sans-serif","Rubik Mono One, monospace","Bungee Shade, cursive","Fascinate Inline, cursive"];
     const logoChars = root.querySelectorAll('.logo-char');
-    const logoRots = [-3, 2, -1.5, 2.5, -2, 1.5];
+    const logoRots = [-3, 2, -1.5, 2.5, -2, 1.5, -1, 1.5, 2.5];
     function pickFont(exc) { let p; do { p=logoFonts[Math.floor(Math.random()*logoFonts.length)]; } while(p===exc); return p; }
     const logoIntervals = [];
     logoChars.forEach((ch, i) => {
@@ -413,14 +414,42 @@ export default function Home() {
       });
     }
 
-    /* ═══ BUTTON NAVIGATION ═══ */
-    root.querySelectorAll('.btn[data-route]').forEach(link => {
-      link.addEventListener('click', (e) => {
-        e.preventDefault();
-        const route = link.getAttribute('data-route');
-        if (route) navigateTo(route);
-      });
-    });
+    /* ═══ PAGE RIP (uses React navigate) ═══ */
+    const tOvr = root.querySelector('#pageTransition');
+    const rPcs = tOvr.querySelectorAll('.rip-piece');
+    const rSnp = tOvr.querySelectorAll('.rip-snapshot');
+    let tRun = false; const aRAFs = [];
+
+    function trigTrans(e) {
+      e.preventDefault();
+      if (tRun) return;
+      const link = e.currentTarget;
+      const route = link.getAttribute('data-route') || link.getAttribute('href') || '/';
+      runTrans(() => navigate(route));
+    }
+
+    function runTrans(cb) {
+      tRun=true; aRAFs.forEach(id => cancelAnimationFrame(id)); aRAFs.length=0;
+      tOvr.classList.remove('active');
+      rPcs.forEach(p => {p.style.transition='none';p.style.transform='translateY(0)';p.style.opacity='0';});
+      const sY=window.scrollY, nE=root.querySelector('#navbar'), pE=root.querySelector('#pageWrapper');
+      rSnp.forEach(snap => {snap.innerHTML='';const nc=nE.cloneNode(true);nc.style.position='absolute';nc.style.top='0';nc.style.left='0';nc.style.right='0';nc.style.zIndex='10';nc.id='';const pc=pE.cloneNode(true);pc.style.position='absolute';pc.style.top='0';pc.style.left='0';pc.style.right='0';pc.style.transform='translateY(-'+sY+'px)';pc.id='';pc.querySelectorAll('.scroll-section').forEach(s=>{s.style.opacity='1';s.style.transform='none';s.style.clipPath='none';s.style.filter='none';});snap.appendChild(nc);snap.appendChild(pc);});
+      tOvr.classList.add('active');
+      requestAnimationFrame(()=>{requestAnimationFrame(()=>{
+        rPcs.forEach(p=>{p.style.transition='none';p.style.transform='translateX(0) translateY(0) rotateZ(0deg) rotateX(0deg) scale(1)';p.style.opacity='1';});
+        tOvr.offsetHeight;
+        rPcs.forEach((p,i)=>{p.style.transition='transform 0.25s cubic-bezier(0.2,0,0.6,1)';p.style.transform='translateX('+((i-2)*0.5)+'%)';});
+        setTimeout(()=>{
+          const fp=[{d:0,dr:-8,r:-25,rx:15,fl:12,du:1.1},{d:60,dr:5,r:18,rx:-12,fl:-8,du:1},{d:30,dr:-3,r:-10,rx:20,fl:10,du:1.15},{d:90,dr:7,r:22,rx:-18,fl:-14,du:0.95},{d:50,dr:-6,r:-15,rx:10,fl:9,du:1.05}];
+          rPcs.forEach((pc,i)=>{const p=fp[i];const st=performance.now()+p.d;let dn=false;function an(now){if(dn)return;const el=Math.max(0,now-st)/1000;if(el>p.du+0.1){pc.style.opacity='0';dn=true;return;}const t=Math.min(el/p.du,1),g=t*t*135,dr=p.dr*t+p.fl*Math.sin(t*Math.PI*2.5),rZ=p.r*t+Math.sin(t*Math.PI*3)*5,rX=p.rx*Math.sin(t*Math.PI*1.8),sc=1-t*0.15,op=t>0.7?1-((t-0.7)/0.3):1;pc.style.transition='none';pc.style.transform='translateX('+dr+'%) translateY('+g+'vh) rotateZ('+rZ+'deg) rotateX('+rX+'deg) scale('+sc+')';pc.style.opacity=op;aRAFs.push(requestAnimationFrame(an));}aRAFs.push(requestAnimationFrame(an));});
+        },280);
+        setTimeout(()=>{if(cb)cb();aRAFs.forEach(id=>cancelAnimationFrame(id));aRAFs.length=0;rPcs.forEach(p=>{p.style.transition='none';p.style.opacity='0';p.style.transform='translateY(200vh)';});tOvr.classList.remove('active');rSnp.forEach(s=>{s.innerHTML='';});tRun=false;},1400);
+      });});
+    }
+
+    runTransRef.current = runTrans;
+    root.querySelectorAll('.btn[data-route]').forEach(link => link.addEventListener('click', trigTrans));
+
 
     /* ═══ P5 WEDGE MENU ═══ */
     const p5Trig = root.querySelector('#p5Trigger');
@@ -532,7 +561,7 @@ export default function Home() {
           p5Svg.offsetHeight;
           for (let j = 0; j < P5_N; j++) { p5W[j].g.style.transform='scale(1)'; p5W[j].path.setAttribute('fill','#1a1a1a'); p5W[j].text.setAttribute('font-size','18'); }
         });
-        p5W[i].g.addEventListener('click', () => { closeP5(); navigateTo(P5_ROUTES[i]); });
+        p5W[i].g.addEventListener('click', () => { closeP5(); runTrans(() => navigate(P5_ROUTES[i])); });
       })(hi);
     }
 
@@ -598,7 +627,7 @@ export default function Home() {
     };
 
     return () => { if (cleanupRef.current) cleanupRef.current(); };
-  }, [navigateTo]);
+  }, [navigate]);
 
   const reelImages = [
     "https://huntnewsnu.com/wp-content/uploads/2025/10/IVSteastDiningHalls_5_13_25_ShivWani_9-1-1200x800.jpg",
@@ -614,6 +643,13 @@ export default function Home() {
   return (
     <div ref={wrapperRef}>
       <div className="bg-scribbles-layer" id="bgScribbles"></div>
+        <div className="page-transition-overlay" id="pageTransition">
+          <div className="rip-piece"><div className="rip-snapshot"></div></div>
+          <div className="rip-piece"><div className="rip-snapshot"></div></div>
+          <div className="rip-piece"><div className="rip-snapshot"></div></div>
+          <div className="rip-piece"><div className="rip-snapshot"></div></div>
+          <div className="rip-piece"><div className="rip-snapshot"></div></div>
+        </div>
       <svg className="crumple-filter-svg" xmlns="http://www.w3.org/2000/svg">
         <filter id="crumpleWarp"><feTurbulence type="turbulence" baseFrequency="0.015" numOctaves="3" seed="5" result="warp"/><feDisplacementMap in="SourceGraphic" in2="warp" scale="6" xChannelSelector="R" yChannelSelector="G"/></filter>
       </svg>
@@ -624,12 +660,12 @@ export default function Home() {
         </svg>
       </div>
       <nav id="navbar">
-        <a href="/" className="nav-logo sketch-1" onClick={e => { e.preventDefault(); navigateTo('/'); }}><span></span> <span className="logo-letters"><span className="logo-char" data-offset="0">N</span><span className="logo-char" data-offset="1">o</span><span className="logo-char" data-offset="2">m</span><span className="logo-char" data-offset="3">N</span><span className="logo-char" data-offset="4">o</span><span className="logo-char" data-offset="5">m</span></span></a>
+        <a href="/" className="nav-logo sketch-1" onClick={e => { e.preventDefault(); runTransRef.current?.(() => navigate('/')); }}><span></span> <span className="logo-letters"><span className="logo-char" data-offset="0">S</span><span className="logo-char" data-offset="1">W</span><span className="logo-char" data-offset="2">I</span><span className="logo-char" data-offset="3">P</span><span className="logo-char" data-offset="4">E</span><span className="logo-char" data-offset="5">W</span><span className="logo-char" data-offset="6">I</span><span className="logo-char" data-offset="7">S</span><span className="logo-char" data-offset="8">E</span></span></a>
         <div style={{display:'flex',alignItems:'center',gap:'0.75rem'}}>
           <button className="p5-menu-trigger" id="p5Trigger" aria-label="Menu">
             <svg viewBox="0 0 24 22" xmlns="http://www.w3.org/2000/svg"><path className="morph-crust"/><path className="morph-left"/><path className="morph-right"/></svg>
           </button>
-          <a href="/login" className="nav-signin sketch-2" onClick={e => { e.preventDefault(); navigateTo('/login'); }}>Sign In</a>
+          <a href="/login" className="nav-signin sketch-2" onClick={e => { e.preventDefault(); runTransRef.current?.(() => navigate('/login')); }}>Sign In</a>
         </div>
         <div className="wave-divider"><svg viewBox="0 0 1200 20" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg"><path d="M0,0 C200,18 400,18 600,10 C800,2 1000,2 1200,10 L1200,0 Z"/></svg></div>
       </nav>

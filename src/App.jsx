@@ -1,6 +1,5 @@
 import React from 'react'
 import { Routes, Route, useLocation } from 'react-router-dom'
-import CorkBoardTransition from './assets/Components/CorkBoardTransition'
 import Nav from './assets/components/Nav'
 import Footer from './assets/components/Footer'
 import Home from './assets/pages/Home'
@@ -15,7 +14,6 @@ export default function App() {
   const isHome = location.pathname === '/'
 
   return (
-    <CorkBoardTransition>
       <div className="min-h-screen flex flex-col">
         {!isHome && <Nav />}
         <main className="flex-1">
@@ -30,6 +28,5 @@ export default function App() {
         </main>
         {!isHome && <Footer />}
       </div>
-    </CorkBoardTransition>
   )
 }

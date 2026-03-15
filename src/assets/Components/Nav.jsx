@@ -1,12 +1,12 @@
 import React from 'react'
-import { usePageTransition } from './CorkBoardTransition'
+import { useNavigate } from 'react-router-dom'
 
 export default function Nav() {
-  const navigateTo = usePageTransition()
+  const navigate = useNavigate()
 
   const handleClick = (e, path) => {
     e.preventDefault()
-    navigateTo(path)
+    navigate(path)
   }
 
   return (

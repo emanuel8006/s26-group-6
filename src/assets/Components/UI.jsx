@@ -1,3 +1,4 @@
+import React from 'react'
 // ── Card ──────────────────────────────────────────────────────────
 export function Card({ children, className = '', hover = true, glass = false }) {
   return (

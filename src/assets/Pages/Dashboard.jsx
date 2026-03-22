@@ -1,140 +1,482 @@
-import { Link } from 'react-router-dom'
-import { Card, StatBox, Badge, ProgressBar, SectionTitle } from '../components/UI'
+import React, { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 
-const activity = [
-  { icon: '🍕', name: 'Student Union Pizza', when: 'Today, 12:34 PM', amount: '-$9.50', isSwipe: false },
-  { icon: '🔄', name: 'Swipe — International Village', when: 'Today, 8:10 AM', amount: '-1 swipe', isSwipe: true },
-  { icon: '🛒', name: 'Star Market Groceries', when: 'Yesterday, 5:45 PM', amount: '-$24.12', isSwipe: false },
-  { icon: '☕', name: "Dunkin' — Dining Dollars", when: 'Yesterday, 9:00 AM', amount: '-$5.25', isSwipe: false },
-  { icon: '🔄', name: 'Swipe — Stetson East', when: 'Mon, 6:30 PM', amount: '-1 swipe', isSwipe: true },
-]
+// ── Helpers ───────────────────────────────────────────────────────
+function today() { return new Date() }
 
-const quickActions = [
-  { icon: '⭐', label: 'Is Food Good Today?', to: '/food-good', color: 'hover:border-amber-300 hover:bg-amber-50 hover:text-amber-700' },
-  { icon: '💵', label: 'Log a Transaction', to: '/dining-dollars', color: 'hover:border-forest hover:bg-forest-muted hover:text-forest' },
-  { icon: '🔄', label: 'Use a Swipe', to: '/swipes', color: 'hover:border-forest hover:bg-forest-muted hover:text-forest' },
-  { icon: '🛒', label: 'Build Grocery List', to: '/dining-dollars', color: 'hover:border-forest hover:bg-forest-muted hover:text-forest' },
-  { icon: '📊', label: 'View Spending Report', to: '/dining-dollars', color: 'hover:border-forest hover:bg-forest-muted hover:text-forest' },
-  { icon: '⚙️', label: 'Update Preferences', to: '/login', color: 'hover:border-gray-300 hover:bg-gray-50 hover:text-gray-700' },
-]
+function parseDate(str) {
+  if (!str) return null
+  return new Date(str + 'T12:00:00')
+}
 
-export default function Dashboard() {
+function daysUntil(dateStr) {
+  if (!dateStr) return null
+  const diff = parseDate(dateStr) - today()
+  return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)))
+}
+
+function daysSince(dateStr) {
+  if (!dateStr) return null
+  const diff = today() - parseDate(dateStr)
+  return Math.max(0, Math.floor(diff / (1000 * 60 * 60 * 24)))
+}
+
+function getBreakOffDays(semesterBreaks = []) {
+  const days = new Set()
+  semesterBreaks.forEach(b => {
+    if (b.enabled) {
+      b.dates?.forEach(d => days.add(d))
+      if (b.weekendEnabled) b.weekendDates?.forEach(d => days.add(d))
+    }
+  })
+  return [...days]
+}
+
+function calcActiveDaysLeft(endStr, breaks = [], customOffDays = []) {
+  if (!endStr) return null
+  const end = parseDate(endStr)
+  const t = today()
+  if (t >= end) return 0
+  let count = 0
+  const cur = new Date(t)
+  cur.setDate(cur.getDate() + 1)
+  const breakSet = new Set([...getBreakOffDays(breaks), ...customOffDays])
+  while (cur <= end) {
+    const ds = cur.toISOString().split('T')[0]
+    if (!breakSet.has(ds)) count++
+    cur.setDate(cur.getDate() + 1)
+  }
+  return count
+}
+
+function calcTotalActiveDays(startStr, endStr, breaks = [], customOffDays = []) {
+  if (!startStr || !endStr) return 105
+  const start = parseDate(startStr)
+  const end = parseDate(endStr)
+  if (!start || !end) return 105
+  const totalDays = Math.max(1, Math.ceil((end - start) / (1000 * 60 * 60 * 24)))
+  const breakSet = new Set([...getBreakOffDays(breaks), ...customOffDays])
+  let breakCount = 0
+  const cur = new Date(start)
+  while (cur <= end) {
+    if (breakSet.has(cur.toISOString().split('T')[0])) breakCount++
+    cur.setDate(cur.getDate() + 1)
+  }
+  return Math.max(1, totalDays - breakCount)
+}
+
+function calcPace(remaining, total, activeDaysLeft, totalActiveDays) {
+  if (!total || total <= 0 || !totalActiveDays) return null
+  const pctLeft = activeDaysLeft / totalActiveDays
+  const expectedRemaining = total * pctLeft
+  const diff = remaining - expectedRemaining
+  const pctDiff = Math.abs(diff) / total
+  if (pctDiff < 0.05) return 'on_track'
+  if (diff > 0) return 'under_budget'
+  return 'over_budget'
+}
+
+const PACE_LABELS = {
+  on_track:     { label: 'On Pace',       color: '#2d6a1f', bg: '#f0f7eb', border: '#c8deba' },
+  under_budget: { label: 'Ahead',         color: '#1a4fa0', bg: '#e6f0ff', border: '#b8d0f0' },
+  over_budget:  { label: 'Spending Fast', color: '#D42B2B', bg: '#FFF0EE', border: '#f0b8b8' },
+}
+
+// ── Styles ────────────────────────────────────────────────────────
+const S = {
+  hero: { background: 'linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%)', color: '#fff', overflow: 'hidden', position: 'relative' },
+  heroInner: { maxWidth: '1100px', margin: '0 auto', padding: '2.5rem 2rem', position: 'relative', zIndex: 2 },
+  heroEyebrow: { fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.75rem', letterSpacing: '0.14em', color: '#D42B2B', marginBottom: '6px', display: 'block' },
+  heroTitle: { fontFamily: "'Playfair Display', serif", fontSize: 'clamp(1.8rem, 4vw, 2.8rem)', fontWeight: 700, color: '#fff', margin: '0 0 6px', lineHeight: 1.1 },
+  heroSub: { fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.9rem', letterSpacing: '0.04em', color: 'rgba(255,255,255,0.5)', margin: 0 },
+  heroDot: (color) => ({ width: '8px', height: '8px', borderRadius: '50%', background: color, display: 'inline-block', marginRight: '8px', boxShadow: `0 0 6px ${color}` }),
+  statGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '12px', marginTop: '1.5rem' },
+  miniStat: { background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '10px', padding: '12px 16px' },
+  miniStatVal: { fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: '1.8rem', color: '#fff', margin: '0 0 2px', lineHeight: 1 },
+  miniStatLabel: { fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.65rem', letterSpacing: '0.1em', color: 'rgba(255,255,255,0.45)', margin: 0 },
+  body: { maxWidth: '1100px', margin: '0 auto', padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' },
+  twoCol: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.2rem' },
+  threeCol: { display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1.2rem' },
+  card: { background: '#fff', border: '2px solid rgba(0,0,0,0.08)', borderRadius: '12px', padding: '1.4rem', boxShadow: '3px 4px 0px rgba(0,0,0,0.06)' },
+  cardLabel: { fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.7rem', letterSpacing: '0.12em', color: '#9CA3AF', display: 'block', marginBottom: '4px' },
+  bigNum: { fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: '2.4rem', color: '#1a1a1a', lineHeight: 1, margin: '0 0 2px' },
+  bigNumSub: { fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.72rem', letterSpacing: '0.06em', color: '#9CA3AF', margin: 0 },
+  progressTrack: { height: '8px', background: 'rgba(0,0,0,0.06)', borderRadius: '99px', overflow: 'hidden', margin: '10px 0 6px' },
+  paceBadge: (pace) => {
+    const p = PACE_LABELS[pace] || PACE_LABELS.on_track
+    return { fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.68rem', letterSpacing: '0.08em', padding: '3px 10px', borderRadius: '99px', background: p.bg, color: p.color, border: `1.5px solid ${p.border}`, display: 'inline-block' }
+  },
+  actionBtn: (variant = 'default') => ({
+    display: 'flex', alignItems: 'center', gap: '10px', width: '100%', padding: '12px 16px',
+    background: variant === 'primary' ? '#D42B2B' : variant === 'yellow' ? '#FFE45C' : '#fff',
+    color: variant === 'yellow' ? '#1a1a1a' : variant === 'primary' ? '#fff' : '#1a1a1a',
+    border: `2px solid ${variant === 'primary' ? '#1a1a1a' : 'rgba(0,0,0,0.12)'}`,
+    borderRadius: '10px', cursor: 'pointer', textAlign: 'left',
+    boxShadow: variant === 'primary' ? '3px 3px 0px #1a1a1a' : '2px 2px 0px rgba(0,0,0,0.07)',
+    fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.82rem', letterSpacing: '0.06em',
+    transition: 'all 0.12s ease', marginBottom: '8px',
+  }),
+  comingSoon: { background: '#FAF9F6', border: '2px dashed rgba(0,0,0,0.1)', borderRadius: '10px', padding: '2rem', textAlign: 'center' },
+  logModal: { position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' },
+  logCard: { background: '#fff', border: '2px solid #1a1a1a', borderRadius: '14px', padding: '1.8rem', maxWidth: '400px', width: '100%', boxShadow: '5px 6px 0px #1a1a1a' },
+  input: { width: '100%', padding: '10px 14px', border: '2px solid rgba(0,0,0,0.12)', borderRadius: '8px', fontSize: '0.9rem', fontFamily: "'Inter', sans-serif", background: '#fff', color: '#1a1a1a', outline: 'none', boxSizing: 'border-box', boxShadow: '2px 3px 0px rgba(0,0,0,0.07)', marginBottom: '10px' },
+}
+
+// ── Projected pace chart (projected only, no fake actuals) ────────
+function PaceChart({ projWeekly, activeDays }) {
+  const weeks = Math.min(Math.ceil(activeDays / 7), 16)
+  const maxVal = Math.max(projWeekly * 1.4, 20)
+
   return (
-    <>
-      {/* Welcome Banner */}
-      <div className="relative bg-forest-deep overflow-hidden">
-        <div className="absolute inset-0 bg-hero-mesh opacity-70" />
-        <div className="absolute inset-0 opacity-[0.03]"
-          style={{ backgroundImage: 'radial-gradient(circle, #fff 1px, transparent 1px)', backgroundSize: '20px 20px' }} />
-        <div className="relative z-10 max-w-6xl mx-auto px-6 py-10">
-          <div className="flex items-start justify-between flex-wrap gap-4">
-            <div>
-              <p className="text-green-300/70 text-xs font-semibold uppercase tracking-widest mb-1">Dashboard</p>
-              <h1 className="font-display text-3xl md:text-4xl font-bold text-white mb-1">Good afternoon, Alex 👋</h1>
-              <p className="text-white/50 text-sm">Here's how your dining plan is looking this week.</p>
+    <div>
+      <div style={{ display: 'flex', alignItems: 'flex-end', gap: '3px', height: '100px', marginBottom: '6px' }}>
+        {Array.from({ length: weeks }, (_, i) => (
+          <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', height: '100%', justifyContent: 'flex-end' }}>
+            <div style={{ width: '100%', background: '#FBF2D8', border: '1px solid rgba(0,0,0,0.08)', borderRadius: '3px 3px 0 0', height: `${(projWeekly / maxVal) * 100}%`, minHeight: '4px' }} />
+          </div>
+        ))}
+      </div>
+      <div style={{ display: 'flex', gap: '3px' }}>
+        {Array.from({ length: weeks }, (_, i) => (
+          <div key={i} style={{ flex: 1, textAlign: 'center', fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.55rem', letterSpacing: '0.04em', color: (i + 1) % 4 === 0 ? '#9CA3AF' : 'transparent' }}>
+            {(i + 1) % 4 === 0 ? `W${i + 1}` : '.'}
+          </div>
+        ))}
+      </div>
+      <div style={{ display: 'flex', gap: '14px', marginTop: '8px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+          <div style={{ width: '10px', height: '10px', background: '#FBF2D8', border: '1px solid rgba(0,0,0,0.1)', borderRadius: '2px' }} />
+          <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.62rem', letterSpacing: '0.04em', color: '#9CA3AF' }}>Projected (${projWeekly}/wk)</span>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+          <div style={{ width: '10px', height: '10px', background: '#E5E7EB', border: '1px dashed #9CA3AF', borderRadius: '2px' }} />
+          <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.62rem', letterSpacing: '0.04em', color: '#9CA3AF' }}>Actual — coming soon</span>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ── Log modal ─────────────────────────────────────────────────────
+function LogModal({ type, onClose, onSave }) {
+  const [val, setVal] = useState('')
+  const [loc, setLoc] = useState('')
+  const isSwipe = type === 'swipe'
+
+  return (
+    <div style={S.logModal} onClick={onClose}>
+      <div style={S.logCard} onClick={e => e.stopPropagation()}>
+        <p style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.72rem', letterSpacing: '0.12em', color: '#9CA3AF', margin: '0 0 4px' }}>
+          LOG A {isSwipe ? 'SWIPE' : 'TRANSACTION'}
+        </p>
+        <p style={{ fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: '1.4rem', color: '#1a1a1a', margin: '0 0 1.2rem' }}>
+          {isSwipe ? 'Use a Swipe' : 'Log Dining Dollars'}
+        </p>
+
+        {isSwipe ? (
+          <div>
+            <label style={{ ...S.cardLabel, marginBottom: '6px' }}>DINING LOCATION</label>
+            <select value={loc} onChange={e => setLoc(e.target.value)} style={S.input}>
+              <option value="">Select...</option>
+              <option>International Village</option>
+              <option>Stetson East</option>
+              <option>Stetson West</option>
+              <option>Outtakes</option>
+              <option>Market @ 60</option>
+            </select>
+          </div>
+        ) : (
+          <div>
+            <label style={{ ...S.cardLabel, marginBottom: '6px' }}>AMOUNT SPENT</label>
+            <div style={{ position: 'relative', marginBottom: '10px' }}>
+              <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#9CA3AF', fontSize: '0.9rem' }}>$</span>
+              <input type="number" step="0.01" placeholder="0.00" value={val} onChange={e => setVal(e.target.value)}
+                style={{ ...S.input, paddingLeft: '28px', marginBottom: 0 }} />
             </div>
-            <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/15 rounded-2xl px-5 py-3 mt-1">
-              <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-              <span className="text-white text-sm font-semibold">On Pace</span>
-              <span className="text-white/50 text-xs">· 61 days left</span>
+            <label style={{ ...S.cardLabel, marginBottom: '6px' }}>LOCATION</label>
+            <input type="text" placeholder="e.g. Dunkin' on Huntington" value={loc} onChange={e => setLoc(e.target.value)} style={S.input} />
+          </div>
+        )}
+
+        <div style={{ display: 'flex', gap: '8px', marginTop: '6px' }}>
+          <button onClick={onClose}
+            style={{ flex: 1, padding: '10px', border: '2px solid rgba(0,0,0,0.12)', borderRadius: '8px', fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.85rem', letterSpacing: '0.06em', cursor: 'pointer', background: '#fff', color: '#9CA3AF' }}>
+            CANCEL
+          </button>
+          <button onClick={() => { onSave({ type, val, loc }); onClose() }}
+            style={{ flex: 2, padding: '10px', background: '#D42B2B', border: '2px solid #1a1a1a', borderRadius: '8px', fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.85rem', letterSpacing: '0.06em', cursor: 'pointer', color: '#fff', boxShadow: '2px 3px 0 #1a1a1a' }}>
+            SAVE
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ── Coming Soon placeholder ───────────────────────────────────────
+function ComingSoon({ label, icon }) {
+  return (
+    <div style={S.comingSoon}>
+      <div style={{ fontSize: '1.5rem', marginBottom: '8px', opacity: 0.3 }}>{icon}</div>
+      <p style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.72rem', letterSpacing: '0.1em', color: '#9CA3AF', margin: '0 0 4px' }}>COMING SOON</p>
+      <p style={{ fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: '0.95rem', color: '#1a1a1a', margin: 0, opacity: 0.4 }}>{label}</p>
+    </div>
+  )
+}
+
+// ── Main Dashboard ────────────────────────────────────────────────
+export default function Dashboard() {
+  const navigate = useNavigate()
+  const [profile, setProfile] = useState(null)
+  const [logModal, setLogModal] = useState(null)
+  const [swipesUsed, setSwipesUsed] = useState(0)
+  const [ddSpent, setDdSpent] = useState(0)
+  const [toast, setToast] = useState(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const stored = localStorage.getItem('nomnom_profile')
+    if (!stored) { navigate('/onboarding'); return }
+    try { setProfile(JSON.parse(stored)) } catch { navigate('/onboarding'); return }
+    setLoading(false)
+  }, [navigate])
+
+  if (loading || !profile) return null
+
+  // ── Derived values ────────────────────────────────────────────
+  const plan = profile.planData
+  const semStart = profile.semesterStart
+  const semEnd = profile.semesterEnd
+  const breaks = profile.semesterBreaks || []
+  const customOff = profile.customOffDays || []
+
+  const daysLeft = daysUntil(semEnd)
+  const totalActiveDays = calcTotalActiveDays(semStart, semEnd, breaks, customOff)
+  const activeDaysLeft = calcActiveDaysLeft(semEnd, breaks, customOff)
+  const pctElapsed = totalActiveDays > 0 ? Math.min(1, (totalActiveDays - (activeDaysLeft || 0)) / totalActiveDays) : 0
+
+  // Swipes
+  const totalSwipes = plan?.swipes
+  const startingSwipes = parseInt(profile.swipesLeft) || totalSwipes || 0
+  const currentSwipes = Math.max(0, startingSwipes - swipesUsed)
+  const swipePct = totalSwipes ? Math.round((currentSwipes / totalSwipes) * 100) : null
+  const swipePace = totalSwipes ? calcPace(currentSwipes, totalSwipes, activeDaysLeft, totalActiveDays) : null
+
+  // Dining dollars
+  const totalDD = plan?.diningDollars || 0
+  const startingDD = parseFloat(profile.diningDollarsLeft) || totalDD
+  const currentDD = Math.max(0, startingDD - ddSpent)
+  const ddPct = totalDD ? Math.round((currentDD / totalDD) * 100) : 0
+  const ddPace = calcPace(currentDD, totalDD, activeDaysLeft, totalActiveDays)
+
+  // Projected weekly dining dollars
+  const projWeeklyDD = profile.dollarsPerWeek
+    ? parseFloat(profile.dollarsPerWeek)
+    : profile.projections?.projPlanDD
+      ? Math.round(profile.projections.projPlanDD / (totalActiveDays / 7))
+      : 0
+
+  // Semester label
+  const semLabel = profile.semesterPreset === 'spring2026' ? 'Spring 2026'
+    : profile.semesterPreset === 'fall2026' ? 'Fall 2026'
+    : semEnd ? new Date(semEnd + 'T12:00:00').toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+    : 'This Semester'
+
+  const greeting = (() => {
+    const h = new Date().getHours()
+    if (h < 12) return 'Good morning'
+    if (h < 17) return 'Good afternoon'
+    return 'Good evening'
+  })()
+
+  const overallPace = (swipePace === 'over_budget' || ddPace === 'over_budget') ? 'over_budget'
+    : (swipePace === 'under_budget' && ddPace === 'under_budget') ? 'under_budget'
+    : 'on_track'
+
+  const handleLog = ({ type, val, loc }) => {
+    if (type === 'swipe') {
+      setSwipesUsed(s => s + 1)
+      showToast(`Swipe logged${loc ? ` at ${loc}` : ''}`)
+    } else {
+      setDdSpent(s => s + (parseFloat(val) || 0))
+      showToast(`$${parseFloat(val || 0).toFixed(2)} logged`)
+    }
+  }
+
+  const showToast = (msg) => {
+    setToast(msg)
+    setTimeout(() => setToast(null), 3000)
+  }
+
+  return (
+    <div style={{ background: '#FAF9F6', minHeight: '100vh' }}>
+
+      {/* ── Hero ── */}
+      <div style={S.hero}>
+        <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(circle at 80% 50%, rgba(212,43,43,0.12), transparent 60%), radial-gradient(circle at 20% 80%, rgba(255,228,92,0.06), transparent 50%)', zIndex: 1 }} />
+        <div style={{ position: 'absolute', inset: 0, opacity: 0.03, backgroundImage: 'radial-gradient(circle, #fff 1px, transparent 1px)', backgroundSize: '22px 22px', zIndex: 1 }} />
+        <div style={S.heroInner}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
+            <div>
+              <span style={S.heroEyebrow}>DASHBOARD</span>
+              <h1 style={S.heroTitle}>{greeting} 👋</h1>
+              <p style={S.heroSub}>{semLabel} · {plan?.name || 'No plan set'}</p>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '12px', padding: '10px 16px' }}>
+              <span style={S.heroDot(overallPace === 'over_budget' ? '#f87171' : overallPace === 'under_budget' ? '#60a5fa' : '#4ade80')} />
+              <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.82rem', letterSpacing: '0.06em', color: '#fff' }}>
+                {PACE_LABELS[overallPace].label}
+              </span>
+              <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.72rem', letterSpacing: '0.04em', color: 'rgba(255,255,255,0.4)' }}>
+                · {daysLeft ?? '—'} days left
+              </span>
             </div>
           </div>
 
-          {/* Stats in banner */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mt-8">
+          <div style={S.statGrid}>
             {[
-              { label: 'Dining Dollars Left', value: '$342', sub: 'of $600 starting balance' },
-              { label: 'Swipes Left', value: '47', sub: 'of 80 total this semester' },
-              { label: 'Spent This Week', value: '$38', sub: 'budget is $45/week' },
-              { label: 'Daily Pace', value: '$5.60', sub: 'to hit $0 at finals' },
-            ].map(({ label, value, sub }) => (
-              <div key={label} className="glass-dark rounded-2xl px-5 py-4">
-                <p className="text-white/40 text-[10px] uppercase tracking-widest font-bold mb-1">{label}</p>
-                <p className="font-display text-2xl font-bold text-white">{value}</p>
-                <p className="text-white/40 text-xs mt-0.5">{sub}</p>
+              { label: 'CALENDAR DAYS LEFT', value: daysLeft ?? '—' },
+              { label: 'ACTIVE DAYS LEFT',   value: activeDaysLeft ?? '—' },
+              { label: 'TOTAL ACTIVE DAYS',  value: totalActiveDays },
+              { label: 'SEMESTER',           value: semLabel },
+            ].map(({ label, value }) => (
+              <div key={label} style={S.miniStat}>
+                <p style={S.miniStatVal}>{value}</p>
+                <p style={S.miniStatLabel}>{label}</p>
               </div>
             ))}
           </div>
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto px-6 py-8 space-y-6">
+      <div style={S.body}>
 
-        {/* Main Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          <Link to="/dining-dollars" className="group bg-white rounded-2xl p-7 border border-black/[0.04] shadow-card hover:shadow-card-hover hover:-translate-y-1 transition-all duration-300 block">
-            <div className="flex items-start justify-between mb-5">
+        {/* ── Balance cards ── */}
+        <div style={S.twoCol}>
+          {/* Swipes */}
+          <div style={S.card}>
+            <span style={S.cardLabel}>MEAL SWIPES</span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '4px' }}>
               <div>
-                <div className="w-12 h-12 bg-amber-50 rounded-xl flex items-center justify-center text-2xl mb-3">💵</div>
-                <h2 className="font-display text-2xl text-charcoal">Dining Dollars</h2>
-                <p className="text-gray-400 text-sm mt-1">Restaurants, groceries & on-campus</p>
+                <p style={S.bigNum}>{totalSwipes === null ? '∞' : currentSwipes}</p>
+                <p style={S.bigNumSub}>{totalSwipes ? `OF ${totalSwipes} TOTAL` : 'UNLIMITED'}</p>
               </div>
-              <span className="text-gray-300 group-hover:text-forest group-hover:translate-x-1 transition-all text-xl">→</span>
+              {swipePace && <span style={S.paceBadge(swipePace)}>{PACE_LABELS[swipePace].label}</span>}
             </div>
-            <ProgressBar value={57} variant="orange" />
-            <div className="flex justify-between items-center mt-3">
-              <div>
-                <p className="text-xs text-gray-400">Remaining</p>
-                <p className="font-display text-3xl font-bold text-charcoal">$342</p>
-              </div>
-              <Badge variant="orange">57% used</Badge>
-            </div>
-          </Link>
+            {totalSwipes && (
+              <>
+                <div style={S.progressTrack}>
+                  <div style={{ height: '100%', background: swipePace === 'over_budget' ? '#D42B2B' : '#2d6a1f', width: `${swipePct}%`, borderRadius: '99px', transition: 'width 0.6s ease' }} />
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.68rem', letterSpacing: '0.06em', color: '#9CA3AF' }}>{swipePct}% remaining</span>
+                  <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.68rem', letterSpacing: '0.06em', color: '#9CA3AF' }}>
+                    ~{activeDaysLeft > 0 ? (currentSwipes / activeDaysLeft).toFixed(1) : '—'}/day left to use
+                  </span>
+                </div>
+              </>
+            )}
+          </div>
 
-          <Link to="/swipes" className="group bg-white rounded-2xl p-7 border border-black/[0.04] shadow-card hover:shadow-card-hover hover:-translate-y-1 transition-all duration-300 block">
-            <div className="flex items-start justify-between mb-5">
+          {/* Dining Dollars */}
+          <div style={S.card}>
+            <span style={S.cardLabel}>DINING DOLLARS</span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '4px' }}>
               <div>
-                <div className="w-12 h-12 bg-forest-muted rounded-xl flex items-center justify-center text-2xl mb-3">🔄</div>
-                <h2 className="font-display text-2xl text-charcoal">Swipes</h2>
-                <p className="text-gray-400 text-sm mt-1">Dining halls & outtakes</p>
+                <p style={S.bigNum}>${currentDD.toFixed(0)}</p>
+                <p style={S.bigNumSub}>OF ${totalDD} TOTAL</p>
               </div>
-              <span className="text-gray-300 group-hover:text-forest group-hover:translate-x-1 transition-all text-xl">→</span>
+              {ddPace && <span style={S.paceBadge(ddPace)}>{PACE_LABELS[ddPace].label}</span>}
             </div>
-            <ProgressBar value={41} variant="green" />
-            <div className="flex justify-between items-center mt-3">
-              <div>
-                <p className="text-xs text-gray-400">Remaining</p>
-                <p className="font-display text-3xl font-bold text-charcoal">47 left</p>
-              </div>
-              <Badge variant="green">On Track ✓</Badge>
+            <div style={S.progressTrack}>
+              <div style={{ height: '100%', background: ddPace === 'over_budget' ? '#D42B2B' : '#2d6a1f', width: `${ddPct}%`, borderRadius: '99px', transition: 'width 0.6s ease' }} />
             </div>
-          </Link>
-        </div>
-
-        {/* Bottom Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-          <Card className="lg:col-span-2">
-            <SectionTitle>Recent Activity</SectionTitle>
-            <ul>
-              {activity.map(({ icon, name, when, amount, isSwipe }, i) => (
-                <li key={i} className="flex items-center gap-4 py-3.5 border-b border-black/[0.04] last:border-0">
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-base flex-shrink-0 ${isSwipe ? 'bg-forest-muted' : 'bg-parchment'}`}>
-                    {icon}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-charcoal truncate">{name}</p>
-                    <p className="text-xs text-gray-400 mt-0.5">{when}</p>
-                  </div>
-                  <span className="text-sm font-bold text-red-400 flex-shrink-0">{amount}</span>
-                </li>
-              ))}
-            </ul>
-          </Card>
-
-          <div>
-            <SectionTitle>Quick Actions</SectionTitle>
-            <div className="space-y-2">
-              {quickActions.map(({ icon, label, to, color }) => (
-                <Link key={label} to={to}
-                  className={`flex items-center gap-3 w-full px-4 py-3 bg-white border border-black/[0.06] rounded-xl text-sm font-medium text-charcoal transition-all ${color}`}
-                >
-                  <span className="text-base">{icon}</span> {label}
-                </Link>
-              ))}
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.68rem', letterSpacing: '0.06em', color: '#9CA3AF' }}>{ddPct}% remaining</span>
+              <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.68rem', letterSpacing: '0.06em', color: '#9CA3AF' }}>
+                ${activeDaysLeft > 0 ? (currentDD / activeDaysLeft).toFixed(2) : '—'}/day left to spend
+              </span>
             </div>
           </div>
         </div>
+
+        {/* ── Pace chart + Quick actions ── */}
+        <div style={S.threeCol}>
+          <div style={S.card}>
+            <span style={S.cardLabel}>WEEKLY SPENDING PACE — DINING DOLLARS</span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+              <p style={{ fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: '1rem', color: '#1a1a1a', margin: 0 }}>Projected Spend Over Semester</p>
+              <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.72rem', letterSpacing: '0.06em', color: '#9CA3AF' }}>${projWeeklyDD}/wk projected</span>
+            </div>
+            <PaceChart projWeekly={projWeeklyDD} activeDays={totalActiveDays} />
+            {profile.outOfPocket && parseFloat(profile.outOfPocket) > 0 && (
+              <div style={{ marginTop: '12px', padding: '8px 12px', background: '#FBF2D8', border: '1px solid rgba(0,0,0,0.08)', borderRadius: '6px', fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.7rem', letterSpacing: '0.04em', color: '#6B7280' }}>
+                + ~${Math.round(parseFloat(profile.outOfPocket) * (totalActiveDays / 7))}/sem projected out-of-pocket
+              </div>
+            )}
+          </div>
+
+          <div style={S.card}>
+            <span style={S.cardLabel}>QUICK ACTIONS</span>
+            <button style={S.actionBtn('primary')} onClick={() => setLogModal('swipe')}>
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="2" y="4" width="12" height="8" rx="1.5"/><line x1="5" y1="4" x2="5" y2="12"/></svg>
+              USE A SWIPE
+            </button>
+            <button style={S.actionBtn('yellow')} onClick={() => setLogModal('dollars')}>
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="8" cy="8" r="6"/><path d="M8 5v6M6 6.5h3a1 1 0 010 2H7a1 1 0 000 2h3"/></svg>
+              LOG DINING $
+            </button>
+            <button style={S.actionBtn()} onClick={() => navigate('/dining-dollars')}>
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M2 4h12v8a1 1 0 01-1 1H3a1 1 0 01-1-1V4z"/><path d="M2 4l6-2 6 2"/></svg>
+              VIEW SPENDING
+            </button>
+            <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid rgba(0,0,0,0.06)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
+                <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.65rem', letterSpacing: '0.08em', color: '#9CA3AF' }}>SEMESTER PROGRESS</span>
+                <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.65rem', letterSpacing: '0.06em', color: '#1a1a1a' }}>{Math.round(pctElapsed * 100)}%</span>
+              </div>
+              <div style={S.progressTrack}>
+                <div style={{ height: '100%', background: '#1a1a1a', width: `${pctElapsed * 100}%`, borderRadius: '99px', transition: 'width 0.6s ease' }} />
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '4px' }}>
+                <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.6rem', color: '#C0C0C0' }}>START</span>
+                <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.6rem', color: '#C0C0C0' }}>END</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ── Food recommendations — coming soon ── */}
+        <div style={S.card}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+            <div>
+              <span style={S.cardLabel}>PERSONALIZED FOR YOU</span>
+              <p style={{ fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: '1rem', color: '#1a1a1a', margin: 0 }}>What's Good Today</p>
+            </div>
+          </div>
+          <ComingSoon label="Food recommendations will be powered by live dining hall data" icon="🍽️" />
+        </div>
+
+        {/* ── Recent activity — coming soon ── */}
+        <div style={S.card}>
+          <span style={S.cardLabel}>RECENT ACTIVITY</span>
+          <p style={{ fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: '1rem', color: '#1a1a1a', margin: '0 0 1rem' }}>Transaction History</p>
+          <ComingSoon label="Transaction history will sync once backend is connected" icon="📋" />
+        </div>
+
       </div>
-    </>
+
+      {/* ── Log modal ── */}
+      {logModal && (
+        <LogModal type={logModal} onClose={() => setLogModal(null)} onSave={handleLog} />
+      )}
+
+      {/* ── Toast ── */}
+      {toast && (
+        <div style={{ position: 'fixed', bottom: '2rem', left: '50%', transform: 'translateX(-50%)', background: '#1a1a1a', color: '#fff', padding: '10px 20px', borderRadius: '99px', fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.82rem', letterSpacing: '0.06em', boxShadow: '0 4px 20px rgba(0,0,0,0.3)', whiteSpace: 'nowrap', zIndex: 9999, border: '2px solid rgba(255,255,255,0.1)' }}>
+          {toast}
+        </div>
+      )}
+    </div>
   )
 }

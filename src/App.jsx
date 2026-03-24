@@ -8,7 +8,6 @@ import Login from './assets/pages/Login'
 import Dashboard from './assets/pages/Dashboard'
 import DiningDollars from './assets/pages/DiningDollars'
 import Swipes from './assets/pages/Swipes'
-import FoodGood from './assets/pages/FoodGood'
 
 export default function App() {
   const location = useLocation()
@@ -24,7 +23,6 @@ export default function App() {
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/dining-dollars" element={<DiningDollars />} />
           <Route path="/swipes" element={<Swipes />} />
-          <Route path="/food-good" element={<FoodGood />} />
           <Route path="/onboarding" element={<Onboarding />} />
         </Routes>
       </main>

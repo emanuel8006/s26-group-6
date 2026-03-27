@@ -52,7 +52,7 @@ async def delete_user(user: Any = Depends(get_current_user)) -> Exception|APIRes
         response = (
         supabase_client.table("profiles")
         .delete()
-        .eq("id", user)
+        .eq("id", user.id)
         .execute()
         )
         return response
@@ -88,7 +88,7 @@ async def create_meal_plan(
         response = (
             supabase_client.table("profiles")
             .update(update_dict)
-            .eq("id",user)
+            .eq("id",user.id)
             .execute()
         )
         return response
@@ -101,7 +101,36 @@ async def delete_user(user: Any = Depends(get_current_user)):
         response = (
         supabase_client.table("profiles")
         .delete()
-        .eq("id", user)
+        .eq("id", user.id)
+        .execute()
+        )
+        return response
+    except Exception as exception:
+        raise HTTPException(status_code=500, detail=str(exception))
+    
+@router.get("/get/")
+async def get_user_info(user: Any = Depends(get_current_user)) -> Exception|APIResponse:
+    try:
+        response = (
+        supabase_client.table("profiles")
+        .select("*")
+        .eq("id",user.id)
+        .execute()
+        )
+        return response
+    except Exception as exception:
+        raise HTTPException(status_code=500, detail=str(exception))
+    
+@router.get("/get_specific/")
+async def get_user_info_specific(
+    user: Any = Depends(get_current_user),
+    columns: list[str]
+    ) -> Exception|APIResponse:
+    try:
+        response = (
+        supabase_client.table("profiles")
+        .select(", ".join(columns))
+        .eq("id",user.id)
         .execute()
         )
         return response

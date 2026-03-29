@@ -172,22 +172,29 @@ function DishCard({ item }) {
 }
 
 function StationSection({ station }) {
+  const [collapsed, setCollapsed] = useState(false)
   const items = station.items || []
   if (!items.length) return null
   const avgCal = items.filter(i => i.calories && i.calories !== 'N/A').reduce((s, i, _, a) => s + i.calories / a.length, 0)
   return (
     <div style={{ marginBottom:'1.6rem' }}>
-      <div style={{ display:'flex',alignItems:'center',gap:'10px',marginBottom:'10px' }}>
+      <div
+        onClick={() => setCollapsed(c => !c)}
+        style={{ display:'flex',alignItems:'center',gap:'10px',marginBottom: collapsed ? 0 : '10px',cursor:'pointer',userSelect:'none' }}
+      >
         <div style={{ height:'2px',width:'18px',background:'#D42B2B',borderRadius:'1px',flexShrink:0 }} />
         <p style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:'0.78rem',letterSpacing:'0.1em',color:'#6B7280',margin:0 }}>{station.station || station.name}</p>
         <div style={{ flex:1,height:'1px',background:'rgba(0,0,0,0.06)' }} />
         <span style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:'0.6rem',letterSpacing:'0.06em',color:'#C0C0C0' }}>
           {items.length} ITEMS{avgCal > 0 ? ` · ~${Math.round(avgCal)} CAL AVG` : ''}
         </span>
+        <span style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:'0.65rem',color:'#C0C0C0',marginLeft:'4px',transition:'transform 0.2s',display:'inline-block',transform: collapsed ? 'rotate(-90deg)' : 'rotate(0deg)' }}>▼</span>
       </div>
-      <div style={{ display:'grid',gridTemplateColumns:'repeat(auto-fill, minmax(210px,1fr))',gap:'7px' }}>
-        {items.map((item, i) => <DishCard key={i} item={item} />)}
-      </div>
+      {!collapsed && (
+        <div style={{ display:'grid',gridTemplateColumns:'repeat(auto-fill, minmax(210px,1fr))',gap:'7px',animation:'fadeIn 0.2s ease' }}>
+          {items.map((item, i) => <DishCard key={i} item={item} />)}
+        </div>
+      )}
     </div>
   )
 }

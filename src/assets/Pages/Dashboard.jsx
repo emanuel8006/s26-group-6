@@ -98,7 +98,7 @@ const S = {
   twoCol: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.2rem' },
   threeCol: { display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1.2rem' },
   card: { background: '#fff', border: '2px solid rgba(0,0,0,0.08)', borderRadius: '12px', padding: '1.4rem', boxShadow: '3px 4px 0px rgba(0,0,0,0.06)' },
-  cardLabel: { fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.7rem', letterSpacing: '0.12em', color: '#9CA3AF', display: 'block', marginBottom: '4px' },
+  cardLabel: { fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.8rem', letterSpacing: '0.1em', color: '#6B7280', display: 'block', marginBottom: '4px' },
   bigNum: { fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: '2.4rem', color: '#1a1a1a', lineHeight: 1, margin: '0 0 2px' },
   bigNumSub: { fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.72rem', letterSpacing: '0.06em', color: '#9CA3AF', margin: 0 },
   progressTrack: { height: '8px', background: 'rgba(0,0,0,0.06)', borderRadius: '99px', overflow: 'hidden', margin: '10px 0 6px' },
@@ -166,7 +166,7 @@ function LogModal({ type, onClose, onSave }) {
   return (
     <div style={S.logModal} onClick={onClose}>
       <div style={S.logCard} onClick={e => e.stopPropagation()}>
-        <p style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.72rem', letterSpacing: '0.12em', color: '#9CA3AF', margin: '0 0 4px' }}>
+        <p style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.8rem', letterSpacing: '0.1em', color: '#6B7280', margin: '0 0 4px' }}>
           LOG A {isSwipe ? 'SWIPE' : 'TRANSACTION'}
         </p>
         <p style={{ fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: '1.4rem', color: '#1a1a1a', margin: '0 0 1.2rem' }}>
@@ -190,7 +190,19 @@ function LogModal({ type, onClose, onSave }) {
             <label style={{ ...S.cardLabel, marginBottom: '6px' }}>AMOUNT SPENT</label>
             <div style={{ position: 'relative', marginBottom: '10px' }}>
               <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#9CA3AF', fontSize: '0.9rem' }}>$</span>
-              <input type="number" step="0.01" placeholder="0.00" value={val} onChange={e => setVal(e.target.value)}
+              <input type="number" inputMode="decimal" placeholder="0.00" value={val}
+                onKeyDown={e => ['e','E','+','-'].includes(e.key) && e.preventDefault()}
+                onWheel={e => e.target.blur()}
+                onChange={e => {
+                  const v = e.target.value
+                  if (v === '' || v === '.') { setVal(v); return }
+                  const n = parseFloat(v)
+                  if (isNaN(n) || n < 0) return
+                  if (n > 400) { setVal('400'); return }
+                  const parts = v.split('.')
+                  if (parts[1] && parts[1].length > 2) return
+                  setVal(v)
+                }}
                 style={{ ...S.input, paddingLeft: '28px', marginBottom: 0 }} />
             </div>
             <label style={{ ...S.cardLabel, marginBottom: '6px' }}>LOCATION</label>
@@ -214,10 +226,9 @@ function LogModal({ type, onClose, onSave }) {
 }
 
 // ── Coming Soon placeholder ───────────────────────────────────────
-function ComingSoon({ label, icon }) {
+function ComingSoon({ label }) {
   return (
     <div style={S.comingSoon}>
-      <div style={{ fontSize: '1.5rem', marginBottom: '8px', opacity: 0.3 }}>{icon}</div>
       <p style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.72rem', letterSpacing: '0.1em', color: '#9CA3AF', margin: '0 0 4px' }}>COMING SOON</p>
       <p style={{ fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: '0.95rem', color: '#1a1a1a', margin: 0, opacity: 0.4 }}>{label}</p>
     </div>
@@ -426,7 +437,7 @@ export default function Dashboard() {
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="8" cy="8" r="6"/><path d="M8 5v6M6 6.5h3a1 1 0 010 2H7a1 1 0 000 2h3"/></svg>
               LOG DINING $
             </button>
-            <button style={S.actionBtn()} onClick={() => navigate('/dining-dollars')}>
+            <button style={S.actionBtn()} onClick={() => navigate('/menu')}>
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M2 4h12v8a1 1 0 01-1 1H3a1 1 0 01-1-1V4z"/><path d="M2 4l6-2 6 2"/></svg>
               VIEW SPENDING
             </button>
@@ -446,22 +457,23 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* ── Food recommendations — coming soon ── */}
-        <div style={S.card}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-            <div>
-              <span style={S.cardLabel}>PERSONALIZED FOR YOU</span>
-              <p style={{ fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: '1rem', color: '#1a1a1a', margin: 0 }}>What's Good Today</p>
-            </div>
+        {/* ── Today's Menu ── */}
+        <div style={{ ...S.card, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
+          <div>
+            <span style={S.cardLabel}>DINING HALLS</span>
+            <p style={{ fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: '1rem', color: '#1a1a1a', margin: '0 0 4px' }}>Today's Menu</p>
+            <p style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.72rem', letterSpacing: '0.04em', color: '#9CA3AF', margin: 0 }}>LIVE MENUS FROM STETSON EAST AND INTERNATIONAL VILLAGE</p>
           </div>
-          <ComingSoon label="Food recommendations will be powered by live dining hall data" icon="🍽️" />
+          <button onClick={() => navigate('/menu')} style={{ padding: '10px 20px', background: '#FFE45C', border: '2.5px solid #1a1a1a', borderRadius: '8px', fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.88rem', letterSpacing: '0.07em', cursor: 'pointer', boxShadow: '3px 3px 0 #1a1a1a', color: '#1a1a1a', transition: 'all 0.12s', flexShrink: 0 }}>
+            VIEW TODAY'S MENU →
+          </button>
         </div>
 
         {/* ── Recent activity — coming soon ── */}
         <div style={S.card}>
           <span style={S.cardLabel}>RECENT ACTIVITY</span>
           <p style={{ fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: '1rem', color: '#1a1a1a', margin: '0 0 1rem' }}>Transaction History</p>
-          <ComingSoon label="Transaction history will sync once backend is connected" icon="📋" />
+          <ComingSoon label="Transaction history will sync once backend is connected"  />
         </div>
 
       </div>

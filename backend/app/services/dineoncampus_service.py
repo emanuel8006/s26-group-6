@@ -3,6 +3,7 @@ from datetime import date
 from typing import Dict, Any, List
 from cachetools import TTLCache
 import httpx
+from curl_cffi.requests import AsyncSession
 
 menu_cache: TTLCache = TTLCache(maxsize=100, ttl=3600)
 
@@ -12,7 +13,7 @@ IV_LOC_ID = "5f4f8a425e42ad17329be131"
 HEADERS = {
     "User-Agent": (
         "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
-        "(KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36"
+        "(KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"
     ),
     "Accept": "application/json, text/plain, */*",
     "Accept-Language": "en-US,en;q=0.9,es;q=0.8",
@@ -20,7 +21,7 @@ HEADERS = {
     "Origin": "https://new.dineoncampus.com",
     "sec-ch-ua": '"Not:A-Brand";v="99", "Google Chrome";v="145", "Chromium";v="145"',
     "sec-ch-ua-mobile": "?0",
-    "sec-ch-ua-platform": '"macOS"',
+    "sec-ch-ua-platform": '"MacOS"',
     "sec-fetch-dest": "empty",
     "sec-fetch-mode": "cors",
     "sec-fetch-site": "same-site",
@@ -67,7 +68,7 @@ async def get_menu(location_name: str, period_name: str) -> Dict[str, Any]:
     """
     from app.services.location_service import get_location_id, get_period_id_by_name
 
-    location_id = get_location_id(location_name=location_name)
+    location_id = get_location_id(location_name)
     if not location_id:
         return {
             "error": f"Unrecognized location name: {location_name}",
@@ -90,10 +91,14 @@ async def get_menu(location_name: str, period_name: str) -> Dict[str, Any]:
         f"?date={get_date()}&period={period_id}"
     )
 
-    async with httpx.AsyncClient(headers=HEADERS) as client:
+#    async with httpx.AsyncClient(headers=HEADERS) as client:
+#        try:
+#            res = await client.get(url, timeout=10.0)
+#            res.raise_for_status()
+
+    async with AsyncSession(impersonate="chrome") as s:
         try:
-            res = await client.get(url, timeout=10.0)
-            res.raise_for_status()
+            res = await s.get(url, headers=HEADERS)
         except httpx.HTTPStatusError as e:
             return {"error": "DineOnCampus API failed", "status": e.response.status_code, "detail": str(e)}
         except httpx.RequestError as e:

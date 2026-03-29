@@ -53,7 +53,7 @@ const st = {
   heroInner: { maxWidth: '1100px', margin: '0 auto', padding: '2.5rem 2rem', position: 'relative', zIndex: 2 },
   body: { maxWidth: '1100px', margin: '0 auto', padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' },
   card: { background: '#fff', border: '2px solid rgba(0,0,0,0.09)', borderRadius: '12px', padding: '1.4rem', boxShadow: '3px 4px 0 rgba(0,0,0,0.06)' },
-  label: { fontFamily: "'Bebas Neue',sans-serif", fontSize: '0.7rem', letterSpacing: '0.12em', color: '#9CA3AF', display: 'block', marginBottom: '4px' },
+  label: { fontFamily: "'Bebas Neue',sans-serif", fontSize: '0.8rem', letterSpacing: '0.1em', color: '#6B7280', display: 'block', marginBottom: '4px' },
   heading: { fontFamily: "'Playfair Display',serif", fontWeight: 700, fontSize: '1rem', color: '#1a1a1a', margin: '0 0 1rem' },
   bigNum: { fontFamily: "'Playfair Display',serif", fontWeight: 700, fontSize: '2.6rem', color: '#1a1a1a', lineHeight: 1, margin: '0 0 2px' },
   input: { width: '100%', padding: '10px 14px', border: '2px solid rgba(0,0,0,0.12)', borderRadius: '8px', fontSize: '0.9rem', fontFamily: "'Inter',sans-serif", background: '#fff', color: '#1a1a1a', outline: 'none', boxSizing: 'border-box', boxShadow: '2px 3px 0 rgba(0,0,0,0.07)', transition: 'border-color 0.15s' },
@@ -82,7 +82,26 @@ function LogModal({ onClose, onSave }) {
             <label style={st.label}>AMOUNT</label>
             <div style={{ position:'relative' }}>
               <span style={{ position:'absolute',left:'12px',top:'50%',transform:'translateY(-50%)',color:'#9CA3AF',fontSize:'0.9rem' }}>$</span>
-              <input type="number" step="0.01" placeholder="0.00" value={form.amount} onChange={e=>set('amount',e.target.value)} style={{ ...st.input,paddingLeft:'28px' }} />
+              <input
+                type="number"
+                inputMode="decimal"
+                placeholder="0.00"
+                value={form.amount}
+                onKeyDown={e => ['e','E','+','-'].includes(e.key) && e.preventDefault()}
+                onWheel={e => e.target.blur()}
+                onChange={e => {
+                  const val = e.target.value
+                  if (val === '' || val === '.') { set('amount', val); return }
+                  const num = parseFloat(val)
+                  if (isNaN(num) || num < 0) return
+                  if (num > 400) { set('amount', '400'); return }
+                  // Max 2 decimal places
+                  const parts = val.split('.')
+                  if (parts[1] && parts[1].length > 2) return
+                  set('amount', val)
+                }}
+                style={{ ...st.input,paddingLeft:'28px' }}
+              />
             </div>
           </div>
           <div>

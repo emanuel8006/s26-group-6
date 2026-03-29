@@ -3,6 +3,7 @@ from datetime import date
 from typing import Dict, List, Any, Optional
 from cachetools import TTLCache
 import httpx
+from curl_cffi.requests import AsyncSession
 
 from app.services.dineoncampus_service import HEADERS
 
@@ -33,10 +34,14 @@ async def get_periods(location_id: str) -> List[Dict[str, str]]:
         f"?date={date.today().isoformat()}"
     )
 
-    async with httpx.AsyncClient(headers=HEADERS) as client:
+#    async with httpx.AsyncClient(headers=HEADERS) as client:
+#        try:
+#            res = await client.get(url, timeout=10.0)
+#            res.raise_for_status()
+
+    async with AsyncSession(impersonate="chrome") as s:
         try:
-            res = await client.get(url, timeout=10.0)
-            res.raise_for_status()
+            res = await s.get(url, headers=HEADERS)
         except httpx.HTTPStatusError as e:
             return {"error": "DineOnCampus API failed", "status": e.response.status_code, "detail": str(e)}
         except httpx.RequestError as e:
@@ -59,7 +64,7 @@ async def get_period_id_by_name(location_id: str, period_name: str) -> Optional[
     """Finds the period ID for a given location and period name."""
     periods = await get_periods(location_id)
     if isinstance(periods, dict) and "error" in periods:
-        return None
+        return "error"
     for period in periods:
         if period.get("name", "").lower() == period_name.lower().strip():
             return period["id"]

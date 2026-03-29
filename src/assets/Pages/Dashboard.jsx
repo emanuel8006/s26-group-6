@@ -92,8 +92,8 @@ const S = {
   heroDot: (color) => ({ width: '8px', height: '8px', borderRadius: '50%', background: color, display: 'inline-block', marginRight: '8px', boxShadow: `0 0 6px ${color}` }),
   statGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '12px', marginTop: '1.5rem' },
   miniStat: { background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '10px', padding: '12px 16px' },
-  miniStatVal: { fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: '1.8rem', color: '#fff', margin: '0 0 2px', lineHeight: 1 },
-  miniStatLabel: { fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.65rem', letterSpacing: '0.1em', color: 'rgba(255,255,255,0.45)', margin: 0 },
+  miniStatVal: { fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: '1.8rem', color: '#fff', margin: '0 0 2px', lineHeight: 1.3 },
+  miniStatLabel: { fontFamily: "'Bebas Neue', sans-serif", fontSize: '1.5rem', letterSpacing: '0.1em', color: 'rgba(255,255,255,0.45)', margin: 1 },
   body: { maxWidth: '1100px', margin: '0 auto', padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' },
   twoCol: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.2rem' },
   threeCol: { display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1.2rem' },
@@ -330,7 +330,7 @@ export default function Dashboard() {
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
             <div>
               <span style={S.heroEyebrow}>DASHBOARD</span>
-              <h1 style={S.heroTitle}>{greeting} 👋</h1>
+              <h1 style={S.heroTitle}>{greeting}</h1>
               <p style={S.heroSub}>{semLabel} · {plan?.name || 'No plan set'}</p>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '12px', padding: '10px 16px' }}>

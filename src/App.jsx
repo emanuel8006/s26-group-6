@@ -16,6 +16,13 @@ export default function App() {
 
   return (
     <div className="min-h-screen flex flex-col">
+      <div className="page-transition-overlay" id="pageTransition">
+        <div className="rip-piece"><div className="rip-snapshot"></div></div>
+        <div className="rip-piece"><div className="rip-snapshot"></div></div>
+        <div className="rip-piece"><div className="rip-snapshot"></div></div>
+        <div className="rip-piece"><div className="rip-snapshot"></div></div>
+        <div className="rip-piece"><div className="rip-snapshot"></div></div>
+      </div>
       {!isHome && <Nav />}
       <main className="flex-1">
         <Routes>

@@ -12,7 +12,7 @@ import Swipes from './assets/pages/Swipes'
 
 export default function App() {
   const location = useLocation()
-  const isHome = location.pathname === '/' || location.pathname === '/onboarding'
+  const isHome = location.pathname === '/' || location.pathname === '/onboarding' || location.pathname === '/login' //add all path names to this bool
 
   return (
     <div className="min-h-screen flex flex-col">

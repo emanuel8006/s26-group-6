@@ -116,7 +116,7 @@ nav .wave-divider{z-index:1001}
 .stats-strip-inner{max-width:1100px;margin:0 auto;padding:2rem;display:flex;justify-content:space-around;flex-wrap:wrap;gap:1.5rem}
 .strip-stat{text-align:center}
 .strip-stat .num{font-family:'Playfair Display',serif;font-size:1.8rem;font-weight:700;color:var(--black);position:relative;z-index:1}
-.strip-stat .lbl{font-family:'Bebas Neue',sans-serif;font-size:0.8rem;color:var(--gray);margin-top:0.1rem;position:relative;z-index:1;letter-spacing:0.03em}
+.strip-stat .lbl{font-family:'Bebas Neue',sans-serif;font-size:1.2rem;color:var(--gray);margin-top:0.1rem;position:relative;z-index:1;letter-spacing:0.03em}
 .features{max-width:1100px;margin:4rem auto;padding:0 2rem}
 .features-header{text-align:center;margin-bottom:2.5rem}
 .features-header h2{font-family:'Bebas Neue','Playfair Display',sans-serif;font-size:2rem;color:var(--black);margin-bottom:0.5rem;letter-spacing:0.05em}
@@ -124,7 +124,7 @@ nav .wave-divider{z-index:1001}
 .features-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1.25rem}
 .feature-card{background:var(--white);border-radius:var(--radius);padding:2rem;box-shadow:var(--shadow-sm);border:1px solid rgba(0,0,0,0.07);cursor:default;position:relative;overflow:hidden;display:flex;flex-direction:column;min-height:180px}
 .feature-card h3{font-family:'Playfair Display',serif;font-size:1.15rem;color:var(--charcoal);margin-bottom:0.5rem;position:relative;z-index:1}
-.feature-card p{color:var(--gray);font-family:'Bebas Neue',sans-serif;font-size:0.9rem;line-height:1.6;position:relative;z-index:1;letter-spacing:0.03em}
+.feature-card p{color:var(--gray);font-family:'Bebas Neue',sans-serif;font-size:1.1rem;line-height:1.6;position:relative;z-index:1;letter-spacing:0.03em}
 .collage-section{background:var(--warm-cream);padding:4rem 2rem;contain:layout style}
 .collage-inner{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:3rem;align-items:center}
 .collage-text h2{font-family:'Bebas Neue','Playfair Display',sans-serif;font-size:2rem;color:var(--black);margin-bottom:1rem;letter-spacing:0.05em}

@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import callumPhoto from '../callum.jpg';
+import callumPhoto from '../callum_new.jpg';
 import './Home.css';
 
 export default function Home() {

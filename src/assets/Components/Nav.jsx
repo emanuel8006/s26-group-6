@@ -36,35 +36,34 @@ export default function Nav() {
 
           {/* Logo */}
           <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none' }}>
-            <div style={{ width: '4px', height: '28px', background: '#D42B2B', borderRadius: '2px', flexShrink: 0 }} />
-            <span style={{ fontFamily: "'Chicle', serif", fontSize: '1.35rem', fontWeight: 700, color: '#1a1a1a', letterSpacing: '0.01em' }}>NomNom</span>
+            <div style={{ width: '4px', height: '28px', borderRadius: '2px', flexShrink: 0 }} />
+            <span style={{ fontFamily: "'Chicle', serif", fontSize: '1.35rem', fontWeight: 700, color: '#1a1a1a', letterSpacing: '0.01em' }}>SwipeWise</span>
           </Link>
 
-          {/* Desktop links */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }} className="nav-desktop-links">
-            {navLinks.map(({ to, label }) => (
-              <Link key={to} to={to} style={{
-                fontFamily: "'Bebas Neue', sans-serif",
-                fontSize: '0.88rem', letterSpacing: '0.08em',
-                color: isActive(to) ? '#D42B2B' : '#1a1a1a',
-                textDecoration: 'none',
-                padding: '6px 14px',
-                borderRadius: '6px',
-                background: isActive(to) ? 'rgba(212,43,43,0.07)' : 'transparent',
-                border: isActive(to) ? '1.5px solid rgba(212,43,43,0.2)' : '1.5px solid transparent',
-                transition: 'all 0.12s ease',
-                position: 'relative',
-              }}
-                onMouseEnter={e => { if (!isActive(to)) { e.target.style.background = 'rgba(0,0,0,0.05)'; e.target.style.borderColor = 'rgba(0,0,0,0.1)' } }}
-                onMouseLeave={e => { if (!isActive(to)) { e.target.style.background = 'transparent'; e.target.style.borderColor = 'transparent' } }}
-              >
-                {label}
-              </Link>
-            ))}
-          </div>
-
-          {/* Sign in + mobile toggle */}
+          {/* Desktop links + Sign in + mobile toggle */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }} className="nav-desktop-links">
+              {navLinks.map(({ to, label }) => (
+                <Link key={to} to={to} style={{
+                  fontFamily: "'Bebas Neue', sans-serif",
+                  fontSize: '0.88rem', letterSpacing: '0.08em',
+                  color: isActive(to) ? '#D42B2B' : '#1a1a1a',
+                  textDecoration: 'none',
+                  padding: '6px 14px',
+                  borderRadius: '6px',
+                  background: isActive(to) ? 'rgba(212,43,43,0.07)' : 'transparent',
+                  border: isActive(to) ? '1.5px solid rgba(212,43,43,0.2)' : '1.5px solid transparent',
+                  transition: 'all 0.12s ease',
+                  position: 'relative',
+                }}
+                  onMouseEnter={e => { if (!isActive(to)) { e.target.style.background = 'rgba(0,0,0,0.05)'; e.target.style.borderColor = 'rgba(0,0,0,0.1)' } }}
+                  onMouseLeave={e => { if (!isActive(to)) { e.target.style.background = 'transparent'; e.target.style.borderColor = 'transparent' } }}
+                >
+                  {label}
+                </Link>
+              ))}
+            </div>
+
             <Link to="/login" style={{
               fontFamily: "'Bebas Neue', sans-serif",
               fontSize: '0.88rem', letterSpacing: '0.08em',

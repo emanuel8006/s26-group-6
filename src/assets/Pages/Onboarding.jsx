@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 const PLANS = [
@@ -182,7 +182,7 @@ function suggestPlan(projSwipes, dollarsPerWeek, effDays) {
 
 const st = {
   page: { minHeight: '100vh', background: '#FAF9F6', fontFamily: "'Inter', sans-serif", position: 'relative', overflow: 'hidden' },
-  topbar: { background: '#FBF2D8', borderBottom: '2px solid #1a1a1a', padding: '0.9rem 2rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 100, boxShadow: '0 2px 0 rgba(0,0,0,0.04)' },
+  topbar: { background: '#FBF2D8', padding: '0.9rem 2rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 100, overflow: 'visible' },
   logo: { fontFamily: "'Chicle', serif", fontSize: '1.4rem', fontWeight: 700, color: '#1a1a1a' },
   exitBtn: { fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.85rem', letterSpacing: '0.08em', color: '#6B7280', background: 'none', border: 'none', cursor: 'pointer' },
   container: { maxWidth: '600px', margin: '0 auto', padding: '2.5rem 1.5rem 4rem' },
@@ -214,15 +214,114 @@ const st = {
 }
 
 function ProgressBar({ step, total }) {
-  const pct = Math.round((step / total) * 100)
+  const pathRef = useRef(null)
+  const clipPathRef = useRef(null)
+  const rafRef = useRef(null)
+  const phaseRef = useRef(0)
+  const targetRef = useRef(step / total)
+  const currentRef = useRef(step / total)
+
+  useEffect(() => {
+    targetRef.current = step / total
+  }, [step, total])
+
+  useEffect(() => {
+    const FREQ = 0.035, AMP = 6, H = 28, MID = 14, HALF_W = 5
+
+    function draw() {
+      currentRef.current += (targetRef.current - currentRef.current) * 0.06
+      phaseRef.current += 0.04
+      const endX = currentRef.current * 1000
+
+      let d = '', clipD = ''
+      if (endX >= 2) {
+        // collect centerline points
+        const pts = []
+        for (let x = 0; x <= endX; x += 3) {
+          pts.push([x, MID + Math.sin(x * FREQ + phaseRef.current) * AMP])
+        }
+
+        // stroke path (centerline)
+        d = `M ${pts[0][0]} ${pts[0][1].toFixed(2)}`
+        for (let i = 1; i < pts.length; i++) {
+          d += ` L ${pts[i][0]} ${pts[i][1].toFixed(2)}`
+        }
+
+        // clip band: forward pass = top edge (y - HALF_W), reverse pass = bottom edge (y + HALF_W)
+        clipD = `M ${(pts[0][0] / 1000).toFixed(4)} ${((pts[0][1] - HALF_W) / H).toFixed(4)}`
+        for (let i = 1; i < pts.length; i++) {
+          clipD += ` L ${(pts[i][0] / 1000).toFixed(4)} ${((pts[i][1] - HALF_W) / H).toFixed(4)}`
+        }
+        for (let i = pts.length - 1; i >= 0; i--) {
+          clipD += ` L ${(pts[i][0] / 1000).toFixed(4)} ${((pts[i][1] + HALF_W) / H).toFixed(4)}`
+        }
+        clipD += ' Z'
+      }
+
+      if (pathRef.current) pathRef.current.setAttribute('d', d)
+      if (clipPathRef.current) clipPathRef.current.setAttribute('d', clipD)
+      rafRef.current = requestAnimationFrame(draw)
+    }
+
+    rafRef.current = requestAnimationFrame(draw)
+    return () => cancelAnimationFrame(rafRef.current)
+  }, [])
+
   return (
     <div style={st.progressWrap}>
-      <div style={st.progressTop}>
-        <span style={st.progressLabel}>STEP {step} OF {total}</span>
-        <span style={st.progressPct}>{pct}%</span>
-      </div>
-      <div style={st.progressTrack}>
-        <div style={{ height: '100%', background: '#D42B2B', width: `${pct}%`, transition: 'width 0.4s ease', borderRadius: '99px' }} />
+      <svg style={{ position: 'absolute', width: 0, height: 0, overflow: 'hidden' }} aria-hidden="true">
+        <defs>
+          <clipPath id="onboardingWaveClip" clipPathUnits="objectBoundingBox">
+            <path ref={clipPathRef} d="" />
+          </clipPath>
+        </defs>
+      </svg>
+
+      <div style={{ position: 'relative', height: '28px' }}>
+        {/* Faint track */}
+        <div style={{
+          position: 'absolute', top: '50%', left: 0, right: 0,
+          height: '2px', background: 'rgba(0,0,0,0.1)',
+          transform: 'translateY(-50%)',
+        }} />
+        {/* Sine wave — stroke only, no fill */}
+        <svg
+          viewBox="0 0 1000 28"
+          preserveAspectRatio="none"
+          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', display: 'block' }}
+        >
+          <path
+            ref={pathRef}
+            d=""
+            fill="none"
+            stroke="#D42B2B"
+            strokeWidth="10"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            vectorEffect="non-scaling-stroke"
+          />
+        </svg>
+        {/* Dark text — always rendered, visible where clip doesn't cover */}
+        <div style={{
+          position: 'absolute', inset: 0,
+          display: 'flex', alignItems: 'center',
+          fontFamily: "'Bebas Neue', sans-serif", fontSize: '1.5rem',
+          letterSpacing: '0.12em', color: '#1a1a1a',
+          pointerEvents: 'none', userSelect: 'none',
+        }}>
+           Step {step} / {total}
+        </div>
+        {/* White text — same div size as container so objectBoundingBox aligns with the SVG */}
+        <div style={{
+          position: 'absolute', inset: 0,
+          display: 'flex', alignItems: 'center',
+          fontFamily: "'Bebas Neue', sans-serif", fontSize: '1.5rem',
+          letterSpacing: '0.12em', color: '#fff',
+          clipPath: 'url(#onboardingWaveClip)',
+          pointerEvents: 'none', userSelect: 'none',
+        }}>
+           Step {step} / {total}
+        </div>
       </div>
     </div>
   )
@@ -635,12 +734,13 @@ export default function Onboarding() {
 
       <div style={{ ...st.topbar, position: 'sticky', zIndex: 100 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <div style={{ width: '4px', height: '28px', background: '#D42B2B', borderRadius: '2px' }} />
-          <span style={st.logo}>NomNom</span>
+          <div style={{ width: '4px', height: '28px', borderRadius: '2px' }} />
+          <span style={{ ...st.logo, cursor: 'pointer' }} onClick={() => navigate('/')}>SwipeWise</span>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.72rem', letterSpacing: '0.1em', color: '#9CA3AF' }}>STEP {step} OF {TOTAL_STEPS}</span>
-          <button onClick={() => navigate('/')} style={{ ...st.exitBtn, padding: '5px 12px', border: '1.5px solid rgba(0,0,0,0.15)', borderRadius: '6px', background: 'rgba(0,0,0,0.04)' }}>EXIT</button>
+        <div style={{ position: 'absolute', left: 0, right: 0, bottom: -20, height: 20, zIndex: 999, pointerEvents: 'none' }}>
+          <svg viewBox="0 0 1200 20" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" style={{ width: '100%', height: '100%', display: 'block' }}>
+            <path d="M0,0 C200,18 400,18 600,10 C800,2 1000,2 1200,10 L1200,0 Z" fill="#FBF2D8"/>
+          </svg>
         </div>
       </div>
 
@@ -691,7 +791,7 @@ export default function Onboarding() {
                         const val = e.target.value
                         if (val === '') { set('swipesLeft', val); return }
                         if (!/^\d+$/.test(val)) return
-                        if (parseInt(val) > 225) { set('swipesLeft', '225'); return }
+                        if (parseInt(val) > (selectedPlan?.swipes ?? 225)) { set('swipesLeft', String(selectedPlan?.swipes ?? 225)); return }
                         set('swipesLeft', val)
                       }}
                       style={st.input}
@@ -716,7 +816,7 @@ export default function Onboarding() {
                         if (!/^\d*\.?\d*$/.test(val)) return
                         const parts = val.split('.')
                         if (parts[1] && parts[1].length > 2) return
-                        if (!isNaN(parseFloat(val)) && parseFloat(val) > 600) { set('diningDollarsLeft', '600'); return }
+                        if (!isNaN(parseFloat(val)) && parseFloat(val) > (selectedPlan?.diningDollars ?? 600)) { set('diningDollarsLeft', String(selectedPlan?.diningDollars ?? 600)); return }
                         set('diningDollarsLeft', val)
                       }}
                       style={{ ...st.input, paddingLeft: '28px' }}

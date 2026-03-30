@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import PhotoReel from '../Components/PhotoReel'
 
 function parseDate(str) { return str ? new Date(str + 'T12:00:00') : null }
 function daysUntil(str) {
@@ -165,6 +166,7 @@ export default function Swipes() {
 
       {/* ── Hero ── */}
       <div style={st.hero}>
+        <PhotoReel />
         <div style={{ position:'absolute',inset:0,backgroundImage:'radial-gradient(circle at 20% 60%,rgba(212,43,43,0.1),transparent 55%)',zIndex:1 }} />
         <div style={{ position:'absolute',inset:0,opacity:0.03,backgroundImage:'radial-gradient(circle,#fff 1px,transparent 1px)',backgroundSize:'22px 22px',zIndex:1 }} />
         <div style={st.heroInner}>

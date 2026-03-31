@@ -12,7 +12,10 @@ router = APIRouter(prefix="/auth")
 class AuthRequest(BaseModel):
     email: str
     password: str
-
+    full_name: str|None
+    username: str|None
+    dietary_restrictions: list[str]|None
+    dietary_preferences: list[str]|None
 
 def _extract_bearer_token(authorization: str) -> str:
     if not authorization.startswith("Bearer "):
@@ -35,9 +38,18 @@ def get_current_user(authorization: str = Header(...)):
 @router.post("/register")
 def register(body: AuthRequest):
     """Register a new user with email and password."""
-    response = supabase_client.auth.sign_up(
-        {"email": body.email, "password": body.password}
-    )
+    response = supabase_client.auth.sign_up({
+        "email": body.email, 
+        "password": body.password,
+        "options": {
+            "data": {
+                "fullName": body.full_name,
+                "username": body.username,
+                "dietary_restrictions": body.dietary_restrictions,
+                "dietary_preferences": body.dietary_preferences
+            }
+        }
+    })
     if response.user is None:
         raise HTTPException(status_code=400, detail="Registration failed")
     return {"user": response.user}

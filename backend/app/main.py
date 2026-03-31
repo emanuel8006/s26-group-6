@@ -9,7 +9,7 @@ app.add_middleware(
     allow_origins=["http://localhost:5173"],  # Vite's default port
     # TODO: Change link above to the frontend's actual URL when deployed
     allow_credentials=True,
-    allow_methods=["GET"],
+    allow_methods=["*"],
     allow_headers=["*"],
 )
 

@@ -34,7 +34,7 @@ async def update_user_info(
 
     try:
         response = (
-            supabase_client.table("profiles")
+            supabase_client.table("users")
             .update(update_dict)
             .eq("id", user.id)
             .execute()
@@ -50,7 +50,7 @@ async def delete_user(user: Any = Depends(get_current_user)) -> Exception|APIRes
     """
     try:
         response = (
-        supabase_client.table("profiles")
+        supabase_client.table("users")
         .delete()
         .eq("id", user.id)
         .execute()
@@ -61,32 +61,42 @@ async def delete_user(user: Any = Depends(get_current_user)) -> Exception|APIRes
 
 @router.post("/update_meal_plan/")
 async def create_meal_plan(
-    user: Any = Depends(get_current_user),
-    swipes_start: int,
-    dining_dollars_start :float,
-    start_date: str,
-    end_date: str,
+    swipes_start: int|None,
+    dining_dollars_start: float|None,
+    start_date: str|None = None,
+    end_date: str|None = None,
     swipes_current: int|None = None,
-    dining_dollars_current: float|None = None
+    dining_dollars_current: float|None = None,
+    plan_name: str|None = None,
+    user: Any = Depends(get_current_user)
 ):
     """
     Adds meal plan info to account
     """
-    update_dict: dict[str,str] = {
-        "swipes_start":swipes_start,
-        "dining_dollars_start":dining_dollars_start,
-        "start_date":start_date,
-        "end_date":end_date
-    }
 
+    update_dict: dict[str,str] = {}
+
+    if swipes_start:
+        update_dict["swipes_start"] = swipes_start
+    if dining_dollars_start:
+        update_dict["dining_dollars_start"] = dining_dollars_start
+    if start_date:
+        update_dict["start_date"] = start_date
+    if end_date:
+        update_dict["end_date"] = end_date
     if swipes_current:
         update_dict["swipes_current"] = swipes_current
     if dining_dollars_current:
         update_dict["dining_dollars_current"] = dining_dollars_current
+    if plan_name:
+        update_dict["plan_name"] = plan_name
+
+    if not update_dict:
+        raise HTTPException(status_code=400, detail="No fields to update")
 
     try:
         response = (
-            supabase_client.table("profiles")
+            supabase_client.table("meal_plans")
             .update(update_dict)
             .eq("id",user.id)
             .execute()
@@ -99,7 +109,7 @@ async def create_meal_plan(
 async def delete_user(user: Any = Depends(get_current_user)):
     try:
         response = (
-        supabase_client.table("profiles")
+        supabase_client.table("users")
         .delete()
         .eq("id", user.id)
         .execute()
@@ -112,7 +122,7 @@ async def delete_user(user: Any = Depends(get_current_user)):
 async def get_user_info(user: Any = Depends(get_current_user)) -> Exception|APIResponse:
     try:
         response = (
-        supabase_client.table("profiles")
+        supabase_client.table("users")
         .select("*")
         .eq("id",user.id)
         .execute()
@@ -128,7 +138,7 @@ async def get_user_info_specific(
     ) -> Exception|APIResponse:
     try:
         response = (
-        supabase_client.table("profiles")
+        supabase_client.table("users")
         .select(", ".join(columns))
         .eq("id",user.id)
         .execute()

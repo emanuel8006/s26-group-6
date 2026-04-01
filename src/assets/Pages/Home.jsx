@@ -1,11 +1,14 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import callumPhoto from '../callum_new.jpg';
 import './Home.css';
 
 export default function Home() {
   const wrapperRef = useRef(null);
   const navigate = useNavigate();
   const cleanupRef = useRef(null);
+  const runTransRef = useRef(null);
+  const [isLoggedIn] = useState(() => !!localStorage.getItem('nomnom_profile'));
 
   useEffect(() => {
     if (!wrapperRef.current) return;
@@ -220,7 +223,7 @@ export default function Home() {
     /* ═══ LOGO ═══ */
     const logoFonts = ["Playfair Display, serif","Abril Fatface, serif","Permanent Marker, cursive","Bebas Neue, sans-serif","Rubik Mono One, monospace","Bungee Shade, cursive","Fascinate Inline, cursive"];
     const logoChars = root.querySelectorAll('.logo-char');
-    const logoRots = [-3, 2, -1.5, 2.5, -2, 1.5];
+    const logoRots = [-3, 2, -1.5, 2.5, -2, 1.5, -1, 1.5, 2.5];
     function pickFont(exc) { let p; do { p=logoFonts[Math.floor(Math.random()*logoFonts.length)]; } while(p===exc); return p; }
     const logoIntervals = [];
     logoChars.forEach((ch, i) => {
@@ -233,7 +236,7 @@ export default function Home() {
     });
 
     /* ═══ MAG-CUT ═══ */
-    const magT = root.querySelectorAll('.feature-card h3, .collage-item .food-label, .team-card h4');
+    const magT = root.querySelectorAll('.feature-card h3, .team-card h4');
     const magC = [{bg:'#FFE45C',border:'#d4b830'},{bg:'#D42B2B',border:'#a82222',light:true},{bg:'#1a1a1a',border:'#000',light:true},{bg:'#F2F0EC',border:'#d8d4cc'},{bg:'#FFE45C',border:'#d4b830'},{bg:'#D42B2B',border:'#a82222',light:true},{bg:'#FFF',border:'#d0d0d0'},{bg:'#1a1a1a',border:'#000',light:true}];
     let mI = 0;
     magT.forEach(el => {
@@ -258,8 +261,8 @@ export default function Home() {
       const emoji = card.dataset.emoji, tilt = parseInt(card.dataset.tilt)||0;
       if (emoji) {
         const el = document.createElement('div'); el.className = 'bg-emoji'; el.textContent = emoji;
-        const isF = inner.classList.contains('feature-card'), isC = inner.classList.contains('collage-item');
-        el.style.fontSize = isF ? '7rem' : isC ? '5rem' : '4.5rem';
+        const isF = inner.classList.contains('feature-card');
+        el.style.fontSize = isF ? '7rem' : '4.5rem';
         el.style.opacity = isF ? '0.15' : '0.12'; el.style.transform = 'rotate('+tilt+'deg)';
         el.dataset.opDefault = isF ? '0.15' : '0.12'; el.dataset.opHover = '0.6';
         inner.appendChild(el);
@@ -413,7 +416,7 @@ export default function Home() {
     }
 
     /* ═══ PAGE RIP (uses React navigate) ═══ */
-    const tOvr = root.querySelector('#pageTransition');
+    const tOvr = document.querySelector('#pageTransition');
     const rPcs = tOvr.querySelectorAll('.rip-piece');
     const rSnp = tOvr.querySelectorAll('.rip-snapshot');
     let tRun = false; const aRAFs = [];
@@ -431,21 +434,24 @@ export default function Home() {
       tOvr.classList.remove('active');
       rPcs.forEach(p => {p.style.transition='none';p.style.transform='translateY(0)';p.style.opacity='0';});
       const sY=window.scrollY, nE=root.querySelector('#navbar'), pE=root.querySelector('#pageWrapper');
-      rSnp.forEach(snap => {snap.innerHTML='';const nc=nE.cloneNode(true);nc.style.position='absolute';nc.style.top='0';nc.style.left='0';nc.style.right='0';nc.style.zIndex='10';nc.id='';const pc=pE.cloneNode(true);pc.style.position='absolute';pc.style.top='0';pc.style.left='0';pc.style.right='0';pc.style.transform='translateY(-'+sY+'px)';pc.id='';pc.querySelectorAll('.scroll-section').forEach(s=>{s.style.opacity='1';s.style.transform='none';s.style.clipPath='none';s.style.filter='none';});snap.appendChild(nc);snap.appendChild(pc);});
+      rSnp.forEach(snap => {snap.innerHTML='';const nc=nE.cloneNode(true);nc.style.position='absolute';nc.style.top='0';nc.style.left='0';nc.style.right='0';nc.style.zIndex='10';nc.id='';const pc=pE.cloneNode(true);pc.style.position='absolute';pc.style.top='0';pc.style.left='0';pc.style.right='0';pc.style.transform='translateY(-'+sY+'px)';pc.id='';pc.querySelectorAll('.scroll-section').forEach(s=>{s.style.opacity='1';s.style.transform='none';s.style.clipPath='none';s.style.filter='none';});[nc,pc].forEach(clone=>{clone.querySelectorAll('*').forEach(el=>{el.style.animation='none';el.style.transition='none';});clone.style.animation='none';clone.style.transition='none';});snap.appendChild(nc);snap.appendChild(pc);});
       tOvr.classList.add('active');
+      if(cb) cb();
       requestAnimationFrame(()=>{requestAnimationFrame(()=>{
         rPcs.forEach(p=>{p.style.transition='none';p.style.transform='translateX(0) translateY(0) rotateZ(0deg) rotateX(0deg) scale(1)';p.style.opacity='1';});
         tOvr.offsetHeight;
-        rPcs.forEach((p,i)=>{p.style.transition='transform 0.25s cubic-bezier(0.2,0,0.6,1)';p.style.transform='translateX('+((i-2)*0.5)+'%)';});
+        rPcs.forEach((p,i)=>{p.style.transition='none';p.style.transform='translateX('+((i-2)*0.5)+'%)';});
         setTimeout(()=>{
-          const fp=[{d:0,dr:-8,r:-25,rx:15,fl:12,du:1.1},{d:60,dr:5,r:18,rx:-12,fl:-8,du:1},{d:30,dr:-3,r:-10,rx:20,fl:10,du:1.15},{d:90,dr:7,r:22,rx:-18,fl:-14,du:0.95},{d:50,dr:-6,r:-15,rx:10,fl:9,du:1.05}];
+          const fp=[{d:0,dr:-8,r:-25,rx:15,fl:12,du:1.1},{d:0,dr:5,r:18,rx:-12,fl:-8,du:1},{d:0,dr:-3,r:-10,rx:20,fl:10,du:1.15},{d:0,dr:7,r:22,rx:-18,fl:-14,du:0.95},{d:0,dr:-6,r:-15,rx:10,fl:9,du:1.05}];
           rPcs.forEach((pc,i)=>{const p=fp[i];const st=performance.now()+p.d;let dn=false;function an(now){if(dn)return;const el=Math.max(0,now-st)/1000;if(el>p.du+0.1){pc.style.opacity='0';dn=true;return;}const t=Math.min(el/p.du,1),g=t*t*135,dr=p.dr*t+p.fl*Math.sin(t*Math.PI*2.5),rZ=p.r*t+Math.sin(t*Math.PI*3)*5,rX=p.rx*Math.sin(t*Math.PI*1.8),sc=1-t*0.15,op=t>0.7?1-((t-0.7)/0.3):1;pc.style.transition='none';pc.style.transform='translateX('+dr+'%) translateY('+g+'vh) rotateZ('+rZ+'deg) rotateX('+rX+'deg) scale('+sc+')';pc.style.opacity=op;aRAFs.push(requestAnimationFrame(an));}aRAFs.push(requestAnimationFrame(an));});
-        },280);
-        setTimeout(()=>{if(cb)cb();aRAFs.forEach(id=>cancelAnimationFrame(id));aRAFs.length=0;rPcs.forEach(p=>{p.style.transition='none';p.style.opacity='0';p.style.transform='translateY(200vh)';});tOvr.classList.remove('active');rSnp.forEach(s=>{s.innerHTML='';});tRun=false;},1400);
+        },0);
+        setTimeout(()=>{aRAFs.forEach(id=>cancelAnimationFrame(id));aRAFs.length=0;rPcs.forEach(p=>{p.style.transition='none';p.style.opacity='0';p.style.transform='translateY(200vh)';});tOvr.classList.remove('active');rSnp.forEach(s=>{s.innerHTML='';});tRun=false;},1400);
       });});
     }
 
+    runTransRef.current = runTrans;
     root.querySelectorAll('.btn[data-route]').forEach(link => link.addEventListener('click', trigTrans));
+
 
     /* ═══ P5 WEDGE MENU ═══ */
     const p5Trig = root.querySelector('#p5Trigger');
@@ -453,8 +459,8 @@ export default function Home() {
     const p5Ring = root.querySelector('#p5Ring');
     let p5Open = false;
 
-    const P5_LBL = ['Dashboard', 'Dining $', 'Swipes', 'Is Food Good?'];
-    const P5_ROUTES = ['/dashboard', '/dining-dollars', '/swipes', '/food-good'];
+    const P5_LBL = ['Dashboard', 'Dining $', 'Swipes', 'Todays Menu'];
+    const P5_ROUTES = ['/dashboard', '/dining-dollars', '/swipes', '/menu'];
     const P5_N = P5_LBL.length;
     const P5_R = 150, P5_SA = -15, P5_EA = 115, P5_XO = -40;
 
@@ -557,7 +563,7 @@ export default function Home() {
           p5Svg.offsetHeight;
           for (let j = 0; j < P5_N; j++) { p5W[j].g.style.transform='scale(1)'; p5W[j].path.setAttribute('fill','#1a1a1a'); p5W[j].text.setAttribute('font-size','18'); }
         });
-        p5W[i].g.addEventListener('click', () => { closeP5(); navigate(P5_ROUTES[i]); });
+        p5W[i].g.addEventListener('click', () => { closeP5(); runTrans(() => navigate(P5_ROUTES[i])); });
       })(hi);
     }
 
@@ -570,6 +576,46 @@ export default function Home() {
     cards3d.forEach(card => setup3D(card, card.querySelector('.card-3d-inner'), 14, 18, 1.05));
     btn3dWraps.forEach(wrap => setup3D(wrap, wrap.querySelector('.btn'), 10, 12, 1.06));
 
+    /* ═══ DOCK MAGNIFY (Team Cards) ═══ */
+    const teamGrid = root.querySelector('.team-grid');
+    const teamCards = teamGrid ? Array.from(teamGrid.querySelectorAll('.card-3d')) : [];
+    const DOCK_MAX_SCALE = 1.10;
+    const DOCK_RANGE = 670;
+
+    function dockMagnify(e) {
+      const mouseX = e.clientX;
+      teamCards.forEach(card => {
+        const rect = card.getBoundingClientRect();
+        const cardCX = rect.left + rect.width / 2;
+        const dist = Math.abs(mouseX - cardCX);
+
+        if (dist > DOCK_RANGE) {
+          card.style.setProperty('--dock-scale', '1');
+          card.style.setProperty('--dock-lift', '0px');
+          return;
+        }
+
+        const proximity = 1 - (dist / DOCK_RANGE);
+        const eased = Math.pow(proximity, 1.3);
+        const scale = 1 + (DOCK_MAX_SCALE - 1) * eased;
+        const lift = -6 * eased;
+        card.style.setProperty('--dock-scale', scale.toFixed(4));
+        card.style.setProperty('--dock-lift', lift.toFixed(1) + 'px');
+      });
+    }
+
+    function dockReset() {
+      teamCards.forEach(card => {
+        card.style.setProperty('--dock-scale', '1');
+        card.style.setProperty('--dock-lift', '0px');
+      });
+    }
+
+    if (teamGrid) {
+      teamGrid.addEventListener('mousemove', dockMagnify);
+      teamGrid.addEventListener('mouseleave', dockReset);
+    }
+
     /* ═══ CLEANUP ═══ */
     cleanupRef.current = () => {
       cancelAnimationFrame(waveRAF);
@@ -578,6 +624,7 @@ export default function Home() {
       window.removeEventListener('scroll', onScroll);
       window.removeEventListener('resize', onResize);
       window.removeEventListener('scroll', onScrollP5);
+      if (teamGrid) { teamGrid.removeEventListener('mousemove', dockMagnify); teamGrid.removeEventListener('mouseleave', dockReset); }
       io.disconnect();
     };
 
@@ -598,14 +645,7 @@ export default function Home() {
   return (
     <div ref={wrapperRef}>
       <div className="bg-scribbles-layer" id="bgScribbles"></div>
-      <div className="page-transition-overlay" id="pageTransition">
-        <div className="rip-piece"><div className="rip-snapshot"></div></div>
-        <div className="rip-piece"><div className="rip-snapshot"></div></div>
-        <div className="rip-piece"><div className="rip-snapshot"></div></div>
-        <div className="rip-piece"><div className="rip-snapshot"></div></div>
-        <div className="rip-piece"><div className="rip-snapshot"></div></div>
-      </div>
-      <svg className="crumple-filter-svg" xmlns="http://www.w3.org/2000/svg">
+        <svg className="crumple-filter-svg" xmlns="http://www.w3.org/2000/svg">
         <filter id="crumpleWarp"><feTurbulence type="turbulence" baseFrequency="0.015" numOctaves="3" seed="5" result="warp"/><feDisplacementMap in="SourceGraphic" in2="warp" scale="6" xChannelSelector="R" yChannelSelector="G"/></filter>
       </svg>
       <div className="scroll-progress" id="scrollProgress">
@@ -615,12 +655,12 @@ export default function Home() {
         </svg>
       </div>
       <nav id="navbar">
-        <a href="/" className="nav-logo sketch-1" onClick={e => { e.preventDefault(); navigate('/'); }}><span></span> <span className="logo-letters"><span className="logo-char" data-offset="0">N</span><span className="logo-char" data-offset="1">o</span><span className="logo-char" data-offset="2">m</span><span className="logo-char" data-offset="3">N</span><span className="logo-char" data-offset="4">o</span><span className="logo-char" data-offset="5">m</span></span></a>
+        <a href="/" className="nav-logo sketch-1" onClick={e => { e.preventDefault(); runTransRef.current?.(() => navigate('/')); }}><span></span> <span className="logo-letters"><span className="logo-char" data-offset="0">S</span><span className="logo-char" data-offset="1">W</span><span className="logo-char" data-offset="2">I</span><span className="logo-char" data-offset="3">P</span><span className="logo-char" data-offset="4">E</span><span className="logo-char" data-offset="5">W</span><span className="logo-char" data-offset="6">I</span><span className="logo-char" data-offset="7">S</span><span className="logo-char" data-offset="8">E</span></span></a>
         <div style={{display:'flex',alignItems:'center',gap:'0.75rem'}}>
           <button className="p5-menu-trigger" id="p5Trigger" aria-label="Menu">
             <svg viewBox="0 0 24 22" xmlns="http://www.w3.org/2000/svg"><path className="morph-crust"/><path className="morph-left"/><path className="morph-right"/></svg>
           </button>
-          <a href="/login" className="nav-signin sketch-2" onClick={e => { e.preventDefault(); navigate('/login'); }}>Sign In</a>
+          <a href="/login" className="nav-signin sketch-2" onClick={e => { e.preventDefault(); runTransRef.current?.(() => navigate('/login')); }}>Sign In</a>
         </div>
         <div className="wave-divider"><svg viewBox="0 0 1200 20" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg"><path d="M0,0 C200,18 400,18 600,10 C800,2 1000,2 1200,10 L1200,0 Z"/></svg></div>
       </nav>
@@ -632,7 +672,10 @@ export default function Home() {
             <h1 className="sketch-1">Make your<br/><em>dining plan</em><br/><span className="hero-red">actually make sense.</span></h1>
             <p className="sketch-2">Track dining dollars, manage swipes, and discover the best food on campus, all in one place.</p>
             <div className="hero-ctas sketch-3">
-              <a href="/onboarding" className="btn btn-white btn-lg zoom-trigger" data-route="/onboarding"><span>Let's Start Budgeting</span></a>
+              {isLoggedIn
+                ? <a href="/dashboard" className="btn btn-white btn-lg zoom-trigger" data-route="/dashboard" onClick={e => { e.preventDefault(); runTransRef.current?.(() => navigate('/dashboard')); }}><span>Go to Dashboard</span></a>
+                : <a href="/onboarding" className="btn btn-white btn-lg zoom-trigger" data-route="/onboarding"><span>Let's Start Budgeting</span></a>
+              }
               <a href="/menu" className="btn btn-outline btn-lg zoom-trigger" data-route="/menu"><span>Today's Menu →</span></a>
             </div>
           </div>
@@ -649,60 +692,77 @@ export default function Home() {
         <div className="hero-bottom-wave"><svg viewBox="0 0 1200 30" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg"><path d="M0,0 L1200,0 L1200,15 C1000,28 800,5 600,18 C400,30 200,8 0,20 Z"/></svg></div>
         <section className="stats-strip scroll-section">
           <div className="stats-strip-inner">
-            <div className="strip-stat card-3d" data-emoji="💵" data-tilt="-12" data-hue="120" data-sat="60" data-light="40"><div className="card-3d-inner"><div className="num"><span className="highlight-wrap">$3,820<span className="highlight-bg"></span></span></div><div className="lbl">avg. dining plan cost per sem</div></div></div>
-            <div className="strip-stat card-3d" data-emoji="⏱️" data-tilt="-6" data-hue="210" data-sat="60" data-light="50"><div className="card-3d-inner"><div className="num"><span className="highlight-wrap">5 mins<span className="highlight-bg"></span></span></div><div className="lbl">to get set up</div></div></div>
-            <div className="strip-stat card-3d" data-emoji="🎉" data-tilt="10" data-hue="45" data-sat="70" data-light="50"><div className="card-3d-inner"><div className="num"><span className="highlight-wrap">100%<span className="highlight-bg"></span></span></div><div className="lbl">free to use</div></div></div>
+            <div className="strip-stat card-3d"  data-tilt="-12" data-hue="120" data-sat="60" data-light="40"><div className="card-3d-inner"><div className="num"><span className="highlight-wrap">$3,820<span className="highlight-bg"></span></span></div><div className="lbl">avg. dining plan cost per sem</div></div></div>
+            <div className="strip-stat card-3d"  data-tilt="-6" data-hue="210" data-sat="60" data-light="50"><div className="card-3d-inner"><div className="num"><span className="highlight-wrap">5 mins<span className="highlight-bg"></span></span></div><div className="lbl">to get set up</div></div></div>
+            <div className="strip-stat card-3d"  data-tilt="10" data-hue="45" data-sat="70" data-light="50"><div className="card-3d-inner"><div className="num"><span className="highlight-wrap">100%<span className="highlight-bg"></span></span></div><div className="lbl">free to use</div></div></div>
           </div>
         </section>
         <section className="features scroll-section">
           <div className="features-header">
             <h2>Everything you need to eat smarter</h2>
-            <p>Stop guessing and start planning.</p>
+            <p>Stop guessing and start planning. Your dining dollars deserve better.</p>
           </div>
           <div className="features-grid">
-            <div className="card-3d" data-emoji="💰" data-tilt="-8" data-hue="130" data-sat="55" data-light="38"><div className="card-3d-inner feature-card"><h3><span className="highlight-wrap">Dining Dollars Tracker<span className="highlight-bg"></span></span></h3><p>See exactly where your money is going: restaurants, groceries, or on-campus spots. Stay on pace all semester.</p></div></div>
-            <div className="card-3d" data-emoji="🔄" data-tilt="6" data-hue="25" data-sat="70" data-light="52"><div className="card-3d-inner feature-card"><h3><span className="highlight-wrap">Swipe Manager<span className="highlight-bg"></span></span></h3><p>Track your weekly swipes, dining hall visits, and outtakes. Never let a swipe go to waste again.</p></div></div>
-            <div className="card-3d" data-emoji="⭐" data-tilt="-10" data-hue="48" data-sat="75" data-light="50"><div className="card-3d-inner feature-card"><h3><span className="highlight-wrap">Is Food Good?<span className="highlight-bg"></span></span></h3><p>Get personalized meal suggestions based on your diet preferences, cuisine tastes, and today's dining hall menu.</p></div></div>
-            <div className="card-3d" data-emoji="📊" data-tilt="12" data-hue="270" data-sat="50" data-light="48"><div className="card-3d-inner feature-card"><h3><span className="highlight-wrap">Pace Tracker<span className="highlight-bg"></span></span></h3><p>Are you spending too fast? Too slow? We'll tell you if you're on track to make it to the end of the semester.</p></div></div>
-            <div className="card-3d" data-emoji="🛒" data-tilt="-5" data-hue="170" data-sat="55" data-light="42"><div className="card-3d-inner feature-card"><h3><span className="highlight-wrap">Grocery Planner<span className="highlight-bg"></span></span></h3><p>Optimize your grocery runs against your remaining balance. Build a shopping list that stretches every dollar.</p></div></div>
-            <div className="card-3d" data-emoji="🔔" data-tilt="9" data-hue="345" data-sat="60" data-light="52"><div className="card-3d-inner feature-card"><h3><span className="highlight-wrap">Smart Alerts<span className="highlight-bg"></span></span></h3><p>Get notified before you overspend or end the semester with leftover balance you can't use.</p></div></div>
+            <div className="card-3d"  data-tilt="-8" data-hue="130" data-sat="55" data-light="38"><div className="card-3d-inner feature-card"><h3><span className="highlight-wrap">Dining Dollars Tracker<span className="highlight-bg"></span></span></h3><p>See exactly where your money is going: restaurants, groceries, or on-campus spots. Stay on pace all semester.</p></div></div>
+            <div className="card-3d"  data-tilt="6" data-hue="25" data-sat="70" data-light="52"><div className="card-3d-inner feature-card"><h3><span className="highlight-wrap">Swipe Manager<span className="highlight-bg"></span></span></h3><p>Track your weekly swipes, dining hall visits, and outtakes. Never let a swipe go to waste again.</p></div></div>
+            <div className="card-3d"  data-tilt="-10" data-hue="48" data-sat="75" data-light="50"><div className="card-3d-inner feature-card"><h3><span className="highlight-wrap">Today's Menu<span className="highlight-bg"></span></span></h3><p>Check out today's dining hall menu across the different dining halls.</p></div></div>
+            <div className="card-3d"  data-tilt="12" data-hue="270" data-sat="50" data-light="48"><div className="card-3d-inner feature-card"><h3><span className="highlight-wrap">Pace Tracker<span className="highlight-bg"></span></span></h3><p>Are you spending too fast? Too slow? We'll tell you if you're on track to make it to the end of the semester.</p></div></div>
+            <div className="card-3d"  data-tilt="-5" data-hue="170" data-sat="55" data-light="42"><div className="card-3d-inner feature-card"><h3><span className="highlight-wrap">Grocery Planner<span className="highlight-bg"></span></span></h3><p>Optimize your grocery runs against your remaining balance. Build a shopping list that stretches every dollar.</p></div></div>
+            <div className="card-3d"  data-tilt="9" data-hue="345" data-sat="60" data-light="52"><div className="card-3d-inner feature-card"><h3><span className="highlight-wrap">Smart Alerts<span className="highlight-bg"></span></span></h3><p>Get notified before you overspend or end the semester with leftover balance you can't use.</p></div></div>
           </div>
         </section>
         <section className="collage-section scroll-section">
-          <div className="collage-inner">
+          <div className="collage-inner collage-inner--centered">
             <div className="collage-text">
               <h2>Our Mission</h2>
-              <p>College dining plans are expensive and confusing. Students consistently overspend early in the semester or waste money at the end. NomNom was built to change that, giving every student the clarity to eat well, spend wisely, and enjoy campus food without the stress.</p>
+              <p>College dining plans are expensive and confusing. Students consistently overspend early in the semester or waste money at the end. SwipeWise was built to change that, giving every student the clarity to eat well, spend wisely, and enjoy campus food without the stress.</p>
               <a href="/login" className="btn btn-primary zoom-trigger" data-route="/login"><span>Get Started Free</span></a>
             </div>
-            <div className="collage-grid">
-              <div className="card-3d" data-emoji="🍽️" data-tilt="-7" data-hue="0" data-sat="65" data-light="50"><div className="card-3d-inner collage-item"><div className="food-label"><span className="highlight-wrap">Dining Meal Plans<span className="highlight-bg"></span></span></div></div></div>
-              <div className="card-3d" data-emoji="💳" data-tilt="5" data-hue="45" data-sat="70" data-light="48"><div className="card-3d-inner collage-item"><div className="food-label"><span className="highlight-wrap">Dining Dollars Plan<span className="highlight-bg"></span></span></div></div></div>
-              <div className="card-3d" data-emoji="🏠" data-tilt="-11" data-hue="210" data-sat="55" data-light="45"><div className="card-3d-inner collage-item"><div className="food-label"><span className="highlight-wrap">Habitats<span className="highlight-bg"></span></span></div></div></div>
-              <div className="card-3d" data-emoji="🧮" data-tilt="8" data-hue="270" data-sat="50" data-light="48"><div className="card-3d-inner collage-item"><div className="food-label"><span className="highlight-wrap">Total Calculations<span className="highlight-bg"></span></span></div></div></div>
-            </div>
+            {/* TODO: Replace with animation / illustration */}
           </div>
         </section>
         <section className="team-section scroll-section">
           <h2>Meet the Team</h2>
-          <p>We're a group of freshmen trying to help fellow students manage their meals better.</p>
+          <p>Students building for students.</p>
           <div className="team-grid">
             {[1,2,3,4,5].map((n,i) => {
               const tilts = [-4,7,-9,6,-3], hues = [215,285,30,160,0], sats = [55,45,60,50,60], lights = [52,50,50,45,50];
-              const roles = ['Frontend / Design','Backend / Data','Product / UX','Full Stack','Role TBD'];
-              return <div key={n} className="card-3d" data-emoji="👤" data-tilt={tilts[i]} data-hue={hues[i]} data-sat={sats[i]} data-light={lights[i]}><div className="card-3d-inner team-card"><div className="team-avatar">👤</div><h4><span className="highlight-wrap">Team Member {n}<span className="highlight-bg"></span></span></h4><p>{roles[i]}</p></div></div>;
+              const roles = ['Frontend / Design','Backend / Data Analysis','Product / UX','Backend / Data Analysis','Fullstack'];
+              const names = ['Naman Patel', 'Callum Johnson', 'Aarav Gandbhir', 'Tan Matalon', 'Emanuel Galindo Garcia'];
+              const photos = [
+                'https://media.licdn.com/dms/image/v2/D4E03AQFWOhWwKnPaqw/profile-displayphoto-crop_800_800/B4EZkndKDcGUAI-/0/1757303579846?e=1775088000&v=beta&t=OyekSeMBvwmrVXlekxvORPB3taZQyTQ2-Dw3MynIgdQ',
+                callumPhoto,
+                'https://media.licdn.com/dms/image/v2/D4E03AQH08cgIZmzsRQ/profile-displayphoto-scale_400_400/B4EZxpMj_6IkAg-/0/1771291427358?e=1775088000&v=beta&t=6Og94j2oY86e10l-6BOBrbCK8WTG0hIMp3OMFzSsoHc',
+                'https://media.licdn.com/dms/image/v2/D4E03AQFWxHH13XN_7A/profile-displayphoto-scale_400_400/B4EZmXm7o_HgAg-/0/1759185190057?e=1775088000&v=beta&t=PYcA7VzyVnrAawpjznL6PNY_8zkcoQ9ygfVIXTCsH34',
+                'https://media.licdn.com/dms/image/v2/D4D03AQHlM6XilVj0jw/profile-displayphoto-shrink_800_800/B4DZaNiFawGcAs-/0/1746131245182?e=1775088000&v=beta&t=V0h5YemCBsG_16lYPC_kLnrZPG7kH8pixWJemi53gpg',
+              ];
+              const githubs = [
+                'https://github.com/namanp07',
+                'https://github.com/CallumJ25',
+                'https://github.com/agandbhir123',
+                'https://github.com/tanmatalon',
+                'https://github.com/emanuel8006',
+              ];
+              const linkedins = [
+                'https://www.linkedin.com/in/naman-patel-6b8744382/',
+                'https://www.linkedin.com/in/callum-johnson-a9a15a235/',
+                'https://www.linkedin.com/in/aarav-gandbhir-157902304/',
+                'https://www.linkedin.com/in/tanmatalon/',
+                'https://www.linkedin.com/in/emanuel-galindo-garcia-657901354/',
+              ];
+              return <div key={n} className="card-3d"  data-tilt={tilts[i]} data-hue={hues[i]} data-sat={sats[i]} data-light={lights[i]}><div className="card-3d-inner team-card"><div className="team-avatar"><img src={photos[i]} alt={names[i]} /></div><h4><span className="highlight-wrap">{names[i]}<span className="highlight-bg"></span></span></h4><p>{roles[i]}</p><div className="team-socials"><a href={githubs[i]} target="_blank" rel="noopener noreferrer" aria-label="GitHub"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg></a><a href={linkedins[i]} target="_blank" rel="noopener noreferrer" aria-label="LinkedIn"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg></a></div></div></div>;
             })}
           </div>
         </section>
         <section className="mission-section scroll-section">
           <div className="mission-inner">
             <h2>Ready to eat smarter?</h2>
-            <p>It takes 5 minutes or less to set up.</p>
+            <p>Take back control NOW. It takes 5 minutes to set up.</p>
             <a href="/login" className="btn btn-white btn-lg zoom-trigger" data-route="/login"><span>Create Free Account →</span></a>
           </div>
         </section>
         <footer className="scroll-section">
-          <p>© 2026 NomNom &nbsp;|&nbsp; <a href="#">Contact</a></p>
+          <p>© 2026 SwipeWise &nbsp;&nbsp; <a href="#"></a></p>
         </footer>
       </div>
     </div>

@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 
+const API_BASE = 'http://localhost:8000'
+
 // ── Helpers ───────────────────────────────────────────────────────
 function today() { return new Date() }
 
@@ -93,18 +95,18 @@ const S = {
   statGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '12px', marginTop: '1.5rem' },
   miniStat: { background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '10px', padding: '12px 16px' },
   miniStatVal: { fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: '1.8rem', color: '#fff', margin: '0 0 2px', lineHeight: 1 },
-  miniStatLabel: { fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.65rem', letterSpacing: '0.1em', color: 'rgba(255,255,255,0.45)', margin: 0 },
+  miniStatLabel: { fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.75rem', letterSpacing: '0.1em', color: 'rgba(255,255,255,0.45)', margin: 0 },
   body: { maxWidth: '1100px', margin: '0 auto', padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' },
   twoCol: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.2rem' },
   threeCol: { display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1.2rem' },
   card: { background: '#fff', border: '2px solid rgba(0,0,0,0.08)', borderRadius: '12px', padding: '1.4rem', boxShadow: '3px 4px 0px rgba(0,0,0,0.06)' },
-  cardLabel: { fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.7rem', letterSpacing: '0.12em', color: '#9CA3AF', display: 'block', marginBottom: '4px' },
+  cardLabel: { fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.8rem', letterSpacing: '0.1em', color: '#6B7280', display: 'block', marginBottom: '4px' },
   bigNum: { fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: '2.4rem', color: '#1a1a1a', lineHeight: 1, margin: '0 0 2px' },
-  bigNumSub: { fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.72rem', letterSpacing: '0.06em', color: '#9CA3AF', margin: 0 },
+  bigNumSub: { fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.8rem', letterSpacing: '0.06em', color: '#9CA3AF', margin: 0 },
   progressTrack: { height: '8px', background: 'rgba(0,0,0,0.06)', borderRadius: '99px', overflow: 'hidden', margin: '10px 0 6px' },
   paceBadge: (pace) => {
     const p = PACE_LABELS[pace] || PACE_LABELS.on_track
-    return { fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.68rem', letterSpacing: '0.08em', padding: '3px 10px', borderRadius: '99px', background: p.bg, color: p.color, border: `1.5px solid ${p.border}`, display: 'inline-block' }
+    return { fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.75rem', letterSpacing: '0.08em', padding: '3px 10px', borderRadius: '99px', background: p.bg, color: p.color, border: `1.5px solid ${p.border}`, display: 'inline-block' }
   },
   actionBtn: (variant = 'default') => ({
     display: 'flex', alignItems: 'center', gap: '10px', width: '100%', padding: '12px 16px',
@@ -138,7 +140,7 @@ function PaceChart({ projWeekly, activeDays }) {
       </div>
       <div style={{ display: 'flex', gap: '3px' }}>
         {Array.from({ length: weeks }, (_, i) => (
-          <div key={i} style={{ flex: 1, textAlign: 'center', fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.55rem', letterSpacing: '0.04em', color: (i + 1) % 4 === 0 ? '#9CA3AF' : 'transparent' }}>
+          <div key={i} style={{ flex: 1, textAlign: 'center', fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.78rem', letterSpacing: '0.04em', color: (i + 1) % 4 === 0 ? '#9CA3AF' : 'transparent' }}>
             {(i + 1) % 4 === 0 ? `W${i + 1}` : '.'}
           </div>
         ))}
@@ -146,11 +148,11 @@ function PaceChart({ projWeekly, activeDays }) {
       <div style={{ display: 'flex', gap: '14px', marginTop: '8px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
           <div style={{ width: '10px', height: '10px', background: '#FBF2D8', border: '1px solid rgba(0,0,0,0.1)', borderRadius: '2px' }} />
-          <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.62rem', letterSpacing: '0.04em', color: '#9CA3AF' }}>Projected (${projWeekly}/wk)</span>
+          <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.75rem', letterSpacing: '0.04em', color: '#9CA3AF' }}>Projected (${projWeekly}/wk)</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
           <div style={{ width: '10px', height: '10px', background: '#E5E7EB', border: '1px dashed #9CA3AF', borderRadius: '2px' }} />
-          <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.62rem', letterSpacing: '0.04em', color: '#9CA3AF' }}>Actual — coming soon</span>
+          <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.75rem', letterSpacing: '0.04em', color: '#9CA3AF' }}>Actual — coming soon</span>
         </div>
       </div>
     </div>
@@ -166,7 +168,7 @@ function LogModal({ type, onClose, onSave }) {
   return (
     <div style={S.logModal} onClick={onClose}>
       <div style={S.logCard} onClick={e => e.stopPropagation()}>
-        <p style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.72rem', letterSpacing: '0.12em', color: '#9CA3AF', margin: '0 0 4px' }}>
+        <p style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.8rem', letterSpacing: '0.1em', color: '#6B7280', margin: '0 0 4px' }}>
           LOG A {isSwipe ? 'SWIPE' : 'TRANSACTION'}
         </p>
         <p style={{ fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: '1.4rem', color: '#1a1a1a', margin: '0 0 1.2rem' }}>
@@ -190,7 +192,19 @@ function LogModal({ type, onClose, onSave }) {
             <label style={{ ...S.cardLabel, marginBottom: '6px' }}>AMOUNT SPENT</label>
             <div style={{ position: 'relative', marginBottom: '10px' }}>
               <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#9CA3AF', fontSize: '0.9rem' }}>$</span>
-              <input type="number" step="0.01" placeholder="0.00" value={val} onChange={e => setVal(e.target.value)}
+              <input type="number" inputMode="decimal" placeholder="0.00" value={val}
+                onKeyDown={e => ['e','E','+','-'].includes(e.key) && e.preventDefault()}
+                onWheel={e => e.target.blur()}
+                onChange={e => {
+                  const v = e.target.value
+                  if (v === '' || v === '.') { setVal(v); return }
+                  const n = parseFloat(v)
+                  if (isNaN(n) || n < 0) return
+                  if (n > 50) { setVal('50'); return }
+                  const parts = v.split('.')
+                  if (parts[1] && parts[1].length > 2) return
+                  setVal(v)
+                }}
                 style={{ ...S.input, paddingLeft: '28px', marginBottom: 0 }} />
             </div>
             <label style={{ ...S.cardLabel, marginBottom: '6px' }}>LOCATION</label>
@@ -214,11 +228,10 @@ function LogModal({ type, onClose, onSave }) {
 }
 
 // ── Coming Soon placeholder ───────────────────────────────────────
-function ComingSoon({ label, icon }) {
+function ComingSoon({ label }) {
   return (
     <div style={S.comingSoon}>
-      <div style={{ fontSize: '1.5rem', marginBottom: '8px', opacity: 0.3 }}>{icon}</div>
-      <p style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.72rem', letterSpacing: '0.1em', color: '#9CA3AF', margin: '0 0 4px' }}>COMING SOON</p>
+      <p style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.8rem', letterSpacing: '0.1em', color: '#9CA3AF', margin: '0 0 4px' }}>COMING SOON</p>
       <p style={{ fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: '0.95rem', color: '#1a1a1a', margin: 0, opacity: 0.4 }}>{label}</p>
     </div>
   )
@@ -233,6 +246,7 @@ export default function Dashboard() {
   const [ddSpent, setDdSpent] = useState(0)
   const [toast, setToast] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [menuRecs, setMenuRecs] = useState([])
 
   useEffect(() => {
     const stored = localStorage.getItem('nomnom_profile')
@@ -241,7 +255,49 @@ export default function Dashboard() {
     setLoading(false)
   }, [navigate])
 
+  // Fetch live menu recs based on user preferences
+  useEffect(() => {
+    if (!profile) return
+    const hour = new Date().getHours()
+    const period = hour < 11 ? 'Breakfast' : hour < 15 ? 'Lunch' : 'Dinner'
+    const diet = profile.diet || []
+    const cuisines = profile.cuisines || []
+    async function fetchRecs() {
+      try {
+        const res = await fetch()
+        if (!res.ok) return
+        const data = await res.json()
+        const allItems = (data.stations || []).flatMap(s => (s.items || []).map(i => ({ ...i, station: s.station })))
+        // Score items by user preferences
+        const scored = allItems.map(item => {
+          const tags = item.tags || []
+          let score = 0
+          if (diet.some(d => tags.some(t => t.toLowerCase().includes(d.toLowerCase())))) score += 3
+          if (item.calories && item.calories !== 'N/A' && item.calories <= 400) score += 1
+          if (tags.includes('Good Source of Protein')) score += 1
+          score += Math.random() * 0.5 // slight randomness
+          return { ...item, score }
+        })
+        scored.sort((a, b) => b.score - a.score)
+        setMenuRecs(scored.slice(0, 4))
+      } catch {}
+    }
+    fetchRecs()
+  }, [profile])
+
   if (loading || !profile) return null
+  if (!profile.planData) {
+    return (
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "60vh", flexDirection: "column", gap: "1rem", padding: "2rem" }}>
+        <p style={{ fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: "1.4rem", color: "#1a1a1a", margin: 0 }}>Setup incomplete</p>
+        <p style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: "0.82rem", letterSpacing: "0.06em", color: "#9CA3AF", margin: 0 }}>Your profile is missing some info — let's get you set up properly.</p>
+        <button onClick={() => { localStorage.removeItem("nomnom_profile"); navigate("/onboarding") }}
+          style={{ padding: "12px 28px", background: "#D42B2B", color: "#fff", border: "2.5px solid #1a1a1a", borderRadius: "8px", fontFamily: "'Bebas Neue', sans-serif", fontSize: "0.95rem", letterSpacing: "0.07em", cursor: "pointer", boxShadow: "3px 4px 0 #1a1a1a" }}>
+          REDO SETUP
+        </button>
+      </div>
+    )
+  }
 
   // ── Derived values ────────────────────────────────────────────
   const plan = profile.planData
@@ -253,7 +309,7 @@ export default function Dashboard() {
   const daysLeft = daysUntil(semEnd)
   const totalActiveDays = calcTotalActiveDays(semStart, semEnd, breaks, customOff)
   const activeDaysLeft = calcActiveDaysLeft(semEnd, breaks, customOff)
-  const pctElapsed = totalActiveDays > 0 ? Math.min(1, (totalActiveDays - (activeDaysLeft || 0)) / totalActiveDays) : 0
+  const pctElapsed = totalActiveDays > 0 ? Math.min(1, Math.max(0, (totalActiveDays - (activeDaysLeft || 0)) / totalActiveDays)) : 0
 
   // Swipes
   const totalSwipes = plan?.swipes
@@ -327,7 +383,7 @@ export default function Dashboard() {
               <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.82rem', letterSpacing: '0.06em', color: '#fff' }}>
                 {PACE_LABELS[overallPace].label}
               </span>
-              <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.72rem', letterSpacing: '0.04em', color: 'rgba(255,255,255,0.4)' }}>
+              <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.8rem', letterSpacing: '0.04em', color: 'rgba(255,255,255,0.4)' }}>
                 · {daysLeft ?? '—'} days left
               </span>
             </div>
@@ -369,8 +425,8 @@ export default function Dashboard() {
                   <div style={{ height: '100%', background: swipePace === 'over_budget' ? '#D42B2B' : '#2d6a1f', width: `${swipePct}%`, borderRadius: '99px', transition: 'width 0.6s ease' }} />
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.68rem', letterSpacing: '0.06em', color: '#9CA3AF' }}>{swipePct}% remaining</span>
-                  <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.68rem', letterSpacing: '0.06em', color: '#9CA3AF' }}>
+                  <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.75rem', letterSpacing: '0.06em', color: '#9CA3AF' }}>{swipePct}% remaining</span>
+                  <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.75rem', letterSpacing: '0.06em', color: '#9CA3AF' }}>
                     ~{activeDaysLeft > 0 ? (currentSwipes / activeDaysLeft).toFixed(1) : '—'}/day left to use
                   </span>
                 </div>
@@ -392,8 +448,8 @@ export default function Dashboard() {
               <div style={{ height: '100%', background: ddPace === 'over_budget' ? '#D42B2B' : '#2d6a1f', width: `${ddPct}%`, borderRadius: '99px', transition: 'width 0.6s ease' }} />
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.68rem', letterSpacing: '0.06em', color: '#9CA3AF' }}>{ddPct}% remaining</span>
-              <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.68rem', letterSpacing: '0.06em', color: '#9CA3AF' }}>
+              <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.75rem', letterSpacing: '0.06em', color: '#9CA3AF' }}>{ddPct}% remaining</span>
+              <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.75rem', letterSpacing: '0.06em', color: '#9CA3AF' }}>
                 ${activeDaysLeft > 0 ? (currentDD / activeDaysLeft).toFixed(2) : '—'}/day left to spend
               </span>
             </div>
@@ -406,11 +462,11 @@ export default function Dashboard() {
             <span style={S.cardLabel}>WEEKLY SPENDING PACE — DINING DOLLARS</span>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
               <p style={{ fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: '1rem', color: '#1a1a1a', margin: 0 }}>Projected Spend Over Semester</p>
-              <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.72rem', letterSpacing: '0.06em', color: '#9CA3AF' }}>${projWeeklyDD}/wk projected</span>
+              <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.8rem', letterSpacing: '0.06em', color: '#9CA3AF' }}>${projWeeklyDD}/wk projected</span>
             </div>
             <PaceChart projWeekly={projWeeklyDD} activeDays={totalActiveDays} />
             {profile.outOfPocket && parseFloat(profile.outOfPocket) > 0 && (
-              <div style={{ marginTop: '12px', padding: '8px 12px', background: '#FBF2D8', border: '1px solid rgba(0,0,0,0.08)', borderRadius: '6px', fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.7rem', letterSpacing: '0.04em', color: '#6B7280' }}>
+              <div style={{ marginTop: '12px', padding: '8px 12px', background: '#FBF2D8', border: '1px solid rgba(0,0,0,0.08)', borderRadius: '6px', fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.78rem', letterSpacing: '0.04em', color: '#6B7280' }}>
                 + ~${Math.round(parseFloat(profile.outOfPocket) * (totalActiveDays / 7))}/sem projected out-of-pocket
               </div>
             )}
@@ -432,36 +488,61 @@ export default function Dashboard() {
             </button>
             <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid rgba(0,0,0,0.06)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
-                <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.65rem', letterSpacing: '0.08em', color: '#9CA3AF' }}>SEMESTER PROGRESS</span>
-                <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.65rem', letterSpacing: '0.06em', color: '#1a1a1a' }}>{Math.round(pctElapsed * 100)}%</span>
+                <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.75rem', letterSpacing: '0.08em', color: '#9CA3AF' }}>SEMESTER PROGRESS</span>
+                <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.75rem', letterSpacing: '0.06em', color: '#1a1a1a' }}>{Math.round(pctElapsed * 100)}%</span>
               </div>
               <div style={S.progressTrack}>
                 <div style={{ height: '100%', background: '#1a1a1a', width: `${pctElapsed * 100}%`, borderRadius: '99px', transition: 'width 0.6s ease' }} />
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '4px' }}>
-                <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.6rem', color: '#C0C0C0' }}>START</span>
-                <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.6rem', color: '#C0C0C0' }}>END</span>
+                <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.8rem', color: '#C0C0C0' }}>START</span>
+                <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.8rem', color: '#C0C0C0' }}>END</span>
               </div>
             </div>
           </div>
         </div>
 
-        {/* ── Food recommendations — coming soon ── */}
+        {/* ── Food recommendations ── */}
         <div style={S.card}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
             <div>
-              <span style={S.cardLabel}>PERSONALIZED FOR YOU</span>
+              <span style={S.cardLabel}>PERSONALIZED FOR YOU — STETSON EAST</span>
               <p style={{ fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: '1rem', color: '#1a1a1a', margin: 0 }}>What's Good Today</p>
             </div>
+            <button onClick={() => navigate('/menu')} style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.8rem', letterSpacing: '0.07em', padding: '6px 14px', background: '#FFE45C', border: '2px solid #1a1a1a', borderRadius: '6px', cursor: 'pointer', boxShadow: '2px 2px 0 #1a1a1a', color: '#1a1a1a', flexShrink: 0 }}>
+              SEE FULL MENU →
+            </button>
           </div>
-          <ComingSoon label="Food recommendations will be powered by live dining hall data" icon="🍽️" />
+          {menuRecs.length === 0 ? (
+            <ComingSoon label="Start the backend to see live food recommendations" />
+          ) : (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '10px' }}>
+              {menuRecs.map((item, i) => {
+                const cal = item.calories && item.calories !== 'N/A' ? item.calories : null
+                const tags = item.tags || []
+                return (
+                  <div key={i} style={{ background: '#fff', border: '2px solid rgba(0,0,0,0.08)', borderRadius: '10px', padding: '12px 14px', boxShadow: '2px 3px 0 rgba(0,0,0,0.05)' }}>
+                    <p style={{ fontFamily: "'Inter', sans-serif", fontWeight: 600, fontSize: '0.88rem', color: '#1a1a1a', margin: '0 0 4px', lineHeight: 1.3 }}>{item.name}</p>
+                    <p style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.75rem', letterSpacing: '0.05em', color: '#9CA3AF', margin: '0 0 6px' }}>
+                      {item.station}{cal ? ` · ${cal} cal` : ''}
+                    </p>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                      {tags.slice(0, 2).map(t => (
+                        <span key={t} style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.8rem', letterSpacing: '0.05em', padding: '2px 7px', borderRadius: '99px', background: t.includes('Protein') ? '#EFF6FF' : '#f0f7eb', color: t.includes('Protein') ? '#1a4fa0' : '#2d6a1f', border: '1px solid rgba(0,0,0,0.08)' }}>{t}</span>
+                      ))}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
         </div>
 
         {/* ── Recent activity — coming soon ── */}
         <div style={S.card}>
           <span style={S.cardLabel}>RECENT ACTIVITY</span>
           <p style={{ fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: '1rem', color: '#1a1a1a', margin: '0 0 1rem' }}>Transaction History</p>
-          <ComingSoon label="Transaction history will sync once backend is connected" icon="📋" />
+          <ComingSoon label="Transaction history will sync once backend is connected"  />
         </div>
 
       </div>

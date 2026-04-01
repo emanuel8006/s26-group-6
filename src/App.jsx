@@ -12,10 +12,17 @@ import Swipes from './assets/pages/Swipes'
 
 export default function App() {
   const location = useLocation()
-  const isHome = location.pathname === '/' || location.pathname === '/onboarding'
+  const isHome = location.pathname === '/' || location.pathname === '/onboarding' || location.pathname === '/login' //add all path names to this bool
 
   return (
     <div className="min-h-screen flex flex-col">
+      <div className="page-transition-overlay" id="pageTransition">
+        <div className="rip-piece"><div className="rip-snapshot"></div></div>
+        <div className="rip-piece"><div className="rip-snapshot"></div></div>
+        <div className="rip-piece"><div className="rip-snapshot"></div></div>
+        <div className="rip-piece"><div className="rip-snapshot"></div></div>
+        <div className="rip-piece"><div className="rip-snapshot"></div></div>
+      </div>
       {!isHome && <Nav />}
       <main className="flex-1">
         <Routes>

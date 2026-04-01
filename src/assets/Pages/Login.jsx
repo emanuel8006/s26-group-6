@@ -183,7 +183,7 @@ export default function Login() {
 
           {/* Big editorial headline */}
           <div style={{ marginBottom: '2rem' }}>
-            <p style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.72rem', letterSpacing: '0.16em', color: '#D42B2B', margin: '0 0 10px' }}>NORTHEASTERN UNIVERSITY</p>
+            <p style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.8rem', letterSpacing: '0.16em', color: '#D42B2B', margin: '0 0 10px' }}>NORTHEASTERN UNIVERSITY</p>
             <h1 style={{ fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: 'clamp(2rem, 3.5vw, 3rem)', color: '#fff', lineHeight: 1.1, margin: '0 0 1.2rem' }}>
               Your dining plan,<br/>
               <span style={{ color: '#FFE45C', fontStyle: 'italic' }}>finally</span>{' '}under control.
@@ -202,7 +202,7 @@ export default function Login() {
             ].map(({ num, desc }) => (
               <div key={num} style={{ display: 'flex', alignItems: 'center', gap: '14px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', padding: '10px 14px' }}>
                 <span style={{ fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: '1.1rem', color: '#FFE45C', flexShrink: 0, minWidth: '54px' }}>{num}</span>
-                <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.7rem', letterSpacing: '0.06em', color: 'rgba(255,255,255,0.45)', lineHeight: 1.4 }}>{desc.toUpperCase()}</span>
+                <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.78rem', letterSpacing: '0.06em', color: 'rgba(255,255,255,0.45)', lineHeight: 1.4 }}>{desc.toUpperCase()}</span>
               </div>
             ))}
           </div>
@@ -210,7 +210,7 @@ export default function Login() {
 
         {/* Bottom: footer note */}
         <div style={{ position: 'relative', zIndex: 1 }}>
-          <p style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.65rem', letterSpacing: '0.08em', color: 'rgba(255,255,255,0.2)', margin: 0 }}>
+          <p style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.75rem', letterSpacing: '0.08em', color: 'rgba(255,255,255,0.2)', margin: 0 }}>
             © 2026 NOMNOM · OASIS · NORTHEASTERN UNIVERSITY
           </p>
         </div>
@@ -228,7 +228,7 @@ export default function Login() {
 
           {/* Heading */}
           <div style={{ marginBottom: '2rem' }}>
-            <p style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.72rem', letterSpacing: '0.14em', color: '#D42B2B', margin: '0 0 6px' }}>
+            <p style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.8rem', letterSpacing: '0.14em', color: '#D42B2B', margin: '0 0 6px' }}>
               {tab === 'signin' ? 'WELCOME BACK' : 'GET STARTED'}
             </p>
             <h2 style={{ fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: '2rem', color: '#1a1a1a', margin: 0, lineHeight: 1.1 }}>
@@ -253,19 +253,19 @@ export default function Login() {
           {tab === 'signin' && (
             <form onSubmit={handleSignIn} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <div>
-                <label style={{ display: 'block', fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.7rem', letterSpacing: '0.1em', color: '#9CA3AF', marginBottom: '6px' }}>EMAIL</label>
+                <label style={{ display: 'block', fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.8rem', letterSpacing: '0.1em', color: '#6B7280', marginBottom: '6px' }}>EMAIL</label>
                 <input type="email" placeholder="you@northeastern.edu" style={inputCls} />
               </div>
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-                  <label style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.7rem', letterSpacing: '0.1em', color: '#9CA3AF' }}>PASSWORD</label>
-                  <a href="#" style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.7rem', letterSpacing: '0.06em', color: '#D42B2B', textDecoration: 'none' }}>FORGOT PASSWORD?</a>
+                  <label style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.8rem', letterSpacing: '0.1em', color: '#6B7280' }}>PASSWORD</label>
+                  <a href="#" style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.78rem', letterSpacing: '0.06em', color: '#D42B2B', textDecoration: 'none' }}>FORGOT PASSWORD?</a>
                 </div>
                 <input type="password" placeholder="••••••••" style={inputCls} />
               </div>
               <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
                 <input type="checkbox" style={{ width: '15px', height: '15px', accentColor: '#D42B2B', cursor: 'pointer' }} />
-                <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.7rem', letterSpacing: '0.06em', color: '#6B7280' }}>REMEMBER ME</span>
+                <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.78rem', letterSpacing: '0.06em', color: '#6B7280' }}>REMEMBER ME</span>
               </label>
               <button type="submit" style={{
                 padding: '13px', background: '#D42B2B', color: '#fff',
@@ -273,9 +273,9 @@ export default function Login() {
                 fontFamily: "'Bebas Neue', sans-serif", fontSize: '1rem', letterSpacing: '0.08em',
                 cursor: 'pointer', boxShadow: '4px 4px 0 #1a1a1a', transition: 'all 0.12s', marginTop: '4px',
               }}>SIGN IN →</button>
-              <p style={{ textAlign: 'center', fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.72rem', letterSpacing: '0.06em', color: '#9CA3AF', margin: '4px 0 0' }}>
+              <p style={{ textAlign: 'center', fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.8rem', letterSpacing: '0.06em', color: '#9CA3AF', margin: '4px 0 0' }}>
                 DON'T HAVE AN ACCOUNT?{' '}
-                <button type="button" onClick={() => setTab('signup')} style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.72rem', letterSpacing: '0.06em', color: '#D42B2B', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textDecoration: 'underline' }}>SIGN UP FREE</button>
+                <button type="button" onClick={() => setTab('signup')} style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.8rem', letterSpacing: '0.06em', color: '#D42B2B', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textDecoration: 'underline' }}>SIGN UP FREE</button>
               </p>
             </form>
           )}
@@ -316,9 +316,9 @@ export default function Login() {
                 fontFamily: "'Bebas Neue', sans-serif", fontSize: '1rem', letterSpacing: '0.08em',
                 cursor: 'pointer', boxShadow: '4px 4px 0 #1a1a1a', transition: 'all 0.12s', marginTop: '4px',
               }}>CREATE ACCOUNT →</button>
-              <p style={{ textAlign: 'center', fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.72rem', letterSpacing: '0.06em', color: '#9CA3AF', margin: '4px 0 0' }}>
+              <p style={{ textAlign: 'center', fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.8rem', letterSpacing: '0.06em', color: '#9CA3AF', margin: '4px 0 0' }}>
                 ALREADY HAVE AN ACCOUNT?{' '}
-                <button type="button" onClick={() => setTab('signin')} style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.72rem', letterSpacing: '0.06em', color: '#D42B2B', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textDecoration: 'underline' }}>SIGN IN</button>
+                <button type="button" onClick={() => setTab('signin')} style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.8rem', letterSpacing: '0.06em', color: '#D42B2B', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textDecoration: 'underline' }}>SIGN IN</button>
               </p>
             </form>
           )}

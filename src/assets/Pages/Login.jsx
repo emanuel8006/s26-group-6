@@ -16,36 +16,9 @@ const inputCls = {
   transition: 'border-color 0.15s',
 }
 
-const DIET_OPTIONS = ['Vegetarian', 'Vegan', 'Halal', 'Kosher', 'Gluten-Free', 'Dairy-Free', 'Nut-Free']
-const CUISINE_OPTIONS = ['American', 'Asian', 'Indian', 'Italian', 'Mediterranean', 'Mexican']
-const PLAN_OPTIONS = [
-  { id: 'unlimited', label: 'NU – Unlimited' },
-  { id: '225',       label: 'NU – 225' },
-  { id: '180',       label: 'NU – 180' },
-  { id: '150',       label: 'NU – 150' },
-  { id: '100',       label: 'NU – 100' },
-]
-
-function Chip({ label, selected, onToggle }) {
-  return (
-    <button type="button" onClick={onToggle} style={{
-      padding: '4px 12px', borderRadius: '99px', cursor: 'pointer', transition: 'all 0.12s',
-      border: `1.5px solid ${selected ? '#1a1a1a' : 'rgba(0,0,0,0.15)'}`,
-      background: selected ? '#FFE45C' : '#fff', color: '#1a1a1a',
-      fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.8rem', letterSpacing: '0.06em',
-      boxShadow: selected ? '2px 2px 0 #1a1a1a' : 'none', marginBottom: '5px',
-    }}>{label}</button>
-  )
-}
-
 export default function Login() {
   const [tab, setTab] = useState('signin')
-  const [diet, setDiet] = useState([])
-  const [cuisine, setCuisine] = useState([])
   const navigate = useNavigate()
-
-  const toggleArr = (arr, setArr, val) =>
-    setArr(p => p.includes(val) ? p.filter(x => x !== val) : [...p, val])
 
   const handleSubmit = (e) => { e.preventDefault(); navigate('/dashboard') }
 
@@ -96,7 +69,7 @@ export default function Login() {
         <div style={{ position: 'relative', zIndex: 1 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '3.5rem' }}>
             <div style={{ width: '4px', height: '32px', background: '#D42B2B', borderRadius: '2px' }} />
-            <span style={{ fontFamily: "'Chicle', serif", fontSize: '1.6rem', fontWeight: 700, color: '#fff' }}>NomNom</span>
+            <span style={{ fontFamily: "'Chicle', serif", fontSize: '1.6rem', fontWeight: 700, color: '#fff' }}>SwipeWise</span>
           </div>
 
           {/* Big editorial headline */}
@@ -129,7 +102,7 @@ export default function Login() {
         {/* Bottom: footer note */}
         <div style={{ position: 'relative', zIndex: 1 }}>
           <p style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.84rem', letterSpacing: '0.08em', color: 'rgba(255,255,255,0.2)', margin: 0 }}>
-            © 2026 NOMNOM · OASIS · NORTHEASTERN UNIVERSITY
+            © 2026 SWIPEWISE · OASIS · NORTHEASTERN UNIVERSITY
           </p>
         </div>
       </div>
@@ -150,7 +123,7 @@ export default function Login() {
               {tab === 'signin' ? 'WELCOME BACK' : 'GET STARTED'}
             </p>
             <h2 style={{ fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: '2rem', color: '#1a1a1a', margin: 0, lineHeight: 1.1 }}>
-              {tab === 'signin' ? 'Sign in to NomNom.' : 'Create your account.'}
+              {tab === 'signin' ? 'Sign in to SwipeWise.' : 'Create your account.'}
             </h2>
           </div>
 
@@ -219,27 +192,8 @@ export default function Login() {
                 <label style={{ display: 'block', fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.8rem', letterSpacing: '0.1em', color: '#6B7280', marginBottom: '6px' }}>PASSWORD</label>
                 <input type="password" placeholder="Create a password" style={inputCls} />
               </div>
-              <div>
-                <label style={{ display: 'block', fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.8rem', letterSpacing: '0.1em', color: '#6B7280', marginBottom: '6px' }}>DINING PLAN</label>
-                <select style={{ ...inputCls }}>
-                  <option value="">Select your plan...</option>
-                  {PLAN_OPTIONS.map(p => <option key={p.id} value={p.id}>{p.label}</option>)}
-                </select>
-              </div>
 
-              <div>
-                <p style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.8rem', letterSpacing: '0.1em', color: '#6B7280', margin: '0 0 8px' }}>DIETARY PREFERENCES</p>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                  {DIET_OPTIONS.map(opt => <Chip key={opt} label={opt} selected={diet.includes(opt)} onToggle={() => toggleArr(diet, setDiet, opt)} />)}
-                </div>
-              </div>
 
-              <div>
-                <p style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.8rem', letterSpacing: '0.1em', color: '#6B7280', margin: '0 0 8px' }}>CUISINE PREFERENCES</p>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                  {CUISINE_OPTIONS.map(opt => <Chip key={opt} label={opt} selected={cuisine.includes(opt)} onToggle={() => toggleArr(cuisine, setCuisine, opt)} />)}
-                </div>
-              </div>
 
               <button type="submit" style={{
                 padding: '13px', background: '#D42B2B', color: '#fff',

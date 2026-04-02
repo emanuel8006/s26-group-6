@@ -636,7 +636,7 @@ export default function Onboarding() {
       <div style={{ ...st.topbar, position: 'sticky', zIndex: 100 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <div style={{ width: '4px', height: '28px', background: '#D42B2B', borderRadius: '2px' }} />
-          <span style={st.logo}>NomNom</span>
+          <span style={st.logo}>SwipeWise</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
           <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.8rem', letterSpacing: '0.1em', color: '#9CA3AF' }}>STEP {step} OF {TOTAL_STEPS}</span>
@@ -691,7 +691,8 @@ export default function Onboarding() {
                         const val = e.target.value
                         if (val === '') { set('swipesLeft', val); return }
                         if (!/^\d+$/.test(val)) return
-                        if (parseInt(val) > 225) { set('swipesLeft', '225'); return }
+                        const maxSwipes = selectedPlan?.swipes ?? 225
+                        if (parseInt(val) > maxSwipes) { set('swipesLeft', String(maxSwipes)); return }
                         set('swipesLeft', val)
                       }}
                       style={st.input}

@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, Header, HTTPException
 from pydantic import BaseModel
 from app.db.supabase_client import supabase_client
 
-router = APIRouter(prefix="/auth")
+router = APIRouter(prefix="/auth", tags=["auth"])
 
 
 class AuthRequest(BaseModel):

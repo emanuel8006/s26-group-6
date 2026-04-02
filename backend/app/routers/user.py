@@ -9,7 +9,7 @@ from app.db.supabase_client import supabase_client
 from app.routers.auth import get_current_user
 from pydantic import BaseModel
 
-router = APIRouter(prefix="/user")
+router = APIRouter(prefix="/user", tags=["user"])
 
 @router.put("/update")
 async def update_user_info(
@@ -18,7 +18,7 @@ async def update_user_info(
     dietary_preferences: list[str] | None = None,
     diet_restrictions: str | None = None,
     user: Any = Depends(get_current_user)
-) -> APIResponse|Exception:
+):
     update_dict: dict[str,str|list[str]] = {}
 
     if username is not None:
@@ -43,22 +43,6 @@ async def update_user_info(
         return response
     except Exception as exception:
         raise HTTPException(status_code=500, detail=str(exception))
-
-@router.delete("/delete")
-async def delete_user(user: Any = Depends(get_current_user)) -> Exception|APIResponse:
-    """
-    Deletes user acc based on user_id
-    """
-    try:
-        response = (
-        supabase_client.table("users")
-        .delete()
-        .eq("id", user.id)
-        .execute()
-        )
-        return response
-    except Exception as exception:
-        return exception
 
 class meal_plan_request(BaseModel):
     swipes_start: int|None
@@ -123,7 +107,7 @@ async def delete_user(user: Any = Depends(get_current_user)):
         raise HTTPException(status_code=500, detail=str(exception))
     
 @router.get("/get/")
-async def get_user_info(user: Any = Depends(get_current_user)) -> Exception|APIResponse:
+async def get_user_info(user: Any = Depends(get_current_user)):
     try:
         response = (
         supabase_client.table("users")
@@ -139,7 +123,7 @@ async def get_user_info(user: Any = Depends(get_current_user)) -> Exception|APIR
 async def get_user_info_specific(
     columns: list[str],
     user: Any = Depends(get_current_user)
-    ) -> Exception|APIResponse:
+    ):
     try:
         response = (
         supabase_client.table("users")

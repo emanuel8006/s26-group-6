@@ -9,7 +9,7 @@ from fastapi import APIRouter, HTTPException
 from app.services.dineoncampus_service import get_menu
 from app.services.location_service import get_periods, get_location_id, KNOWN_LOCATIONS
 
-router = APIRouter(prefix="/menu")
+router = APIRouter(prefix="/menu", tags=["menu"])
 
 @router.get("/")
 async def menu(location: str, period_name: str) -> Dict[str, Any]:

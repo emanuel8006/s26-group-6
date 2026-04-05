@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import callumPhoto from '../callum_new.jpg';
+import callumPhoto from '../callum.jpg';
 import nPhoto from '../naman.png';
 import ePhoto from '../emanuel.jpeg';
 import aPhoto from '../aarav.jpeg';

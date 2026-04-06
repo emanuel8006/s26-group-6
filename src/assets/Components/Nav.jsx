@@ -12,15 +12,15 @@ export default function Nav() {
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
-  // Close menu on route change
   useEffect(() => setMenuOpen(false), [location.pathname])
 
   const isActive = (path) => location.pathname === path
 
   const navLinks = [
-    { to: '/dashboard',     label: 'Dashboard' },
+    { to: '/dashboard',      label: 'Dashboard' },
+    { to: '/menu',           label: "Today's Menu" },
     { to: '/dining-dollars', label: 'Dining $' },
-    { to: '/swipes',        label: 'Swipes' },
+    { to: '/swipes',         label: 'Swipes' },
   ]
 
   return (
@@ -35,7 +35,7 @@ export default function Nav() {
         <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 2rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: '58px' }}>
 
           {/* Logo */}
-          <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none' }}>
+          <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none', marginLeft: '-6px' }}>
             <div style={{ width: '4px', height: '28px', background: '#D42B2B', borderRadius: '2px', flexShrink: 0 }} />
             <span style={{ fontFamily: "'Chicle', serif", fontSize: '1.35rem', fontWeight: 700, color: '#1a1a1a', letterSpacing: '0.01em' }}>SwipeWise</span>
           </Link>
@@ -53,10 +53,9 @@ export default function Nav() {
                 background: isActive(to) ? 'rgba(212,43,43,0.07)' : 'transparent',
                 border: isActive(to) ? '1.5px solid rgba(212,43,43,0.2)' : '1.5px solid transparent',
                 transition: 'all 0.12s ease',
-                position: 'relative',
               }}
-                onMouseEnter={e => { if (!isActive(to)) { e.target.style.background = 'rgba(0,0,0,0.05)'; e.target.style.borderColor = 'rgba(0,0,0,0.1)' } }}
-                onMouseLeave={e => { if (!isActive(to)) { e.target.style.background = 'transparent'; e.target.style.borderColor = 'transparent' } }}
+                onMouseEnter={e => { if (!isActive(to)) { e.currentTarget.style.background = 'rgba(0,0,0,0.05)'; e.currentTarget.style.borderColor = 'rgba(0,0,0,0.1)' } }}
+                onMouseLeave={e => { if (!isActive(to)) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = 'transparent' } }}
               >
                 {label}
               </Link>

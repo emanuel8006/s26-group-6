@@ -1,6 +1,8 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import PhotoReel from '../Components/PhotoReel'
+
+const API_BASE = 'http://localhost:8000'
 
 // ── Helpers ───────────────────────────────────────────────────────
 function parseDate(str) { return str ? new Date(str + 'T12:00:00') : null }
@@ -48,6 +50,51 @@ const CATEGORIES = [
   { id: 'other',       label: 'Other',      color: '#6B7280' },
 ]
 
+const MAP_COLORS = {
+  restaurant: '#D42B2B',
+  cafe: '#F57F17',
+  grocery: '#2d6a1f',
+}
+
+const VENDOR_META = {
+  "Amelia's Cluck and Smash": { desc: "Crispy chicken sandwiches and smash burgers", tags: ["American", "BBQ & Wings"] },
+  "BaKala'O Kitchenette":     { desc: "Caribbean-Latin fusion cuisine", tags: ["Mexican", "Mediterranean"] },
+  "Bangkok Pinto":             { desc: "Authentic Thai food", tags: ["Thai"] },
+  "Blaze Pizza":               { desc: "Fast-fire'd custom pizzas", tags: ["Italian"] },
+  "Boston Shawarma":           { desc: "Middle Eastern shawarma and wraps", tags: ["Middle Eastern", "Mediterranean"] },
+  "CVS":                       { desc: "Pharmacy and convenience grocery", tags: ["Grocery"] },
+  "Da Vinci Gelato and Waffle": { desc: "Artisan gelato and waffles", tags: ["Italian", "Bakery & pastries"] },
+  "El Jefe's Taqueria":        { desc: "Burritos, tacos, and Mexican street food", tags: ["Mexican"] },
+  "Energize":                  { desc: "Smoothies, juices, and healthy drinks", tags: ["Healthy & Salads", "Smoothies & juices"] },
+  "Five Guys":                 { desc: "Burgers, fries, and hot dogs", tags: ["American", "Burgers & wings"] },
+  "Giovanni's Market":         { desc: "Local grocery and prepared foods", tags: ["Grocery"] },
+  "Gyroscope":                 { desc: "Greek and Mediterranean gyros", tags: ["Mediterranean", "Middle Eastern"] },
+  "H Mart":                    { desc: "Asian grocery supermarket", tags: ["Grocery", "Asian"] },
+  "LUCIE drink + dine":        { desc: "Upscale American dining at the Colonnade", tags: ["American"] },
+  "Mamacita Mexican Eats":     { desc: "Tacos, burritos, and Mexican favorites", tags: ["Mexican"] },
+  "Panera Bread":              { desc: "Soups, salads, and sandwiches", tags: ["Sandwiches & wraps", "Healthy & Salads"] },
+  "Poke Station":              { desc: "Build-your-own poke bowls", tags: ["Sushi & poke", "Asian", "Healthy & Salads"] },
+  "Qdoba":                     { desc: "Mexican grill — burritos, tacos, bowls", tags: ["Mexican"] },
+  "Sprout":                    { desc: "Fresh healthy bowls and salads", tags: ["Healthy & Salads", "Bowls & salads"] },
+  "Star Market":               { desc: "Full-service grocery store", tags: ["Grocery"] },
+  "Subway":                    { desc: "Custom subs and sandwiches", tags: ["Sandwiches & wraps", "American"] },
+  "Symphony Market":           { desc: "Neighborhood grocery and deli", tags: ["Grocery"] },
+  "TeaDo":                     { desc: "Bubble tea and Asian drinks", tags: ["Bubble tea & drinks", "Asian"] },
+  "University House of Pizza": { desc: "Classic Boston pizza and subs", tags: ["Italian", "American"] },
+  "Wings Over Boston":         { desc: "Chicken wings with tons of sauces", tags: ["BBQ & Wings", "American"] },
+  "Anna's Taqueria":           { desc: "Beloved Boston burrito chain", tags: ["Mexican"] },
+  "Dunkin'":                   { desc: "Coffee, donuts, and breakfast", tags: ["Cafe & Coffee", "Bakery & pastries"] },
+  "Equator Coffees":           { desc: "Specialty coffee, ethically sourced", tags: ["Cafe & Coffee"] },
+  "Faculty Club":              { desc: "Campus dining with full menu", tags: ["American"] },
+  "Fuel America":              { desc: "Coffee and grab-and-go snacks", tags: ["Cafe & Coffee"] },
+  "Juicygreens":               { desc: "Salads, wraps, and healthy bowls", tags: ["Healthy & Salads", "Bowls & salads"] },
+  "Modern Market":             { desc: "Fresh seasonal American cuisine", tags: ["American", "Healthy & Salads"] },
+  "Saxbys":                    { desc: "Coffee and light bites", tags: ["Cafe & Coffee"] },
+  "Starbucks":                 { desc: "Coffee, teas, and snacks", tags: ["Cafe & Coffee"] },
+  "Tatte Bakery and Cafe":     { desc: "Artisan pastries and Israeli-inspired dishes", tags: ["Bakery & pastries", "Cafe & Coffee", "Mediterranean"] },
+  "Wollaston's Market":        { desc: "Campus convenience store and grocery", tags: ["Grocery"] },
+}
+
 const st = {
   page: { minHeight: '100vh', background: '#FAF9F6', backgroundImage: 'linear-gradient(rgba(0,0,0,0.035) 1px,transparent 1px),linear-gradient(90deg,rgba(0,0,0,0.035) 1px,transparent 1px)', backgroundSize: '28px 28px', fontFamily: "'Inter',sans-serif" },
   hero: { background: 'linear-gradient(135deg,#1a1a1a 0%,#2a2a2a 100%)', position: 'relative', overflow: 'hidden' },
@@ -68,6 +115,171 @@ const st = {
     const p = map[pace] || map.on_track
     return { fontFamily:"'Bebas Neue',sans-serif", fontSize:'1.2rem', letterSpacing:'0.08em', padding:'3px 10px', borderRadius:'99px', background:p.bg, color:p.color, border:`1.5px solid ${p.border}`, display:'inline-block' }
   },
+  filterChip: (active, color) => ({
+    padding: '5px 14px', fontFamily: "'Bebas Neue',sans-serif", fontSize: '0.78rem', letterSpacing: '0.07em',
+    cursor: 'pointer', transition: 'all 0.12s', borderRadius: '99px',
+    background: active ? (color || '#1a1a1a') : '#fff',
+    color: active ? '#fff' : '#9CA3AF',
+    border: `1.5px solid ${active ? (color || '#1a1a1a') : 'rgba(0,0,0,0.12)'}`,
+    boxShadow: active ? `2px 2px 0 rgba(0,0,0,0.15)` : 'none',
+  }),
+}
+
+// ── Vendor Map ────────────────────────────────────────────────────
+function VendorMap({ vendors, profile }) {
+  const mapRef = useRef(null)
+  const mapInstanceRef = useRef(null)
+  const markersRef = useRef([])
+  const [catFilter, setCatFilter] = useState('all')
+  const [locFilter, setLocFilter] = useState('all')
+  const [isFullscreen, setIsFullscreen] = useState(false)
+
+  // Use callback ref so we know exactly when the div is mounted
+  const setMapRef = (node) => {
+    if (!node || mapInstanceRef.current) return
+    mapRef.current = node
+    if (!window.L) return
+    const L = window.L
+    const map = L.map(node, { zoomControl: true, scrollWheelZoom: false })
+    map.setView([42.3397, -71.0893], 15)
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors', maxZoom: 19,
+    }).addTo(map)
+    mapInstanceRef.current = map
+    setTimeout(() => map.invalidateSize(), 200)
+  }
+
+  useEffect(() => {
+    if (!mapInstanceRef.current || !vendors.length) return
+    const L = window.L
+    const map = mapInstanceRef.current
+    markersRef.current.forEach(m => m.remove())
+    markersRef.current = []
+    const filtered = vendors.filter(v => {
+      if (catFilter !== 'all' && v.category !== catFilter) return false
+      if (locFilter !== 'all' && v.location_type !== locFilter) return false
+      return true
+    })
+    filtered.forEach(v => {
+      const color = MAP_COLORS[v.category] || '#6B7280'
+      const icon = L.divIcon({
+        html: `<div style="width:14px;height:14px;border-radius:50%;background:${color};border:2.5px solid #fff;box-shadow:0 2px 5px rgba(0,0,0,0.35);"></div>`,
+        className: '', iconSize: [14, 14], iconAnchor: [7, 7], popupAnchor: [0, -10],
+      })
+      const meta = VENDOR_META[v.name] || {}
+      const desc = meta.desc || ''
+      const tags = (meta.tags || []).map(t => `<span style="display:inline-block;padding:2px 8px;border-radius:99px;background:#F3F4F6;font-size:0.68rem;font-family:sans-serif;color:#6B7280;margin:0 3px 3px 0;">${t}</span>`).join('')
+      const popup = `
+        <div style="font-family:'Inter',sans-serif;min-width:200px;padding:4px 0;">
+          <p style="font-family:sans-serif;font-size:0.68rem;letter-spacing:0.08em;color:${color};margin:0 0 3px;text-transform:uppercase;font-weight:700;">${v.location_type === 'on_campus' ? 'ON CAMPUS' : 'OFF CAMPUS'} · ${v.category}</p>
+          <p style="font-weight:700;font-size:1rem;color:#1a1a1a;margin:0 0 2px;">${v.name}</p>
+          ${desc ? `<p style="font-size:0.8rem;color:#4B5563;margin:0 0 5px;line-height:1.4;">${desc}</p>` : ''}
+          <p style="font-size:0.75rem;color:#9CA3AF;margin:0 0 6px;">${v.address}</p>
+          ${tags ? `<div style="margin-bottom:6px;">${tags}</div>` : ''}
+          ${!v.is_available ? '<p style="font-size:0.72rem;color:#D42B2B;margin:0 0 6px;font-weight:600;">⚠ Currently unavailable</p>' : ''}
+          ${v.website_url ? `<a href="${v.website_url}" target="_blank" rel="noopener noreferrer" style="font-size:0.78rem;color:#D42B2B;font-weight:600;text-decoration:none;">Visit Website →</a>` : ''}
+        </div>`
+      const marker = L.marker([v.latitude, v.longitude], { icon }).addTo(map).bindPopup(popup, { maxWidth: 240 })
+      markersRef.current.push(marker)
+    })
+  }, [vendors, catFilter, locFilter])
+
+  if (!vendors.length) return null
+
+  const visibleCount = vendors.filter(v => {
+    if (catFilter !== 'all' && v.category !== catFilter) return false
+    if (locFilter !== 'all' && v.location_type !== locFilter) return false
+    return true
+  }).length
+
+  // Vendor recommendations
+  const cuisines = profile?.cuisines || []
+  const diet = profile?.diet || []
+  const foodTypes = profile?.foodTypes || []
+  const recs = vendors.filter(v => {
+    const meta = VENDOR_META[v.name]
+    if (!meta) return false
+    const matchesCuisine = cuisines.some(c => meta.tags?.includes(c))
+    const matchesFoodType = foodTypes.some(f => meta.tags?.includes(f))
+    const matchesDiet =
+      (diet.includes('Healthy') && meta.tags?.includes('Healthy & Salads')) ||
+      (diet.includes('Vegan') && ['Juicygreens', 'Sprout', 'Poke Station'].includes(v.name)) ||
+      (diet.includes('Vegetarian') && ['Juicygreens', 'Sprout', 'Poke Station', 'Blaze Pizza', 'Panera Bread'].includes(v.name))
+    return matchesCuisine || matchesFoodType || matchesDiet
+  }).slice(0, 4)
+
+  return (
+    <div style={st.card}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem', flexWrap: 'wrap', gap: '8px' }}>
+        <div>
+          <span style={st.label}>DINING DOLLAR VENDORS</span>
+          <p style={{ ...st.heading, marginBottom: 0 }}>Where to Spend Near Campus</p>
+        </div>
+        <span style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: '0.78rem', letterSpacing: '0.06em', color: '#9CA3AF' }}>{visibleCount} LOCATIONS</span>
+      </div>
+
+      {/* Filters */}
+      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '1rem' }}>
+        {[{ id: 'all', label: 'All Locations' }, { id: 'on_campus', label: 'On Campus' }, { id: 'off_campus', label: 'Off Campus' }].map(f => (
+          <button key={f.id} onClick={() => setLocFilter(f.id)} style={st.filterChip(locFilter === f.id, '#1a1a1a')}>{f.label}</button>
+        ))}
+        <div style={{ width: '1px', background: 'rgba(0,0,0,0.1)', margin: '0 4px' }} />
+        {[{ id: 'all', label: 'All', color: '#1a1a1a' }, { id: 'restaurant', label: '🍽 Restaurants', color: '#D42B2B' }, { id: 'cafe', label: '☕ Cafes', color: '#F57F17' }, { id: 'grocery', label: '🛒 Grocery', color: '#2d6a1f' }].map(f => (
+          <button key={f.id} onClick={() => setCatFilter(f.id)} style={st.filterChip(catFilter === f.id, f.color)}>{f.label}</button>
+        ))}
+      </div>
+
+      {/* Map */}
+      <div style={{ borderRadius: '10px', overflow: 'hidden', border: '2px solid rgba(0,0,0,0.09)', height: isFullscreen ? '80vh' : '480px', position: 'relative', transition: 'height 0.3s ease' }}>
+        <div ref={setMapRef} style={{ width: '100%', height: '100%' }} />
+        <button onClick={() => { setIsFullscreen(f => !f); setTimeout(() => mapInstanceRef.current?.invalidateSize(), 350) }}
+          style={{ position: 'absolute', top: '10px', right: '10px', zIndex: 1000, background: '#fff', border: '2px solid rgba(0,0,0,0.15)', borderRadius: '6px', width: '34px', height: '34px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 6px rgba(0,0,0,0.15)' }}>
+          {isFullscreen
+            ? <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#1a1a1a" strokeWidth="2" strokeLinecap="round"><path d="M5 1H1v4M9 1h4v4M5 13H1V9M9 13h4V9"/></svg>
+            : <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#1a1a1a" strokeWidth="2" strokeLinecap="round"><path d="M1 5V1h4M9 1h4v4M1 9v4h4M13 9v4H9"/></svg>
+          }
+        </button>
+      </div>
+
+      {/* Legend */}
+      <div style={{ display: 'flex', gap: '16px', marginTop: '10px', flexWrap: 'wrap' }}>
+        {[{ color: '#D42B2B', label: 'Restaurant' }, { color: '#F57F17', label: 'Cafe' }, { color: '#2d6a1f', label: 'Grocery' }].map(({ color, label }) => (
+          <div key={label} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: color, border: '2px solid white', boxShadow: '0 1px 3px rgba(0,0,0,0.2)' }} />
+            <span style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: '0.75rem', letterSpacing: '0.06em', color: '#6B7280' }}>{label}</span>
+          </div>
+        ))}
+        <span style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: '0.75rem', letterSpacing: '0.06em', color: '#9CA3AF', marginLeft: 'auto' }}>CLICK A PIN FOR DETAILS</span>
+      </div>
+
+      {/* Recommendations */}
+      {recs.length > 0 && (
+        <div style={{ marginTop: '1rem', borderTop: '1px solid rgba(0,0,0,0.07)', paddingTop: '1rem' }}>
+          <span style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: '0.78rem', letterSpacing: '0.1em', color: '#D42B2B', display: 'block', marginBottom: '8px' }}>RECOMMENDED FOR YOU</span>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '8px' }}>
+            {recs.map(v => {
+              const meta = VENDOR_META[v.name] || {}
+              const color = MAP_COLORS[v.category] || '#6B7280'
+              return (
+                <div key={v.id} style={{ background: '#FAFAFA', border: '1.5px solid rgba(0,0,0,0.08)', borderRadius: '8px', padding: '10px 12px', display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
+                  <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: color, flexShrink: 0, marginTop: '4px' }} />
+                  <div>
+                    <p style={{ fontFamily: "'Inter',sans-serif", fontWeight: 600, fontSize: '0.85rem', color: '#1a1a1a', margin: '0 0 2px' }}>{v.name}</p>
+                    <p style={{ fontFamily: "'Inter',sans-serif", fontSize: '0.75rem', color: '#6B7280', margin: '0 0 4px', lineHeight: 1.3 }}>{meta.desc || ''}</p>
+                    <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                      {(meta.tags || []).slice(0, 2).map(t => (
+                        <span key={t} style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: '0.65rem', letterSpacing: '0.05em', padding: '1px 7px', borderRadius: '99px', background: '#F3F4F6', color: '#6B7280' }}>{t}</span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  )
 }
 
 function LogModal({ onClose, onSave }) {
@@ -83,11 +295,7 @@ function LogModal({ onClose, onSave }) {
             <label style={st.label}>AMOUNT</label>
             <div style={{ position:'relative' }}>
               <span style={{ position:'absolute',left:'12px',top:'50%',transform:'translateY(-50%)',color:'#9CA3AF',fontSize:'0.9rem' }}>$</span>
-              <input
-                type="number"
-                inputMode="decimal"
-                placeholder="0.00"
-                value={form.amount}
+              <input type="number" inputMode="decimal" placeholder="0.00" value={form.amount}
                 onKeyDown={e => ['e','E','+','-'].includes(e.key) && e.preventDefault()}
                 onWheel={e => e.target.blur()}
                 onChange={e => {
@@ -95,8 +303,7 @@ function LogModal({ onClose, onSave }) {
                   if (val === '' || val === '.') { set('amount', val); return }
                   const num = parseFloat(val)
                   if (isNaN(num) || num < 0) return
-                  if (num > 400) { set('amount', '400'); return }
-                  // Max 2 decimal places
+                  if (num > 50) { set('amount', '50'); return }
                   const parts = val.split('.')
                   if (parts[1] && parts[1].length > 2) return
                   set('amount', val)
@@ -135,11 +342,31 @@ export default function DiningDollars() {
   const [showModal, setShowModal] = useState(false)
   const [transactions, setTransactions] = useState([])
   const [toast, setToast] = useState(null)
+  const [vendors, setVendors] = useState([])
 
   useEffect(() => {
     const stored = localStorage.getItem('nomnom_profile')
     if (!stored) { navigate('/onboarding'); return }
     if (stored) try { setProfile(JSON.parse(stored)) } catch {}
+  }, [])
+
+  useEffect(() => {
+    async function fetchVendors() {
+      try {
+        const res = await fetch(`${API_BASE}/vendors/`)
+        if (!res.ok) return
+        const data = await res.json()
+        const seen = new Set()
+        const deduped = data.filter(v => {
+          const key = `${v.name}|${v.location_type}`
+          if (seen.has(key)) return false
+          seen.add(key)
+          return true
+        })
+        setVendors(deduped)
+      } catch {}
+    }
+    fetchVendors()
   }, [])
 
   const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(null), 3000) }
@@ -161,12 +388,10 @@ export default function DiningDollars() {
   const projWeekly = profile?.dollarsPerWeek ? parseFloat(profile.dollarsPerWeek) : 0
   const dailyBudget = activeDaysLeft > 0 ? current / activeDaysLeft : 0
 
-  // Pace
   const pctTimeLeft = totalActiveDays > 0 ? (activeDaysLeft || 0) / totalActiveDays : 0
   const expectedRemaining = totalDD * pctTimeLeft
   const pace = !totalDD ? null : Math.abs(current - expectedRemaining) / totalDD < 0.05 ? 'on_track' : current > expectedRemaining ? 'under' : 'over'
 
-  // Category breakdown
   const catTotals = CATEGORIES.map(c => ({
     ...c,
     total: transactions.filter(t => t.category === c.id).reduce((s, t) => s + parseFloat(t.amount || 0), 0),
@@ -185,8 +410,6 @@ export default function DiningDollars() {
 
   return (
     <div style={st.page}>
-
-      {/* ── Hero ── */}
       <div style={st.hero}>
         <PhotoReel />
         <div style={{ position:'absolute',inset:0,backgroundImage:'radial-gradient(circle at 80% 50%,rgba(212,43,43,0.1),transparent 55%)',zIndex:1 }} />
@@ -202,8 +425,6 @@ export default function DiningDollars() {
             </div>
             <button onClick={() => setShowModal(true)} style={{ ...st.btnRed, alignSelf:'flex-start', marginTop:'4px' }}>+ LOG TRANSACTION</button>
           </div>
-
-          {/* Big balance + breakdown */}
           <div style={{ display:'grid',gridTemplateColumns:'auto 1fr',gap:'2.5rem',alignItems:'center',marginTop:'2rem',flexWrap:'wrap' }}>
             <div>
               <p style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:'1.2rem',letterSpacing:'0.12em',color:'rgba(255,255,255,0.35)',margin:'0 0 4px' }}>CURRENT BALANCE</p>
@@ -214,11 +435,9 @@ export default function DiningDollars() {
               </div>
             </div>
             <div>
-              {/* Progress bar */}
               <div style={{ height:'6px',background:'rgba(255,255,255,0.12)',borderRadius:'99px',overflow:'hidden',marginBottom:'10px' }}>
                 <div style={{ height:'100%',width:`${pct}%`,background: pace==='over' ? '#D42B2B' : '#4ade80',borderRadius:'99px',transition:'width 0.6s ease' }} />
               </div>
-              {/* Mini stats */}
               <div style={{ display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:'10px' }}>
                 {[
                   { label:'SPENT', value:`$${spent.toFixed(0)}` },
@@ -237,8 +456,6 @@ export default function DiningDollars() {
       </div>
 
       <div style={st.body}>
-
-        {/* ── Weekly budget alert ── */}
         {projWeekly > 0 && dailyBudget > 0 && (() => {
           const dailyProj = projWeekly / 7
           const isOver = dailyBudget < dailyProj * 0.9
@@ -257,10 +474,7 @@ export default function DiningDollars() {
         })()}
 
         <div style={st.twoCol}>
-          {/* ── Left: history + breakdown ── */}
           <div style={{ display:'flex',flexDirection:'column',gap:'1.2rem' }}>
-
-            {/* Weekly pace bars */}
             {projWeekly > 0 && (
               <div style={st.card}>
                 <span style={st.label}>WEEKLY DINING DOLLAR PACE</span>
@@ -278,8 +492,6 @@ export default function DiningDollars() {
                 </div>
               </div>
             )}
-
-            {/* Category breakdown */}
             {catTotals.length > 0 && (
               <div style={st.card}>
                 <span style={st.label}>SPENDING BY CATEGORY</span>
@@ -302,8 +514,6 @@ export default function DiningDollars() {
                 </div>
               </div>
             )}
-
-            {/* Transaction history */}
             <div style={st.card}>
               <span style={st.label}>TRANSACTION HISTORY</span>
               <p style={st.heading}>Recent Transactions</p>
@@ -334,10 +544,7 @@ export default function DiningDollars() {
             </div>
           </div>
 
-          {/* ── Right: tips + budget info ── */}
           <div style={{ display:'flex',flexDirection:'column',gap:'1.2rem' }}>
-
-            {/* Balance breakdown card */}
             <div style={st.card}>
               <span style={st.label}>BALANCE OVERVIEW</span>
               {[
@@ -354,14 +561,12 @@ export default function DiningDollars() {
                 </div>
               ))}
             </div>
-
-            {/* Tips */}
             <div style={st.card}>
               <span style={st.label}>MONEY TIPS</span>
               <div style={{ display:'flex',flexDirection:'column',gap:'10px' }}>
                 {[
                   { bg:'#FBF2D8', border:'rgba(0,0,0,0.08)', title:'Use swipes when you can', body:'Dining hall swipes are often better value than spending dining dollars on the same meal.' },
-                  { bg:'#f0f7eb', border:'#c8deba', title:'Grocery runs stretch further', body:'Batch shopping 1–2x per week at Star Market or Trader Joe\'s makes your balance last longer.' },
+                  { bg:'#f0f7eb', border:'#c8deba', title:'Grocery runs stretch further', body:"Batch shopping 1–2x per week at Star Market or Wollaston's makes your balance last longer." },
                   { bg:'#FFF0EE', border:'#f0b8b8', title:'Watch the weekend spend', body:'Weekends tend to be the biggest spending days. Plan ahead to avoid burning through your balance.' },
                 ].map(({ bg, border, title, body }) => (
                   <div key={title} style={{ background:bg,border:`1.5px solid ${border}`,borderRadius:'8px',padding:'12px 14px' }}>
@@ -373,10 +578,12 @@ export default function DiningDollars() {
             </div>
           </div>
         </div>
+
+        {/* Vendor Map */}
+        <VendorMap vendors={vendors} profile={profile} />
       </div>
 
       {showModal && <LogModal onClose={() => setShowModal(false)} onSave={handleSave} />}
-
       {toast && (
         <div style={{ position:'fixed',bottom:'2rem',left:'50%',transform:'translateX(-50%)',background:'#1a1a1a',color:'#fff',padding:'10px 20px',borderRadius:'99px',fontFamily:"'Bebas Neue',sans-serif",fontSize:'1.2rem',letterSpacing:'0.06em',boxShadow:'0 4px 20px rgba(0,0,0,0.3)',whiteSpace:'nowrap',zIndex:9999,border:'2px solid rgba(255,255,255,0.1)' }}>
           {toast}

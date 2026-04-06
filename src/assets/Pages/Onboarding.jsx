@@ -38,9 +38,11 @@ const SEMESTERS = {
   },
 }
 
-const DIET_OPTIONS = ['Vegetarian', 'Vegan', 'Halal', 'Kosher', 'Gluten-Free', 'Dairy-Free', 'Nut-Free', 'High Protein', 'Low Carb', 'Low Calorie', 'Low Sodium']
-const CUISINE_OPTIONS = ['American', 'Asian', 'Indian', 'Italian', 'Mediterranean', 'Mexican', 'Middle Eastern', 'Japanese', 'Korean', 'Thai']
-const ALLERGEN_OPTIONS = ['Peanuts', 'Tree Nuts', 'Shellfish', 'Fish', 'Eggs', 'Soy', 'Wheat', 'Sesame', 'Milk']
+const DIET_OPTIONS = ['Vegetarian', 'Vegan', 'Halal', 'Gluten-Free', 'Dairy-Free', 'High Protein', 'Low Carb', 'Low Calorie']
+const CUISINE_OPTIONS = ['American', 'Mexican', 'Thai', 'Mediterranean', 'Middle Eastern', 'Italian', 'Asian']
+const ALLERGEN_OPTIONS = ['Peanuts', 'Tree Nuts', 'Shellfish', 'Fish', 'Eggs', 'Milk / Dairy', 'Soy', 'Wheat / Gluten', 'Sesame', 'Coconut']
+const DINING_STYLE_OPTIONS = ['Quick grab & go', 'Sit-down meal', 'Coffee & cafe runs', 'Grocery & meal prep', 'Late night eats', 'Breakfast spots']
+const FOOD_TYPE_OPTIONS = ['Bowls & salads', 'Sandwiches & wraps', 'Burgers & wings', 'Burritos & tacos', 'Noodles & rice', 'Sushi & poke', 'Bakery & pastries', 'Bubble tea & drinks', 'Smoothies & juices']
 const SPICE_OPTIONS = ['None', 'Mild', 'Medium', 'Spicy', 'Extra Spicy']
 const PORTION_OPTIONS = ['Small', 'Regular', 'Large']
 const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December']
@@ -221,48 +223,29 @@ function ProgressBar({ step, total }) {
   const targetRef = useRef(step / total)
   const currentRef = useRef(step / total)
 
-  useEffect(() => {
-    targetRef.current = step / total
-  }, [step, total])
+  useEffect(() => { targetRef.current = step / total }, [step, total])
 
   useEffect(() => {
     const FREQ = 0.035, AMP = 6, H = 28, MID = 14, HALF_W = 5
-
     function draw() {
       currentRef.current += (targetRef.current - currentRef.current) * 0.06
       phaseRef.current += 0.04
       const endX = currentRef.current * 1000
-
       let d = '', clipD = ''
       if (endX >= 2) {
-        // collect centerline points
         const pts = []
-        for (let x = 0; x <= endX; x += 3) {
-          pts.push([x, MID + Math.sin(x * FREQ + phaseRef.current) * AMP])
-        }
-
-        // stroke path (centerline)
+        for (let x = 0; x <= endX; x += 3) pts.push([x, MID + Math.sin(x * FREQ + phaseRef.current) * AMP])
         d = `M ${pts[0][0]} ${pts[0][1].toFixed(2)}`
-        for (let i = 1; i < pts.length; i++) {
-          d += ` L ${pts[i][0]} ${pts[i][1].toFixed(2)}`
-        }
-
-        // clip band: forward pass = top edge (y - HALF_W), reverse pass = bottom edge (y + HALF_W)
+        for (let i = 1; i < pts.length; i++) d += ` L ${pts[i][0]} ${pts[i][1].toFixed(2)}`
         clipD = `M ${(pts[0][0] / 1000).toFixed(4)} ${((pts[0][1] - HALF_W) / H).toFixed(4)}`
-        for (let i = 1; i < pts.length; i++) {
-          clipD += ` L ${(pts[i][0] / 1000).toFixed(4)} ${((pts[i][1] - HALF_W) / H).toFixed(4)}`
-        }
-        for (let i = pts.length - 1; i >= 0; i--) {
-          clipD += ` L ${(pts[i][0] / 1000).toFixed(4)} ${((pts[i][1] + HALF_W) / H).toFixed(4)}`
-        }
+        for (let i = 1; i < pts.length; i++) clipD += ` L ${(pts[i][0] / 1000).toFixed(4)} ${((pts[i][1] - HALF_W) / H).toFixed(4)}`
+        for (let i = pts.length - 1; i >= 0; i--) clipD += ` L ${(pts[i][0] / 1000).toFixed(4)} ${((pts[i][1] + HALF_W) / H).toFixed(4)}`
         clipD += ' Z'
       }
-
       if (pathRef.current) pathRef.current.setAttribute('d', d)
       if (clipPathRef.current) clipPathRef.current.setAttribute('d', clipD)
       rafRef.current = requestAnimationFrame(draw)
     }
-
     rafRef.current = requestAnimationFrame(draw)
     return () => cancelAnimationFrame(rafRef.current)
   }, [])
@@ -276,50 +259,15 @@ function ProgressBar({ step, total }) {
           </clipPath>
         </defs>
       </svg>
-
       <div style={{ position: 'relative', height: '28px' }}>
-        {/* Faint track */}
-        <div style={{
-          position: 'absolute', top: '50%', left: 0, right: 0,
-          height: '2px', background: 'rgba(0,0,0,0.1)',
-          transform: 'translateY(-50%)',
-        }} />
-        {/* Sine wave — stroke only, no fill */}
-        <svg
-          viewBox="0 0 1000 28"
-          preserveAspectRatio="none"
-          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', display: 'block' }}
-        >
-          <path
-            ref={pathRef}
-            d=""
-            fill="none"
-            stroke="#D42B2B"
-            strokeWidth="10"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            vectorEffect="non-scaling-stroke"
-          />
+        <div style={{ position: 'absolute', top: '50%', left: 0, right: 0, height: '2px', background: 'rgba(0,0,0,0.1)', transform: 'translateY(-50%)' }} />
+        <svg viewBox="0 0 1000 28" preserveAspectRatio="none" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', display: 'block' }}>
+          <path ref={pathRef} d="" fill="none" stroke="#D42B2B" strokeWidth="10" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
         </svg>
-        {/* Dark text — always rendered, visible where clip doesn't cover */}
-        <div style={{
-          position: 'absolute', inset: 0,
-          display: 'flex', alignItems: 'center',
-          fontFamily: "'Bebas Neue', sans-serif", fontSize: '1.5rem',
-          letterSpacing: '0.12em', color: '#1a1a1a',
-          pointerEvents: 'none', userSelect: 'none',
-        }}>
+        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', fontFamily: "'Bebas Neue', sans-serif", fontSize: '1.5rem', letterSpacing: '0.12em', color: '#1a1a1a', pointerEvents: 'none', userSelect: 'none' }}>
            Step {step} / {total}
         </div>
-        {/* White text — same div size as container so objectBoundingBox aligns with the SVG */}
-        <div style={{
-          position: 'absolute', inset: 0,
-          display: 'flex', alignItems: 'center',
-          fontFamily: "'Bebas Neue', sans-serif", fontSize: '1.5rem',
-          letterSpacing: '0.12em', color: '#fff',
-          clipPath: 'url(#onboardingWaveClip)',
-          pointerEvents: 'none', userSelect: 'none',
-        }}>
+        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', fontFamily: "'Bebas Neue', sans-serif", fontSize: '1.5rem', letterSpacing: '0.12em', color: '#fff', clipPath: 'url(#onboardingWaveClip)', pointerEvents: 'none', userSelect: 'none' }}>
            Step {step} / {total}
         </div>
       </div>
@@ -496,21 +444,15 @@ function SemesterSelector({ value, onChange }) {
               {key === 'spring2026' ? (
                 <svg width="30" height="30" viewBox="0 0 30 30" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                   <circle cx="15" cy="15" r="5.5"/>
-                  <line x1="15" y1="2" x2="15" y2="6"/>
-                  <line x1="15" y1="24" x2="15" y2="28"/>
-                  <line x1="2" y1="15" x2="6" y2="15"/>
-                  <line x1="24" y1="15" x2="28" y2="15"/>
-                  <line x1="5.8" y1="5.8" x2="8.6" y2="8.6"/>
-                  <line x1="21.4" y1="21.4" x2="24.2" y2="24.2"/>
-                  <line x1="24.2" y1="5.8" x2="21.4" y2="8.6"/>
-                  <line x1="8.6" y1="21.4" x2="5.8" y2="24.2"/>
+                  <line x1="15" y1="2" x2="15" y2="6"/><line x1="15" y1="24" x2="15" y2="28"/>
+                  <line x1="2" y1="15" x2="6" y2="15"/><line x1="24" y1="15" x2="28" y2="15"/>
+                  <line x1="5.8" y1="5.8" x2="8.6" y2="8.6"/><line x1="21.4" y1="21.4" x2="24.2" y2="24.2"/>
+                  <line x1="24.2" y1="5.8" x2="21.4" y2="8.6"/><line x1="8.6" y1="21.4" x2="5.8" y2="24.2"/>
                 </svg>
               ) : (
                 <svg width="30" height="30" viewBox="0 0 30 30" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M22 4 C22 4 24 11 21 16 C18.5 20 14 21 10 19.5 C6 18 5 14.5 6.5 10.5 C8 7 13 4.5 17.5 5.5 C20 6 22 4 22 4Z"/>
-                  <path d="M21 5 L9 28"/>
-                  <path d="M14 13 Q17 11 20 13"/>
-                  <path d="M11.5 18 Q15 16 18.5 18"/>
+                  <path d="M21 5 L9 28"/><path d="M14 13 Q17 11 20 13"/><path d="M11.5 18 Q15 16 18.5 18"/>
                 </svg>
               )}
             </div>
@@ -532,7 +474,8 @@ function PreferencesStep({ answers, toggleArr, set, onBack, onNext, step, isNewP
       {isNewPlan && <span style={st.pathPill}>FINDING YOU THE RIGHT PLAN</span>}
       <span style={{ display: 'block', ...st.eyebrow }}>DINING DOLLAR PREFERENCES</span>
       <h2 style={st.heading}>What are your food preferences?</h2>
-      <p style={st.sub}>We'll use these to suggest dining dollar restaurants that match your taste and needs. This does not apply to dining hall swipes.</p>
+      <p style={st.sub}>We'll use these to recommend dining dollar vendors near campus that match your taste, needs, and lifestyle.</p>
+
       <div style={{ display: 'flex', alignItems: 'center', gap: '6px', margin: '1.4rem 0 0.7rem' }}>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M12 21 C11.4 21 5.8 16.8 6 11 C6.2 5.5 10.2 3.8 12 4 C13.8 3.8 18 5.5 18 11 C18 16.8 12.6 21 12 21Z" stroke="#9CA3AF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -544,20 +487,7 @@ function PreferencesStep({ answers, toggleArr, set, onBack, onNext, step, isNewP
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '0.5rem' }}>
         {DIET_OPTIONS.map(opt => <Chip key={opt} label={opt} selected={answers.diet.includes(opt)} onToggle={() => toggleArr('diet', opt)} />)}
       </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', margin: '1.4rem 0 0.7rem' }}>
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="12" cy="12" r="8.5" stroke="#9CA3AF" strokeWidth="1.5"/>
-          <path d="M12 3.5 C11.5 6 9.2 8.5 9 12 C8.8 15.5 11.5 18.5 12 20.5" stroke="#9CA3AF" strokeWidth="1" strokeLinecap="round"/>
-          <path d="M12 3.5 C12.5 6 14.8 8.5 15 12 C15.2 15.5 12.5 18.5 12 20.5" stroke="#9CA3AF" strokeWidth="1" strokeLinecap="round"/>
-          <path d="M3.5 12 L20.5 12" stroke="#9CA3AF" strokeWidth="1" strokeLinecap="round"/>
-          <path d="M5.5 7.5 Q12 9 18.5 7.5" stroke="#9CA3AF" strokeWidth="0.8" strokeLinecap="round"/>
-          <path d="M5.5 16.5 Q12 15 18.5 16.5" stroke="#9CA3AF" strokeWidth="0.8" strokeLinecap="round"/>
-        </svg>
-        <span style={{ ...st.sectionLabel, margin: 0, display: 'inline' }}>CUISINE PREFERENCES</span>
-      </div>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '0.5rem' }}>
-        {CUISINE_OPTIONS.map(opt => <Chip key={opt} label={opt} selected={answers.cuisines.includes(opt)} onToggle={() => toggleArr('cuisines', opt)} />)}
-      </div>
+
       <div style={{ display: 'flex', alignItems: 'center', gap: '6px', margin: '1.4rem 0 0.7rem' }}>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M12 3.5 L21 20.5 L3 20.5 Z" stroke="#9CA3AF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -569,6 +499,47 @@ function PreferencesStep({ answers, toggleArr, set, onBack, onNext, step, isNewP
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '0.5rem' }}>
         {ALLERGEN_OPTIONS.map(opt => <Chip key={opt} label={opt} selected={answers.allergens.includes(opt)} onToggle={() => toggleArr('allergens', opt)} />)}
       </div>
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', margin: '1.4rem 0 0.7rem' }}>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="12" cy="12" r="8.5" stroke="#9CA3AF" strokeWidth="1.5"/>
+          <path d="M12 3.5 C11.5 6 9.2 8.5 9 12 C8.8 15.5 11.5 18.5 12 20.5" stroke="#9CA3AF" strokeWidth="1" strokeLinecap="round"/>
+          <path d="M12 3.5 C12.5 6 14.8 8.5 15 12 C15.2 15.5 12.5 18.5 12 20.5" stroke="#9CA3AF" strokeWidth="1" strokeLinecap="round"/>
+          <path d="M3.5 12 L20.5 12" stroke="#9CA3AF" strokeWidth="1" strokeLinecap="round"/>
+          <path d="M5.5 7.5 Q12 9 18.5 7.5" stroke="#9CA3AF" strokeWidth="0.8" strokeLinecap="round"/>
+          <path d="M5.5 16.5 Q12 15 18.5 16.5" stroke="#9CA3AF" strokeWidth="0.8" strokeLinecap="round"/>
+        </svg>
+        <span style={{ ...st.sectionLabel, margin: 0, display: 'inline' }}>CUISINE PREFERENCES</span>
+      </div>
+      <p style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.72rem', letterSpacing: '0.03em', color: '#9CA3AF', margin: '-4px 0 8px' }}>Based on vendors near Northeastern</p>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '0.5rem' }}>
+        {CUISINE_OPTIONS.map(opt => <Chip key={opt} label={opt} selected={answers.cuisines.includes(opt)} onToggle={() => toggleArr('cuisines', opt)} />)}
+      </div>
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', margin: '1.4rem 0 0.7rem' }}>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M4.5 10.5 C4.5 16.5 7.8 20.5 12 20.5 C16.2 20.5 19.5 16.5 19.5 10.5 Z" stroke="#9CA3AF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+          <line x1="3" y1="10.5" x2="21" y2="10.5" stroke="#9CA3AF" strokeWidth="1.5" strokeLinecap="round"/>
+          <line x1="10" y1="20.5" x2="14" y2="20.5" stroke="#9CA3AF" strokeWidth="1.5" strokeLinecap="round"/>
+        </svg>
+        <span style={{ ...st.sectionLabel, margin: 0, display: 'inline' }}>WHAT DO YOU USUALLY EAT?</span>
+      </div>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '0.5rem' }}>
+        {FOOD_TYPE_OPTIONS.map(opt => <Chip key={opt} label={opt} selected={(answers.foodTypes || []).includes(opt)} onToggle={() => toggleArr('foodTypes', opt)} />)}
+      </div>
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', margin: '1.4rem 0 0.7rem' }}>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="3" y="6" width="18" height="13" rx="2" stroke="#9CA3AF" strokeWidth="1.5"/>
+          <line x1="3" y1="11" x2="21" y2="11" stroke="#9CA3AF" strokeWidth="1.5"/>
+          <line x1="7" y1="15.5" x2="11" y2="15.5" stroke="#9CA3AF" strokeWidth="1.5" strokeLinecap="round"/>
+        </svg>
+        <span style={{ ...st.sectionLabel, margin: 0, display: 'inline' }}>DINING STYLE</span>
+      </div>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '0.5rem' }}>
+        {DINING_STYLE_OPTIONS.map(opt => <Chip key={opt} label={opt} selected={(answers.diningStyle || []).includes(opt)} onToggle={() => toggleArr('diningStyle', opt)} />)}
+      </div>
+
       <div style={{ display: 'flex', alignItems: 'center', gap: '6px', margin: '1.4rem 0 0.7rem' }}>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M12 21 C9 21 6 18 6 14 C6 10 8.5 8 10 6 C10 6 9.2 10 12 11 C12 11 10.5 8 14 6 C16 8 18 10.5 18 14 C18 18 15 21 12 21Z" stroke="#9CA3AF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -581,6 +552,7 @@ function PreferencesStep({ answers, toggleArr, set, onBack, onNext, step, isNewP
           <button key={opt} type="button" onClick={() => set('spiceLevel', opt)} style={{ ...st.chip(answers.spiceLevel === opt), marginBottom: 0 }}>{opt}</button>
         ))}
       </div>
+
       <div style={{ display: 'flex', alignItems: 'center', gap: '6px', margin: '1.4rem 0 0.7rem' }}>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M4.5 10.5 C4.5 16.5 7.8 20.5 12 20.5 C16.2 20.5 19.5 16.5 19.5 10.5 Z" stroke="#9CA3AF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -628,11 +600,7 @@ function HabitsStep({ answers, set, onBack, onNext, step, isNewPlan, selectedPla
               </button>
             ))}
           </div>
-          <input
-            type="text"
-            inputMode="numeric"
-            placeholder={answers.swipesPeriod === 'week' ? 'e.g. 10' : 'e.g. 2'}
-            value={answers.swipesAmt}
+          <input type="text" inputMode="numeric" placeholder={answers.swipesPeriod === 'week' ? 'e.g. 10' : 'e.g. 2'} value={answers.swipesAmt}
             onChange={e => {
               const val = e.target.value
               if (val === '') { set('swipesAmt', val); return }
@@ -658,11 +626,7 @@ function HabitsStep({ answers, set, onBack, onNext, step, isNewPlan, selectedPla
         </div>
         <div style={{ position: 'relative' }}>
           <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#9CA3AF', fontSize: '0.9rem' }}>$</span>
-          <input
-            type="text"
-            inputMode="decimal"
-            placeholder="e.g. 35"
-            value={answers.dollarsPerWeek}
+          <input type="text" inputMode="decimal" placeholder="e.g. 35" value={answers.dollarsPerWeek}
             onChange={e => {
               const val = e.target.value
               if (val === '') { set('dollarsPerWeek', val); return }
@@ -677,7 +641,6 @@ function HabitsStep({ answers, set, onBack, onNext, step, isNewPlan, selectedPla
         </div>
         <p style={st.hint}>Money you plan to spend at dining-plan restaurants, cafes, etc. per week.</p>
       </div>
-
       <NavButtons step={step} onBack={onBack} onNext={onNext} nextLabel={isNewPlan ? 'CONTINUE' : 'ALMOST DONE'} />
     </div>
   )
@@ -731,7 +694,7 @@ export default function Onboarding() {
     swipesLeft: '', diningDollarsLeft: '',
     semesterPreset: null, semesterStart: '', semesterEnd: '2026-04-26',
     semesterBreaks: [], customOffDays: [],
-    diet: [], cuisines: [], allergens: [],
+    diet: [], cuisines: [], allergens: [], diningStyle: [], foodTypes: [],
     spiceLevel: '', portionSize: '',
     swipesAmt: '', swipesPeriod: 'day',
     dollarsPerWeek: '',
@@ -855,11 +818,7 @@ export default function Onboarding() {
                 {selectedPlan?.swipes !== null ? (
                   <div>
                     <label style={st.label}>SWIPES REMAINING</label>
-                    <input
-                      type="text"
-                      inputMode="numeric"
-                      placeholder={`e.g. ${Math.floor((selectedPlan?.swipes ?? 225) * 0.6)}`}
-                      value={answers.swipesLeft}
+                    <input type="text" inputMode="numeric" placeholder={`e.g. ${Math.floor((selectedPlan?.swipes ?? 225) * 0.6)}`} value={answers.swipesLeft}
                       onChange={e => {
                         const val = e.target.value
                         if (val === '') { set('swipesLeft', val); return }
@@ -878,11 +837,7 @@ export default function Onboarding() {
                   <label style={st.label}>DINING DOLLARS REMAINING</label>
                   <div style={{ position: 'relative' }}>
                     <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#9CA3AF', fontSize: '0.9rem' }}>$</span>
-                    <input
-                      type="text"
-                      inputMode="decimal"
-                      placeholder={`e.g. ${Math.floor((selectedPlan?.diningDollars ?? 600) * 0.6)}`}
-                      value={answers.diningDollarsLeft}
+                    <input type="text" inputMode="decimal" placeholder={`e.g. ${Math.floor((selectedPlan?.diningDollars ?? 600) * 0.6)}`} value={answers.diningDollarsLeft}
                       onChange={e => {
                         const val = e.target.value
                         if (val === '') { set('diningDollarsLeft', val); return }
@@ -1032,11 +987,11 @@ export default function Onboarding() {
                 ))}
               </div>
             </div>
-            {(answers.diet.length > 0 || answers.cuisines.length > 0 || answers.allergens.length > 0) && (
+            {(answers.diet.length > 0 || answers.cuisines.length > 0 || answers.allergens.length > 0 || answers.foodTypes.length > 0 || answers.diningStyle.length > 0) && (
               <div style={st.summaryCard}>
                 <span style={st.summaryLabel}>PREFERENCES</span>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                  {[...answers.diet, ...answers.cuisines, ...answers.allergens].map(tag => (
+                  {[...answers.diet, ...answers.cuisines, ...answers.allergens, ...answers.foodTypes, ...answers.diningStyle].map(tag => (
                     <span key={tag} style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.7rem', letterSpacing: '0.06em', padding: '3px 10px', borderRadius: '99px', background: '#FFE45C', border: '1.5px solid #1a1a1a', color: '#1a1a1a' }}>{tag}</span>
                   ))}
                 </div>

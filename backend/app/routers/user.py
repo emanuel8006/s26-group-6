@@ -8,6 +8,7 @@ from typing import Any
 from app.db.supabase_client import supabase_client
 from app.routers.auth import get_current_user
 from pydantic import BaseModel
+import json
 
 router = APIRouter(prefix="/user", tags=["user"])
 
@@ -72,14 +73,13 @@ class meal_plan_request(BaseModel):
 
 
 @router.post("/update_meal_plan")
-async def create_meal_plan(
-    body: meal_plan_request,
-    user: Any = Depends(get_current_user)
-):
+async def create_meal_plan(body: meal_plan_request):
     """
     Adds meal plan info to account
     """
-    update_dict: dict[str, str] = {}
+    data = supabase_client.auth.get_user()
+
+    update_dict: dict[str,str] = {}
 
     if body.swipes_start:
         update_dict["swipes_start"] = body.swipes_start
@@ -103,7 +103,7 @@ async def create_meal_plan(
         response = (
             supabase_client.table("meal_plans")
             .update(update_dict)
-            .eq("id", user.id)
+            .eq("id",data.user.id)
             .execute()
         )
         return response
@@ -124,18 +124,22 @@ async def get_user_info(user: Any = Depends(get_current_user)):
     except Exception as exception:
         raise HTTPException(status_code=500, detail=str(exception))
 
+class data_request(BaseModel):
+    column_list: str # json
+    table_name: str # users, meal_plans
 
-@router.get("/get_specific/")
+@router.get("/get_data/")
 async def get_user_info_specific(
-    columns: list[str],
+    body: data_request, # List of column names in json string format
     user: Any = Depends(get_current_user)
-):
+    ) -> Exception|APIResponse:
+    columns = json.loads(body.column_list)
     try:
         response = (
-            supabase_client.table("users")
-            .select(", ".join(columns))
-            .eq("id", user.id)
-            .execute()
+        supabase_client.table(body.table_name)
+        .select(", ".join(columns))
+        .eq("id",user.id)
+        .execute()
         )
         return response
     except Exception as exception:

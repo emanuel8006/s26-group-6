@@ -56,15 +56,19 @@ def register(body: AuthRequest):
 @router.post("/login")
 def login(body: AuthRequest):
     """Log in with email and password, returning a session token and user."""
-    response = supabase_client.auth.sign_in_with_password(
-        {"email": body.email, "password": body.password}
-    )
-    if response.session is None:
-        raise HTTPException(status_code=401, detail="Invalid credentials")
+    try:
+        response = supabase_client.auth.sign_in_with_password(
+            {"email": body.email, "password": body.password}
+        )
+        if response.session is None:
+            raise HTTPException(status_code=401, detail="Invalid credentials")
+    except Exception as exception:
+        raise HTTPException(status_code=500, detail=str(exception))
     return {
         "access_token": response.session.access_token,
         "token_type": "bearer",
         "user": response.user,
+        "token_str": f"{"bearer"},{response.session.access_token},{response.user}"
     }
 
 

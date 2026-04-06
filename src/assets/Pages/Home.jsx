@@ -1,6 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import callumPhoto from '../callum_new.jpg';
+import callumPhoto from '../callum.jpg';
+import nPhoto from '../naman.png';
+import ePhoto from '../emanuel.jpeg';
+import aPhoto from '../aarav.jpeg';
+import tPhoto from '../tan.jpeg';
 import './Home.css';
 
 export default function Home() {
@@ -730,11 +734,11 @@ export default function Home() {
               const roles = ['Frontend / Design','Backend / Data Analysis','Product / UX','Backend / Data Analysis','Fullstack'];
               const names = ['Naman Patel', 'Callum Johnson', 'Aarav Gandbhir', 'Tan Matalon', 'Emanuel Galindo Garcia'];
               const photos = [
-                'https://media.licdn.com/dms/image/v2/D4E03AQFWOhWwKnPaqw/profile-displayphoto-crop_800_800/B4EZkndKDcGUAI-/0/1757303579846?e=1775088000&v=beta&t=OyekSeMBvwmrVXlekxvORPB3taZQyTQ2-Dw3MynIgdQ',
+                nPhoto,
                 callumPhoto,
-                'https://media.licdn.com/dms/image/v2/D4E03AQH08cgIZmzsRQ/profile-displayphoto-scale_400_400/B4EZxpMj_6IkAg-/0/1771291427358?e=1775088000&v=beta&t=6Og94j2oY86e10l-6BOBrbCK8WTG0hIMp3OMFzSsoHc',
-                'https://media.licdn.com/dms/image/v2/D4E03AQFWxHH13XN_7A/profile-displayphoto-scale_400_400/B4EZmXm7o_HgAg-/0/1759185190057?e=1775088000&v=beta&t=PYcA7VzyVnrAawpjznL6PNY_8zkcoQ9ygfVIXTCsH34',
-                'https://media.licdn.com/dms/image/v2/D4D03AQHlM6XilVj0jw/profile-displayphoto-shrink_800_800/B4DZaNiFawGcAs-/0/1746131245182?e=1775088000&v=beta&t=V0h5YemCBsG_16lYPC_kLnrZPG7kH8pixWJemi53gpg',
+                aPhoto,
+                tPhoto,
+                ePhoto,
               ];
               const githubs = [
                 'https://github.com/namanp07',

@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 const PLANS = [
@@ -38,9 +38,11 @@ const SEMESTERS = {
   },
 }
 
-const DIET_OPTIONS = ['Vegetarian', 'Vegan', 'Halal', 'Kosher', 'Gluten-Free', 'Dairy-Free', 'Nut-Free', 'High Protein', 'Low Carb', 'Low Calorie', 'Low Sodium']
-const CUISINE_OPTIONS = ['American', 'Asian', 'Indian', 'Italian', 'Mediterranean', 'Mexican', 'Middle Eastern', 'Japanese', 'Korean', 'Thai', 'Ethiopian']
-const ALLERGEN_OPTIONS = ['Peanuts', 'Tree Nuts', 'Shellfish', 'Fish', 'Eggs', 'Soy', 'Wheat', 'Sesame', 'Milk']
+const DIET_OPTIONS = ['Vegetarian', 'Vegan', 'Halal', 'Gluten-Free', 'Dairy-Free', 'High Protein', 'Low Carb', 'Low Calorie']
+const CUISINE_OPTIONS = ['American', 'Mexican', 'Thai', 'Mediterranean', 'Middle Eastern', 'Italian', 'Asian']
+const ALLERGEN_OPTIONS = ['Peanuts', 'Tree Nuts', 'Shellfish', 'Fish', 'Eggs', 'Milk / Dairy', 'Soy', 'Wheat / Gluten', 'Sesame', 'Coconut']
+const DINING_STYLE_OPTIONS = ['Quick grab & go', 'Sit-down meal', 'Coffee & cafe runs', 'Grocery & meal prep', 'Late night eats', 'Breakfast spots']
+const FOOD_TYPE_OPTIONS = ['Bowls & salads', 'Sandwiches & wraps', 'Burgers & wings', 'Burritos & tacos', 'Noodles & rice', 'Sushi & poke', 'Bakery & pastries', 'Bubble tea & drinks', 'Smoothies & juices']
 const SPICE_OPTIONS = ['None', 'Mild', 'Medium', 'Spicy', 'Extra Spicy']
 const PORTION_OPTIONS = ['Small', 'Regular', 'Large']
 const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December']
@@ -182,7 +184,7 @@ function suggestPlan(projSwipes, dollarsPerWeek, effDays) {
 
 const st = {
   page: { minHeight: '100vh', background: '#FAF9F6', fontFamily: "'Inter', sans-serif", position: 'relative', overflow: 'hidden' },
-  topbar: { background: '#FBF2D8', borderBottom: '2px solid #1a1a1a', padding: '0.9rem 2rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 100, boxShadow: '0 2px 0 rgba(0,0,0,0.04)' },
+  topbar: { background: '#FBF2D8', padding: '0.9rem 2rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 100, overflow: 'visible' },
   logo: { fontFamily: "'Chicle', serif", fontSize: '1.4rem', fontWeight: 700, color: '#1a1a1a' },
   exitBtn: { fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.85rem', letterSpacing: '0.08em', color: '#6B7280', background: 'none', border: 'none', cursor: 'pointer' },
   container: { maxWidth: '600px', margin: '0 auto', padding: '2.5rem 1.5rem 4rem' },
@@ -191,38 +193,83 @@ const st = {
   progressLabel: { fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.78rem', letterSpacing: '0.1em', color: '#9CA3AF' },
   progressPct: { fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.78rem', color: '#D42B2B' },
   progressTrack: { height: '5px', background: 'rgba(0,0,0,0.08)', borderRadius: '99px', overflow: 'hidden' },
-  eyebrow: { fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.75rem', letterSpacing: '0.14em', color: '#D42B2B', display: 'block', marginBottom: '8px' },
+  eyebrow: { fontFamily: "'Bebas Neue', sans-serif", fontSize: '2.2rem', letterSpacing: '0.14em', color: '#D42B2B', display: 'block', marginBottom: '8px' },
   heading: { fontFamily: "'Playfair Display', serif", fontSize: 'clamp(1.7rem, 4vw, 2.2rem)', fontWeight: 700, color: '#1a1a1a', marginBottom: '8px', lineHeight: 1.15 },
-  sub: { fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.88rem', letterSpacing: '0.03em', color: '#6B7280', marginBottom: '1.8rem', lineHeight: 1.65 },
+  sub: { fontFamily: "'Bebas Neue', sans-serif", fontSize: '1.1rem', letterSpacing: '0.03em', color: '#6B7280', marginBottom: '1.8rem', lineHeight: 1.65 },
   card: (sel) => ({ background: sel ? '#FBF2D8' : '#fff', border: `2px solid ${sel ? '#1a1a1a' : 'rgba(0,0,0,0.12)'}`, borderRadius: '10px', padding: '1.2rem', cursor: 'pointer', textAlign: 'left', width: '100%', boxShadow: sel ? '4px 5px 0px #1a1a1a' : '2px 3px 0px rgba(0,0,0,0.08)', transform: sel ? 'translate(-1px,-1px)' : 'none', transition: 'all 0.12s ease' }),
   planCard: (sel) => ({ background: sel ? '#FBF2D8' : '#fff', border: `2px solid ${sel ? '#1a1a1a' : 'rgba(0,0,0,0.1)'}`, borderRadius: '10px', padding: '1rem 1.2rem', cursor: 'pointer', textAlign: 'left', width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: sel ? '4px 5px 0px #1a1a1a' : '2px 3px 0px rgba(0,0,0,0.07)', transform: sel ? 'translate(-1px,-1px)' : 'none', marginBottom: '10px', transition: 'all 0.12s ease' }),
-  chip: (sel) => ({ padding: '5px 14px', borderRadius: '99px', border: `1.5px solid ${sel ? '#1a1a1a' : 'rgba(0,0,0,0.15)'}`, fontSize: '0.75rem', fontFamily: "'Bebas Neue', sans-serif", letterSpacing: '0.06em', cursor: 'pointer', background: sel ? '#FFE45C' : '#fff', color: '#1a1a1a', boxShadow: sel ? '2px 2px 0px #1a1a1a' : 'none', marginBottom: '6px', transition: 'all 0.12s ease' }),
+  chip: (sel) => ({ padding: '5px 14px', borderRadius: '99px', border: `1.5px solid ${sel ? '#1a1a1a' : 'rgba(0,0,0,0.15)'}`, fontSize: '0.84rem', fontFamily: "'Bebas Neue', sans-serif", letterSpacing: '0.06em', cursor: 'pointer', background: sel ? '#FFE45C' : '#fff', color: '#1a1a1a', boxShadow: sel ? '2px 2px 0px #1a1a1a' : 'none', marginBottom: '6px', transition: 'all 0.12s ease' }),
   input: { width: '100%', padding: '10px 14px', border: '2px solid rgba(0,0,0,0.12)', borderRadius: '8px', fontSize: '0.9rem', fontFamily: "'Inter', sans-serif", background: '#fff', color: '#1a1a1a', outline: 'none', boxSizing: 'border-box', boxShadow: '2px 3px 0px rgba(0,0,0,0.07)' },
-  label: { display: 'block', fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.82rem', letterSpacing: '0.1em', color: '#6B7280', marginBottom: '6px' },
-  hint: { fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.8rem', letterSpacing: '0.03em', color: '#9CA3AF', marginTop: '4px' },
+  label: { display: 'block', fontFamily: "'Bebas Neue', sans-serif", fontSize: '1.1rem', letterSpacing: '0.1em', color: '#6B7280', marginBottom: '6px' },
+  hint: { fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.72rem', letterSpacing: '0.03em', color: '#9CA3AF', marginTop: '4px' },
   btnPrimary: { flex: 1, padding: '0.85rem 1.5rem', background: '#D42B2B', color: '#fff', border: '2.5px solid #1a1a1a', borderRadius: '8px', fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.95rem', letterSpacing: '0.07em', cursor: 'pointer', boxShadow: '3px 4px 0px #1a1a1a', transition: 'all 0.12s ease' },
   btnSecondary: { padding: '0.85rem 1.25rem', background: '#FBF2D8', color: '#1a1a1a', border: '2px solid rgba(0,0,0,0.18)', borderRadius: '8px', fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.95rem', letterSpacing: '0.07em', cursor: 'pointer', boxShadow: '2px 3px 0px rgba(0,0,0,0.08)', transition: 'all 0.12s ease' },
   btnDisabled: { flex: 1, padding: '0.85rem 1.5rem', background: 'rgba(0,0,0,0.06)', color: 'rgba(0,0,0,0.25)', border: '2px solid rgba(0,0,0,0.08)', borderRadius: '8px', fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.95rem', letterSpacing: '0.07em', cursor: 'not-allowed' },
-  pathPill: { display: 'inline-block', fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.75rem', letterSpacing: '0.1em', padding: '3px 12px', borderRadius: '99px', background: '#FFE45C', border: '1.5px solid #1a1a1a', color: '#1a1a1a', marginBottom: '1rem', boxShadow: '2px 2px 0px #1a1a1a' },
+  pathPill: { display: 'inline-block', fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.68rem', letterSpacing: '0.1em', padding: '3px 12px', borderRadius: '99px', background: '#FFE45C', border: '1.5px solid #1a1a1a', color: '#1a1a1a', marginBottom: '1rem', boxShadow: '2px 2px 0px #1a1a1a' },
   sectionLabel: { fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.82rem', letterSpacing: '0.1em', color: '#6B7280', display: 'block', margin: '1.4rem 0 0.7rem' },
   noticeBox: (variant = 'cream') => ({ background: variant === 'red' ? '#FFF0EE' : variant === 'blue' ? '#EFF6FF' : '#FBF2D8', border: `2px solid ${variant === 'red' ? '#D42B2B' : variant === 'blue' ? '#3B82F6' : '#1a1a1a'}`, borderRadius: '8px', padding: '12px 16px', fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.82rem', letterSpacing: '0.04em', color: variant === 'red' ? '#D42B2B' : variant === 'blue' ? '#1D4ED8' : '#1a1a1a', marginBottom: '1rem', boxShadow: `3px 3px 0px ${variant === 'red' ? '#D42B2B' : variant === 'blue' ? '#3B82F6' : '#1a1a1a'}` }),
   summaryCard: { background: '#fff', border: '2px solid rgba(0,0,0,0.09)', borderRadius: '10px', padding: '1.1rem 1.2rem', marginBottom: '10px', boxShadow: '3px 4px 0px rgba(0,0,0,0.06)' },
-  summaryLabel: { fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.75rem', letterSpacing: '0.12em', color: '#9CA3AF', display: 'block', marginBottom: '6px' },
-  badgeRed: { fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.75rem', letterSpacing: '0.08em', padding: '2px 8px', borderRadius: '4px', border: '1.5px solid #1a1a1a', background: '#D42B2B', color: '#fff', display: 'inline-block' },
-  badgeYellow: { fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.75rem', letterSpacing: '0.08em', padding: '2px 8px', borderRadius: '4px', border: '1.5px solid #1a1a1a', background: '#FFE45C', color: '#1a1a1a', display: 'inline-block' },
+  summaryLabel: { fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.68rem', letterSpacing: '0.12em', color: '#9CA3AF', display: 'block', marginBottom: '6px' },
+  badgeRed: { fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.65rem', letterSpacing: '0.08em', padding: '2px 8px', borderRadius: '4px', border: '1.5px solid #1a1a1a', background: '#D42B2B', color: '#fff', display: 'inline-block' },
+  badgeYellow: { fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.65rem', letterSpacing: '0.08em', padding: '2px 8px', borderRadius: '4px', border: '1.5px solid #1a1a1a', background: '#FFE45C', color: '#1a1a1a', display: 'inline-block' },
   toggleBtn: (active) => ({ padding: '7px 16px', fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.78rem', letterSpacing: '0.06em', cursor: 'pointer', border: '1.5px solid rgba(0,0,0,0.15)', background: active ? '#1a1a1a' : '#fff', color: active ? '#fff' : '#9CA3AF', transition: 'all 0.12s ease' }),
 }
 
 function ProgressBar({ step, total }) {
-  const pct = Math.round((step / total) * 100)
+  const pathRef = useRef(null)
+  const clipPathRef = useRef(null)
+  const rafRef = useRef(null)
+  const phaseRef = useRef(0)
+  const targetRef = useRef(step / total)
+  const currentRef = useRef(step / total)
+
+  useEffect(() => { targetRef.current = step / total }, [step, total])
+
+  useEffect(() => {
+    const FREQ = 0.035, AMP = 6, H = 28, MID = 14, HALF_W = 5
+    function draw() {
+      currentRef.current += (targetRef.current - currentRef.current) * 0.06
+      phaseRef.current += 0.04
+      const endX = currentRef.current * 1000
+      let d = '', clipD = ''
+      if (endX >= 2) {
+        const pts = []
+        for (let x = 0; x <= endX; x += 3) pts.push([x, MID + Math.sin(x * FREQ + phaseRef.current) * AMP])
+        d = `M ${pts[0][0]} ${pts[0][1].toFixed(2)}`
+        for (let i = 1; i < pts.length; i++) d += ` L ${pts[i][0]} ${pts[i][1].toFixed(2)}`
+        clipD = `M ${(pts[0][0] / 1000).toFixed(4)} ${((pts[0][1] - HALF_W) / H).toFixed(4)}`
+        for (let i = 1; i < pts.length; i++) clipD += ` L ${(pts[i][0] / 1000).toFixed(4)} ${((pts[i][1] - HALF_W) / H).toFixed(4)}`
+        for (let i = pts.length - 1; i >= 0; i--) clipD += ` L ${(pts[i][0] / 1000).toFixed(4)} ${((pts[i][1] + HALF_W) / H).toFixed(4)}`
+        clipD += ' Z'
+      }
+      if (pathRef.current) pathRef.current.setAttribute('d', d)
+      if (clipPathRef.current) clipPathRef.current.setAttribute('d', clipD)
+      rafRef.current = requestAnimationFrame(draw)
+    }
+    rafRef.current = requestAnimationFrame(draw)
+    return () => cancelAnimationFrame(rafRef.current)
+  }, [])
+
   return (
     <div style={st.progressWrap}>
-      <div style={st.progressTop}>
-        <span style={st.progressLabel}>STEP {step} OF {total}</span>
-        <span style={st.progressPct}>{pct}%</span>
-      </div>
-      <div style={st.progressTrack}>
-        <div style={{ height: '100%', background: '#D42B2B', width: `${pct}%`, transition: 'width 0.4s ease', borderRadius: '99px' }} />
+      <svg style={{ position: 'absolute', width: 0, height: 0, overflow: 'hidden' }} aria-hidden="true">
+        <defs>
+          <clipPath id="onboardingWaveClip" clipPathUnits="objectBoundingBox">
+            <path ref={clipPathRef} d="" />
+          </clipPath>
+        </defs>
+      </svg>
+      <div style={{ position: 'relative', height: '28px' }}>
+        <div style={{ position: 'absolute', top: '50%', left: 0, right: 0, height: '2px', background: 'rgba(0,0,0,0.1)', transform: 'translateY(-50%)' }} />
+        <svg viewBox="0 0 1000 28" preserveAspectRatio="none" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', display: 'block' }}>
+          <path ref={pathRef} d="" fill="none" stroke="#D42B2B" strokeWidth="10" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
+        </svg>
+        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', fontFamily: "'Bebas Neue', sans-serif", fontSize: '1.5rem', letterSpacing: '0.12em', color: '#1a1a1a', pointerEvents: 'none', userSelect: 'none' }}>
+           Step {step} / {total}
+        </div>
+        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', fontFamily: "'Bebas Neue', sans-serif", fontSize: '1.5rem', letterSpacing: '0.12em', color: '#fff', clipPath: 'url(#onboardingWaveClip)', pointerEvents: 'none', userSelect: 'none' }}>
+           Step {step} / {total}
+        </div>
       </div>
     </div>
   )
@@ -250,7 +297,7 @@ function PlanCard({ plan, selected, onClick, recBadge }) {
           {recBadge && <span style={st.badgeYellow}>RECOMMENDED</span>}
           {!recBadge && plan.tag && <span style={st.badgeRed}>{plan.tag}</span>}
         </div>
-        <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.75rem', letterSpacing: '0.04em', color: '#9CA3AF', display: 'flex', gap: '14px', flexWrap: 'wrap' }}>
+        <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.84rem', letterSpacing: '0.04em', color: '#9CA3AF', display: 'flex', gap: '14px', flexWrap: 'wrap' }}>
           <span>{plan.swipes === null ? 'Unlimited swipes' : `${plan.swipes} swipes`}</span>
           <span>${plan.diningDollars} dining dollars</span>
           <span>{plan.guestPasses} guest passes</span>
@@ -270,10 +317,10 @@ function BreakCard({ brk, onToggleEnabled, onToggleWeekend }) {
         <div style={{ flexShrink: 0, opacity: brk.enabled ? 1 : 0.4, transition: 'opacity 0.2s' }}>{BREAK_ART[brk.id]}</div>
         <div style={{ flex: 1 }}>
           <p style={{ fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: '1rem', color: '#1a1a1a', margin: '0 0 3px' }}>{brk.label}</p>
-          <p style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.8rem', letterSpacing: '0.05em', color: '#9CA3AF', margin: 0 }}>{dateRange}</p>
+          <p style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.72rem', letterSpacing: '0.05em', color: '#9CA3AF', margin: 0 }}>{dateRange}</p>
         </div>
         <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.8rem', letterSpacing: '0.07em', color: brk.enabled ? '#D42B2B' : '#9CA3AF' }}>{brk.enabled ? 'ENABLED' : 'ENABLE'}</span>
+          <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.72rem', letterSpacing: '0.07em', color: brk.enabled ? '#D42B2B' : '#9CA3AF' }}>{brk.enabled ? 'ENABLED' : 'ENABLE'}</span>
           <div style={{ width: '36px', height: '20px', borderRadius: '99px', background: brk.enabled ? '#D42B2B' : '#E5E7EB', border: '1.5px solid rgba(0,0,0,0.15)', position: 'relative', transition: 'background 0.2s' }}>
             <div style={{ width: '14px', height: '14px', borderRadius: '50%', background: '#fff', position: 'absolute', top: '2px', left: brk.enabled ? '18px' : '2px', transition: 'left 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.2)' }} />
           </div>
@@ -282,7 +329,7 @@ function BreakCard({ brk, onToggleEnabled, onToggleWeekend }) {
       {brk.enabled && (
         <div style={{ borderTop: '1px solid rgba(0,0,0,0.08)', padding: '10px 16px', background: '#FAFAFA', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }} onClick={onToggleWeekend}>
           <input type="checkbox" checked={brk.weekendEnabled} onChange={onToggleWeekend} onClick={e => e.stopPropagation()} style={{ width: '15px', height: '15px', accentColor: '#D42B2B', cursor: 'pointer', flexShrink: 0 }} />
-          <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.8rem', letterSpacing: '0.06em', color: '#1a1a1a' }}>{brk.weekendLabel}</span>
+          <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.72rem', letterSpacing: '0.06em', color: '#1a1a1a' }}>{brk.weekendLabel}</span>
         </div>
       )}
     </div>
@@ -305,7 +352,7 @@ function MonthCard({ year, month, semesterStart, semesterEnd, breakOffDays, cust
       <p style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.82rem', letterSpacing: '0.1em', color: '#1a1a1a', margin: '0 0 8px', textAlign: 'center' }}>{MONTH_NAMES[month].toUpperCase()} {year}</p>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '2px' }}>
         {['S','M','T','W','T','F','S'].map((d, i) => (
-          <div key={i} style={{ textAlign: 'center', fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.8rem', letterSpacing: '0.06em', color: '#C0C0C0', padding: '2px 0 4px' }}>{d}</div>
+          <div key={i} style={{ textAlign: 'center', fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.6rem', letterSpacing: '0.06em', color: '#C0C0C0', padding: '2px 0 4px' }}>{d}</div>
         ))}
         {cells.map((day, i) => {
           if (!day) return <div key={i} />
@@ -346,14 +393,14 @@ function CalendarView({ semesterStart, semesterEnd, breaks, customOffDays, onTog
         {[{ bg: '#D42B2B', border: '1.5px solid #a82020', label: 'Break' }, { bg: '#FFE45C', border: '1.5px solid #c8a800', label: 'Your off days' }, { bg: '#fff', border: '1px solid rgba(0,0,0,0.08)', label: 'On campus' }, { bg: '#F3F4F6', border: 'none', label: 'Outside semester' }].map(({ bg, border, label }) => (
           <div key={label} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <div style={{ width: '14px', height: '14px', background: bg, border, borderRadius: '3px', flexShrink: 0 }} />
-            <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.75rem', letterSpacing: '0.05em', color: '#6B7280' }}>{label}</span>
+            <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.66rem', letterSpacing: '0.05em', color: '#6B7280' }}>{label}</span>
           </div>
         ))}
       </div>
       <p style={{ ...st.hint, marginBottom: '12px' }}>
         Click any on-campus day to mark it as off-campus.
         {customOffDays.length > 0 && (
-          <button type="button" onClick={onClearCustom} style={{ marginLeft: '8px', fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.75rem', letterSpacing: '0.05em', color: '#D42B2B', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>CLEAR MY OFF DAYS</button>
+          <button type="button" onClick={onClearCustom} style={{ marginLeft: '8px', fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.68rem', letterSpacing: '0.05em', color: '#D42B2B', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>CLEAR MY OFF DAYS</button>
         )}
       </p>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '12px', marginBottom: '14px' }}>
@@ -365,7 +412,7 @@ function CalendarView({ semesterStart, semesterEnd, breaks, customOffDays, onTog
         {[{ label: 'BREAK DAYS', value: totalBreakDays, bg: '#D42B2B', color: '#fff' }, { label: 'YOUR OFF DAYS', value: customOffDays.length, bg: '#FFE45C', color: '#1a1a1a' }, { label: 'ACTIVE DAYS', value: effDays, bg: '#FBF2D8', color: '#1a1a1a' }].map(({ label, value, bg, color }, i) => (
           <div key={label} style={{ flex: 1, background: bg, padding: '10px 8px', textAlign: 'center', borderRight: i < 2 ? '2px solid #1a1a1a' : 'none' }}>
             <p style={{ fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: '1.3rem', color, margin: '0 0 2px' }}>{value}</p>
-            <p style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.8rem', letterSpacing: '0.08em', color, opacity: 0.85, margin: 0 }}>{label}</p>
+            <p style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.6rem', letterSpacing: '0.08em', color, opacity: 0.85, margin: 0 }}>{label}</p>
           </div>
         ))}
       </div>
@@ -374,7 +421,7 @@ function CalendarView({ semesterStart, semesterEnd, breaks, customOffDays, onTog
           {breaks.filter(b => b.enabled).map(b => (
             <div key={b.id} style={{ display: 'flex', alignItems: 'center', gap: '6px', background: '#FFF0EE', border: '1.5px solid #D42B2B', borderRadius: '6px', padding: '4px 10px' }}>
               <div style={{ width: '8px', height: '8px', background: '#D42B2B', borderRadius: '2px', flexShrink: 0 }} />
-              <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.78rem', letterSpacing: '0.05em', color: '#D42B2B' }}>
+              <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.7rem', letterSpacing: '0.05em', color: '#D42B2B' }}>
                 {b.label}: {new Date(b.dates[0] + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} – {new Date(b.dates[b.dates.length-1] + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                 {b.weekendEnabled && ' + weekend'}
               </span>
@@ -393,9 +440,25 @@ function SemesterSelector({ value, onChange }) {
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '1.5rem' }}>
         {Object.entries(SEMESTERS).map(([key, sem]) => (
           <button key={key} type="button" onClick={() => onChange(key)} style={{ ...st.card(value === key), padding: '1rem', textAlign: 'center' }}>
+            <div style={{ color: value === key ? '#D42B2B' : '#CBCBCB', marginBottom: '10px', transition: 'color 0.15s', display: 'flex', justifyContent: 'center' }}>
+              {key === 'spring2026' ? (
+                <svg width="30" height="30" viewBox="0 0 30 30" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="15" cy="15" r="5.5"/>
+                  <line x1="15" y1="2" x2="15" y2="6"/><line x1="15" y1="24" x2="15" y2="28"/>
+                  <line x1="2" y1="15" x2="6" y2="15"/><line x1="24" y1="15" x2="28" y2="15"/>
+                  <line x1="5.8" y1="5.8" x2="8.6" y2="8.6"/><line x1="21.4" y1="21.4" x2="24.2" y2="24.2"/>
+                  <line x1="24.2" y1="5.8" x2="21.4" y2="8.6"/><line x1="8.6" y1="21.4" x2="5.8" y2="24.2"/>
+                </svg>
+              ) : (
+                <svg width="30" height="30" viewBox="0 0 30 30" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M22 4 C22 4 24 11 21 16 C18.5 20 14 21 10 19.5 C6 18 5 14.5 6.5 10.5 C8 7 13 4.5 17.5 5.5 C20 6 22 4 22 4Z"/>
+                  <path d="M21 5 L9 28"/><path d="M14 13 Q17 11 20 13"/><path d="M11.5 18 Q15 16 18.5 18"/>
+                </svg>
+              )}
+            </div>
             <p style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '1.1rem', letterSpacing: '0.08em', color: '#D42B2B', margin: '0 0 2px' }}>{sem.short}</p>
             <p style={{ fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: '0.85rem', color: '#1a1a1a', margin: '0 0 2px' }}>{sem.label}</p>
-            <p style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.75rem', letterSpacing: '0.04em', color: '#9CA3AF', margin: 0 }}>
+            <p style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.63rem', letterSpacing: '0.04em', color: '#9CA3AF', margin: 0 }}>
               {new Date(sem.start + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} – {new Date(sem.end + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
             </p>
           </button>
@@ -411,26 +474,93 @@ function PreferencesStep({ answers, toggleArr, set, onBack, onNext, step, isNewP
       {isNewPlan && <span style={st.pathPill}>FINDING YOU THE RIGHT PLAN</span>}
       <span style={{ display: 'block', ...st.eyebrow }}>DINING DOLLAR PREFERENCES</span>
       <h2 style={st.heading}>What are your food preferences?</h2>
-      <p style={st.sub}>We'll use these to suggest dining dollar restaurants that match your taste and needs. This does not apply to dining hall swipes.</p>
-      <span style={st.sectionLabel}>DIETARY RESTRICTIONS & GOALS</span>
+      <p style={st.sub}>We'll use these to recommend dining dollar vendors near campus that match your taste, needs, and lifestyle.</p>
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', margin: '1.4rem 0 0.7rem' }}>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 21 C11.4 21 5.8 16.8 6 11 C6.2 5.5 10.2 3.8 12 4 C13.8 3.8 18 5.5 18 11 C18 16.8 12.6 21 12 21Z" stroke="#9CA3AF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+          <path d="M12 4.5 C11.7 8.5 12.4 13.5 12 21" stroke="#9CA3AF" strokeWidth="1.2" strokeLinecap="round"/>
+          <path d="M9 8.5 Q11 9.5 14 8" stroke="#9CA3AF" strokeWidth="0.9" strokeLinecap="round"/>
+        </svg>
+        <span style={{ ...st.sectionLabel, margin: 0, display: 'inline' }}>DIETARY RESTRICTIONS & GOALS</span>
+      </div>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '0.5rem' }}>
         {DIET_OPTIONS.map(opt => <Chip key={opt} label={opt} selected={answers.diet.includes(opt)} onToggle={() => toggleArr('diet', opt)} />)}
       </div>
-      <span style={st.sectionLabel}>CUISINE PREFERENCES</span>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '0.5rem' }}>
-        {CUISINE_OPTIONS.map(opt => <Chip key={opt} label={opt} selected={answers.cuisines.includes(opt)} onToggle={() => toggleArr('cuisines', opt)} />)}
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', margin: '1.4rem 0 0.7rem' }}>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 3.5 L21 20.5 L3 20.5 Z" stroke="#9CA3AF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+          <line x1="12" y1="10" x2="12" y2="15" stroke="#9CA3AF" strokeWidth="1.5" strokeLinecap="round"/>
+          <circle cx="12" cy="17.5" r="0.9" fill="#9CA3AF"/>
+        </svg>
+        <span style={{ ...st.sectionLabel, margin: 0, display: 'inline' }}>ALLERGENS TO AVOID</span>
       </div>
-      <span style={st.sectionLabel}>ALLERGENS TO AVOID</span>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '0.5rem' }}>
         {ALLERGEN_OPTIONS.map(opt => <Chip key={opt} label={opt} selected={answers.allergens.includes(opt)} onToggle={() => toggleArr('allergens', opt)} />)}
       </div>
-      <span style={st.sectionLabel}>SPICE PREFERENCE</span>
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', margin: '1.4rem 0 0.7rem' }}>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="12" cy="12" r="8.5" stroke="#9CA3AF" strokeWidth="1.5"/>
+          <path d="M12 3.5 C11.5 6 9.2 8.5 9 12 C8.8 15.5 11.5 18.5 12 20.5" stroke="#9CA3AF" strokeWidth="1" strokeLinecap="round"/>
+          <path d="M12 3.5 C12.5 6 14.8 8.5 15 12 C15.2 15.5 12.5 18.5 12 20.5" stroke="#9CA3AF" strokeWidth="1" strokeLinecap="round"/>
+          <path d="M3.5 12 L20.5 12" stroke="#9CA3AF" strokeWidth="1" strokeLinecap="round"/>
+          <path d="M5.5 7.5 Q12 9 18.5 7.5" stroke="#9CA3AF" strokeWidth="0.8" strokeLinecap="round"/>
+          <path d="M5.5 16.5 Q12 15 18.5 16.5" stroke="#9CA3AF" strokeWidth="0.8" strokeLinecap="round"/>
+        </svg>
+        <span style={{ ...st.sectionLabel, margin: 0, display: 'inline' }}>CUISINE PREFERENCES</span>
+      </div>
+      <p style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.72rem', letterSpacing: '0.03em', color: '#9CA3AF', margin: '-4px 0 8px' }}>Based on vendors near Northeastern</p>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '0.5rem' }}>
+        {CUISINE_OPTIONS.map(opt => <Chip key={opt} label={opt} selected={answers.cuisines.includes(opt)} onToggle={() => toggleArr('cuisines', opt)} />)}
+      </div>
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', margin: '1.4rem 0 0.7rem' }}>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M4.5 10.5 C4.5 16.5 7.8 20.5 12 20.5 C16.2 20.5 19.5 16.5 19.5 10.5 Z" stroke="#9CA3AF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+          <line x1="3" y1="10.5" x2="21" y2="10.5" stroke="#9CA3AF" strokeWidth="1.5" strokeLinecap="round"/>
+          <line x1="10" y1="20.5" x2="14" y2="20.5" stroke="#9CA3AF" strokeWidth="1.5" strokeLinecap="round"/>
+        </svg>
+        <span style={{ ...st.sectionLabel, margin: 0, display: 'inline' }}>WHAT DO YOU USUALLY EAT?</span>
+      </div>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '0.5rem' }}>
+        {FOOD_TYPE_OPTIONS.map(opt => <Chip key={opt} label={opt} selected={(answers.foodTypes || []).includes(opt)} onToggle={() => toggleArr('foodTypes', opt)} />)}
+      </div>
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', margin: '1.4rem 0 0.7rem' }}>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="3" y="6" width="18" height="13" rx="2" stroke="#9CA3AF" strokeWidth="1.5"/>
+          <line x1="3" y1="11" x2="21" y2="11" stroke="#9CA3AF" strokeWidth="1.5"/>
+          <line x1="7" y1="15.5" x2="11" y2="15.5" stroke="#9CA3AF" strokeWidth="1.5" strokeLinecap="round"/>
+        </svg>
+        <span style={{ ...st.sectionLabel, margin: 0, display: 'inline' }}>DINING STYLE</span>
+      </div>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '0.5rem' }}>
+        {DINING_STYLE_OPTIONS.map(opt => <Chip key={opt} label={opt} selected={(answers.diningStyle || []).includes(opt)} onToggle={() => toggleArr('diningStyle', opt)} />)}
+      </div>
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', margin: '1.4rem 0 0.7rem' }}>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 21 C9 21 6 18 6 14 C6 10 8.5 8 10 6 C10 6 9.2 10 12 11 C12 11 10.5 8 14 6 C16 8 18 10.5 18 14 C18 18 15 21 12 21Z" stroke="#9CA3AF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+          <path d="M11 15 C11 15 11.5 17.5 13 16.5" stroke="#9CA3AF" strokeWidth="1" strokeLinecap="round"/>
+        </svg>
+        <span style={{ ...st.sectionLabel, margin: 0, display: 'inline' }}>SPICE PREFERENCE</span>
+      </div>
       <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '0.5rem' }}>
         {SPICE_OPTIONS.map(opt => (
           <button key={opt} type="button" onClick={() => set('spiceLevel', opt)} style={{ ...st.chip(answers.spiceLevel === opt), marginBottom: 0 }}>{opt}</button>
         ))}
       </div>
-      <span style={st.sectionLabel}>PORTION SIZE</span>
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', margin: '1.4rem 0 0.7rem' }}>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M4.5 10.5 C4.5 16.5 7.8 20.5 12 20.5 C16.2 20.5 19.5 16.5 19.5 10.5 Z" stroke="#9CA3AF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+          <line x1="3" y1="10.5" x2="21" y2="10.5" stroke="#9CA3AF" strokeWidth="1.5" strokeLinecap="round"/>
+          <line x1="10" y1="20.5" x2="14" y2="20.5" stroke="#9CA3AF" strokeWidth="1.5" strokeLinecap="round"/>
+        </svg>
+        <span style={{ ...st.sectionLabel, margin: 0, display: 'inline' }}>PORTION SIZE</span>
+      </div>
       <div style={{ display: 'flex' }}>
         {PORTION_OPTIONS.map((opt, i) => (
           <button key={opt} type="button" onClick={() => set('portionSize', opt)}
@@ -454,7 +584,14 @@ function HabitsStep({ answers, set, onBack, onNext, step, isNewPlan, selectedPla
 
       {(isNewPlan || selectedPlan?.swipes !== null) && (
         <div style={{ marginBottom: '1.4rem' }}>
-          <label style={st.label}>EXPECTED SWIPES</label>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="3" y="6" width="18" height="13" rx="2" stroke="#9CA3AF" strokeWidth="1.5"/>
+              <line x1="3" y1="11" x2="21" y2="11" stroke="#9CA3AF" strokeWidth="1.5"/>
+              <line x1="7" y1="15.5" x2="11" y2="15.5" stroke="#9CA3AF" strokeWidth="1.5" strokeLinecap="round"/>
+            </svg>
+            <label style={{ ...st.label, marginBottom: 0 }}>EXPECTED SWIPES</label>
+          </div>
           <div style={{ display: 'flex', marginBottom: '8px' }}>
             {['day', 'week'].map((p, i) => (
               <button key={p} type="button" onClick={() => set('swipesPeriod', p)}
@@ -463,11 +600,7 @@ function HabitsStep({ answers, set, onBack, onNext, step, isNewPlan, selectedPla
               </button>
             ))}
           </div>
-          <input
-            type="text"
-            inputMode="numeric"
-            placeholder={answers.swipesPeriod === 'week' ? 'e.g. 10' : 'e.g. 2'}
-            value={answers.swipesAmt}
+          <input type="text" inputMode="numeric" placeholder={answers.swipesPeriod === 'week' ? 'e.g. 10' : 'e.g. 2'} value={answers.swipesAmt}
             onChange={e => {
               const val = e.target.value
               if (val === '') { set('swipesAmt', val); return }
@@ -483,14 +616,17 @@ function HabitsStep({ answers, set, onBack, onNext, step, isNewPlan, selectedPla
       )}
 
       <div>
-        <label style={st.label}>DINING DOLLARS PER WEEK</label>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="12" cy="12" r="8" stroke="#9CA3AF" strokeWidth="1.5"/>
+            <line x1="12" y1="7.5" x2="12" y2="16.5" stroke="#9CA3AF" strokeWidth="1.3" strokeLinecap="round"/>
+            <path d="M10 9.5 C10 9.5 10.5 8.5 12 8.5 C13.5 8.5 14.5 9.3 14.5 10.5 C14.5 11.7 13 12.3 12 12.8 C11 13.3 9.5 13.9 9.5 15.2 C9.5 16.2 10.5 16.8 12 16.8 C13.5 16.8 14 15.8 14 15.8" stroke="#9CA3AF" strokeWidth="1.2" strokeLinecap="round"/>
+          </svg>
+          <label style={{ ...st.label, marginBottom: 0 }}>DINING DOLLARS PER WEEK</label>
+        </div>
         <div style={{ position: 'relative' }}>
           <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#9CA3AF', fontSize: '0.9rem' }}>$</span>
-          <input
-            type="text"
-            inputMode="decimal"
-            placeholder="e.g. 35"
-            value={answers.dollarsPerWeek}
+          <input type="text" inputMode="decimal" placeholder="e.g. 35" value={answers.dollarsPerWeek}
             onChange={e => {
               const val = e.target.value
               if (val === '') { set('dollarsPerWeek', val); return }
@@ -505,7 +641,6 @@ function HabitsStep({ answers, set, onBack, onNext, step, isNewPlan, selectedPla
         </div>
         <p style={st.hint}>Money you plan to spend at dining-plan restaurants, cafes, etc. per week.</p>
       </div>
-
       <NavButtons step={step} onBack={onBack} onNext={onNext} nextLabel={isNewPlan ? 'CONTINUE' : 'ALMOST DONE'} />
     </div>
   )
@@ -559,7 +694,7 @@ export default function Onboarding() {
     swipesLeft: '', diningDollarsLeft: '',
     semesterPreset: null, semesterStart: '', semesterEnd: '2026-04-26',
     semesterBreaks: [], customOffDays: [],
-    diet: [], cuisines: [], allergens: [],
+    diet: [], cuisines: [], allergens: [], diningStyle: [], foodTypes: [],
     spiceLevel: '', portionSize: '',
     swipesAmt: '', swipesPeriod: 'day',
     dollarsPerWeek: '',
@@ -635,12 +770,13 @@ export default function Onboarding() {
 
       <div style={{ ...st.topbar, position: 'sticky', zIndex: 100 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <div style={{ width: '4px', height: '28px', background: '#D42B2B', borderRadius: '2px' }} />
-          <span style={st.logo}>NomNom</span>
+          <div style={{ width: '4px', height: '28px', borderRadius: '2px' }} />
+          <span style={{ ...st.logo, cursor: 'pointer' }} onClick={() => navigate('/')}>SwipeWise</span>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.8rem', letterSpacing: '0.1em', color: '#9CA3AF' }}>STEP {step} OF {TOTAL_STEPS}</span>
-          <button onClick={() => navigate('/')} style={{ ...st.exitBtn, padding: '5px 12px', border: '1.5px solid rgba(0,0,0,0.15)', borderRadius: '6px', background: 'rgba(0,0,0,0.04)' }}>EXIT</button>
+        <div style={{ position: 'absolute', left: 0, right: 0, bottom: -20, height: 20, zIndex: 999, pointerEvents: 'none' }}>
+          <svg viewBox="0 0 1200 20" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" style={{ width: '100%', height: '100%', display: 'block' }}>
+            <path d="M0,0 C200,18 400,18 600,10 C800,2 1000,2 1200,10 L1200,0 Z" fill="#FBF2D8"/>
+          </svg>
         </div>
       </div>
 
@@ -682,16 +818,12 @@ export default function Onboarding() {
                 {selectedPlan?.swipes !== null ? (
                   <div>
                     <label style={st.label}>SWIPES REMAINING</label>
-                    <input
-                      type="text"
-                      inputMode="numeric"
-                      placeholder={`e.g. ${Math.floor((selectedPlan?.swipes ?? 225) * 0.6)}`}
-                      value={answers.swipesLeft}
+                    <input type="text" inputMode="numeric" placeholder={`e.g. ${Math.floor((selectedPlan?.swipes ?? 225) * 0.6)}`} value={answers.swipesLeft}
                       onChange={e => {
                         const val = e.target.value
                         if (val === '') { set('swipesLeft', val); return }
                         if (!/^\d+$/.test(val)) return
-                        if (parseInt(val) > 225) { set('swipesLeft', '225'); return }
+                        if (parseInt(val) > (selectedPlan?.swipes ?? 225)) { set('swipesLeft', String(selectedPlan?.swipes ?? 225)); return }
                         set('swipesLeft', val)
                       }}
                       style={st.input}
@@ -705,18 +837,14 @@ export default function Onboarding() {
                   <label style={st.label}>DINING DOLLARS REMAINING</label>
                   <div style={{ position: 'relative' }}>
                     <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#9CA3AF', fontSize: '0.9rem' }}>$</span>
-                    <input
-                      type="text"
-                      inputMode="decimal"
-                      placeholder={`e.g. ${Math.floor((selectedPlan?.diningDollars ?? 600) * 0.6)}`}
-                      value={answers.diningDollarsLeft}
+                    <input type="text" inputMode="decimal" placeholder={`e.g. ${Math.floor((selectedPlan?.diningDollars ?? 600) * 0.6)}`} value={answers.diningDollarsLeft}
                       onChange={e => {
                         const val = e.target.value
                         if (val === '') { set('diningDollarsLeft', val); return }
                         if (!/^\d*\.?\d*$/.test(val)) return
                         const parts = val.split('.')
                         if (parts[1] && parts[1].length > 2) return
-                        if (!isNaN(parseFloat(val)) && parseFloat(val) > 600) { set('diningDollarsLeft', '600'); return }
+                        if (!isNaN(parseFloat(val)) && parseFloat(val) > (selectedPlan?.diningDollars ?? 600)) { set('diningDollarsLeft', String(selectedPlan?.diningDollars ?? 600)); return }
                         set('diningDollarsLeft', val)
                       }}
                       style={{ ...st.input, paddingLeft: '28px' }}
@@ -787,13 +915,13 @@ export default function Onboarding() {
                     <PlanCard plan={plan} selected={isSelected} onClick={() => set('planId', plan.id)} recBadge={isRec} />
                     {isSelected && (
                       <div style={{ marginTop: '-6px', marginBottom: '10px', padding: '8px 14px', background: '#FBF2D8', border: '1px solid rgba(0,0,0,0.08)', borderTop: 'none', borderRadius: '0 0 8px 8px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                        <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.78rem', letterSpacing: '0.04em', color: '#6B7280' }}>
+                        <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.7rem', letterSpacing: '0.04em', color: '#6B7280' }}>
                           {swipeDiff !== null ? swipeDiff >= 0 ? `+${swipeDiff} SWIPES TO SPARE` : `${Math.abs(swipeDiff)} SWIPES SHORT` : 'UNLIMITED SWIPES'}
                           {' · '}
                           {ddDiff >= 0 ? `+$${ddDiff} DINING DOLLARS TO SPARE` : `$${Math.abs(ddDiff)} SHORT ON DINING DOLLARS`}
                         </span>
                         {oop > 0 && (
-                          <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.78rem', letterSpacing: '0.04em', color: '#D42B2B' }}>
+                          <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.7rem', letterSpacing: '0.04em', color: '#D42B2B' }}>
                             ~${Math.round(oop)} WOULD NEED TO COME OUT OF POCKET THIS SEMESTER
                           </span>
                         )}
@@ -826,12 +954,12 @@ export default function Onboarding() {
                   {selectedPlan?.swipes !== null && (
                     <div>
                       <p style={{ fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: '1.4rem', color: '#1a1a1a', margin: '0 0 2px' }}>{answers.swipesLeft || '—'}</p>
-                      <p style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.75rem', letterSpacing: '0.08em', color: '#9CA3AF', margin: 0 }}>SWIPES LEFT</p>
+                      <p style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.68rem', letterSpacing: '0.08em', color: '#9CA3AF', margin: 0 }}>SWIPES LEFT</p>
                     </div>
                   )}
                   <div>
                     <p style={{ fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: '1.4rem', color: '#1a1a1a', margin: '0 0 2px' }}>${answers.diningDollarsLeft || '—'}</p>
-                    <p style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.75rem', letterSpacing: '0.08em', color: '#9CA3AF', margin: 0 }}>DINING DOLLARS</p>
+                    <p style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.68rem', letterSpacing: '0.08em', color: '#9CA3AF', margin: 0 }}>DINING DOLLARS</p>
                   </div>
                 </div>
               </div>
@@ -841,7 +969,7 @@ export default function Onboarding() {
               <p style={{ fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: '0.95rem', color: '#1a1a1a', margin: '0 0 3px' }}>
                 {answers.semesterPreset ? SEMESTERS[answers.semesterPreset]?.label : '—'}
               </p>
-              <p style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.75rem', letterSpacing: '0.04em', color: '#9CA3AF', margin: 0 }}>
+              <p style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.84rem', letterSpacing: '0.04em', color: '#9CA3AF', margin: 0 }}>
                 {effDays} active days · {getBreakOffDays(answers.semesterBreaks).length} break days · {answers.customOffDays.length} custom off days
               </p>
             </div>
@@ -854,17 +982,17 @@ export default function Onboarding() {
                 ].map(({ label, value }) => (
                   <div key={label}>
                     <p style={{ fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: '1.2rem', color: '#1a1a1a', margin: '0 0 2px' }}>{value}</p>
-                    <p style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.75rem', letterSpacing: '0.08em', color: '#9CA3AF', margin: 0 }}>{label}</p>
+                    <p style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.68rem', letterSpacing: '0.08em', color: '#9CA3AF', margin: 0 }}>{label}</p>
                   </div>
                 ))}
               </div>
             </div>
-            {(answers.diet.length > 0 || answers.cuisines.length > 0 || answers.allergens.length > 0) && (
+            {(answers.diet.length > 0 || answers.cuisines.length > 0 || answers.allergens.length > 0 || answers.foodTypes.length > 0 || answers.diningStyle.length > 0) && (
               <div style={st.summaryCard}>
                 <span style={st.summaryLabel}>PREFERENCES</span>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                  {[...answers.diet, ...answers.cuisines, ...answers.allergens].map(tag => (
-                    <span key={tag} style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.78rem', letterSpacing: '0.06em', padding: '3px 10px', borderRadius: '99px', background: '#FFE45C', border: '1.5px solid #1a1a1a', color: '#1a1a1a' }}>{tag}</span>
+                  {[...answers.diet, ...answers.cuisines, ...answers.allergens, ...answers.foodTypes, ...answers.diningStyle].map(tag => (
+                    <span key={tag} style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.7rem', letterSpacing: '0.06em', padding: '3px 10px', borderRadius: '99px', background: '#FFE45C', border: '1.5px solid #1a1a1a', color: '#1a1a1a' }}>{tag}</span>
                   ))}
                 </div>
               </div>

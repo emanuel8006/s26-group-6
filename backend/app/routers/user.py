@@ -3,14 +3,14 @@ This file creates an API router that handles user-data related requests.
 Connects to supabase through backend/app/db/supabase_client.py. 
 Functions handle database updates relating to user information
 """
-from fastapi import APIRouter, HTTPException, Depends, Header
+from fastapi import APIRouter, HTTPException, Depends
 from typing import Any
 from app.db.supabase_client import supabase_client
 from app.routers.auth import get_current_user
 from pydantic import BaseModel
 import json
 
-router = APIRouter(prefix="/user")
+router = APIRouter(prefix="/user", tags=["user"])
 
 @router.put("/update")
 async def update_user_info(
@@ -19,8 +19,8 @@ async def update_user_info(
     dietary_preferences: list[str] | None = None,
     diet_restrictions: str | None = None,
     user: Any = Depends(get_current_user)
-) -> APIResponse|Exception:
-    update_dict: dict[str,str|list[str]] = {}
+):
+    update_dict: dict[str, str | list[str]] = {}
 
     if username is not None:
         update_dict["username"] = username
@@ -46,29 +46,31 @@ async def update_user_info(
         raise HTTPException(status_code=500, detail=str(exception))
 
 @router.delete("/delete")
-async def delete_user(user: Any = Depends(get_current_user)) -> Exception|APIResponse:
+async def delete_user(user: Any = Depends(get_current_user)):
     """
     Deletes user acc based on user_id
     """
     try:
         response = (
-        supabase_client.table("users")
-        .delete()
-        .eq("id", user.id)
-        .execute()
+            supabase_client.table("users")
+            .delete()
+            .eq("id", user.id)
+            .execute()
         )
         return response
     except Exception as exception:
-        return exception
+        raise HTTPException(status_code=500, detail=str(exception))
+
 
 class meal_plan_request(BaseModel):
-    swipes_start: int|None
-    dining_dollars_start: float|None
-    start_date: str|None = None
-    end_date: str|None = None
-    swipes_current: int|None = None
-    dining_dollars_current: float|None = None
-    plan_name: str|None = None
+    swipes_start: int | None
+    dining_dollars_start: float | None
+    start_date: str | None = None
+    end_date: str | None = None
+    swipes_current: int | None = None
+    dining_dollars_current: float | None = None
+    plan_name: str | None = None
+
 
 @router.post("/update_meal_plan")
 async def create_meal_plan(body: meal_plan_request):
@@ -108,14 +110,15 @@ async def create_meal_plan(body: meal_plan_request):
     except Exception as exception:
         raise HTTPException(status_code=500, detail=str(exception))
 
-@router.delete("/delete/")
-async def delete_user(user: Any = Depends(get_current_user)):
+
+@router.get("/get/")
+async def get_user_info(user: Any = Depends(get_current_user)):
     try:
         response = (
-        supabase_client.table("users")
-        .delete()
-        .eq("id", user.id)
-        .execute()
+            supabase_client.table("users")
+            .select("*")
+            .eq("id", user.id)
+            .execute()
         )
         return response
     except Exception as exception:

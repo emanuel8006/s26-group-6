@@ -1,3 +1,4 @@
+"""DineOnCampus API integration for frontend menu fetching"""
 from datetime import date
 from typing import Dict, Any, List
 from cachetools import TTLCache
@@ -59,6 +60,12 @@ def parse_numeric(value) -> Any:
 
 
 async def get_menu(location_name: str, period_name: str) -> Dict[str, Any]:
+    """"
+    This function fetches the menu for a given location and period from the DineOnCampus API.
+    Caches and returns the parsed menu data, or an error message if fetching/parsing fails.
+    Args:
+        -location_name (str): dining hall name ("stetson east" or "international village")
+    """
     from app.services.location_service import get_location_id, get_period_id_by_name
 
     location_id = get_location_id(location_name)
@@ -153,4 +160,5 @@ async def get_menu(location_name: str, period_name: str) -> Dict[str, Any]:
 
 
 def get_date() -> str:
+    """Returns today's date in ISO format"""
     return date.today().isoformat()

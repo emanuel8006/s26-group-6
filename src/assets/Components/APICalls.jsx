@@ -1,3 +1,5 @@
+const API_BASE = import.meta.env.VITE_API_URL
+
 export async function responseCheck({ response }) {
     if (!response.ok) {
         const errorData = await response.json();
@@ -6,7 +8,7 @@ export async function responseCheck({ response }) {
 };
 
 export async function login({ email, password }) {
-    const response = await fetch('http://localhost:8000/auth/login', {
+    const response = await fetch(`${API_BASE}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -21,7 +23,7 @@ export async function login({ email, password }) {
 };
 
 export async function register({ email, password, fullName, username }) {
-    const response = await fetch('http://localhost:8000/auth/register', {
+    const response = await fetch(`${API_BASE}/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -39,7 +41,7 @@ export async function updateMealPlan({
     planName = null, 
     swipesStart = null, 
     diningDollarsStart = null }) {
-    const response = await fetch('http://localhost:8000/user/update_meal_plan' , {
+    const response = await fetch(`${API_BASE}/user/update_meal_plan` , {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -58,7 +60,7 @@ export async function updateUserInfo({
     dietaryPreferences = null,
     dietaryRestrictions = null
 }) {
-    const response = await fetch('http://localhost:8000/user/update_meal_plan' , {
+    const response = await fetch(`${API_BASE}/user/update_meal_plan` , {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -73,7 +75,7 @@ export async function updateUserInfo({
 };
 
 export async function getData({ sessionToken, columnList, tableName }) {
-    const response  = await fetch('http://localhost:8000/user/get_data', {
+    const response  = await fetch(`${API_BASE}/user/get_data`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',

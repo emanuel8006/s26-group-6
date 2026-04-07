@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import PhotoReel from '../Components/PhotoReel'
 
-const API_BASE = 'http://localhost:8000'
+const API_BASE = import.meta.env.VITE_API_URL
 
 // ── Helpers ───────────────────────────────────────────────────────
 function parseDate(str) { return str ? new Date(str + 'T12:00:00') : null }

@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { login, register, addMealPlan } from '../Components/APICalls'
+import { login, register, updateMealPlan } from '../Components/APICalls'
 
 const inputCls = {
   width: '100%',
@@ -29,7 +29,7 @@ const PLAN_OPTIONS = [
 
 //where register() was
 
-//where addMealPlan() was
+//where updateMealPlan() was
 
 export default function Login() {
   const [tab, setTab] = useState('signin')
@@ -71,7 +71,7 @@ export default function Login() {
       const loginResponseJson = await loginResponse.json()
       console.log(loginResponseJson)
 
-      const mealPlanResponse = await addMealPlan({
+      const mealPlanResponse = await updateMealPlan({
         planName, 
         swipesStart, 
         diningDollarsStart: placeholderDD

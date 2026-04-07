@@ -12,14 +12,14 @@ import json
 
 router = APIRouter(prefix="/user", tags=["user"])
 
-@router.put("/update")
+@router.put("/update_user_info")
 async def update_user_info(
     username: str | None = None,
     email: str | None = None,
     dietary_preferences: list[str] | None = None,
-    diet_restrictions: str | None = None,
-    user: Any = Depends(get_current_user)
+    diet_restrictions: str | None = None
 ):
+    data = supabase_client.auth.get_user()
     update_dict: dict[str, str | list[str]] = {}
 
     if username is not None:
@@ -38,7 +38,7 @@ async def update_user_info(
         response = (
             supabase_client.table("users")
             .update(update_dict)
-            .eq("id", user.id)
+            .eq("id", data.user.id)
             .execute()
         )
         return response
@@ -46,7 +46,8 @@ async def update_user_info(
         raise HTTPException(status_code=500, detail=str(exception))
 
 @router.delete("/delete")
-async def delete_user(user: Any = Depends(get_current_user)):
+async def delete_user():
+    data = supabase_client.auth.get_user()
     """
     Deletes user acc based on user_id
     """
@@ -54,7 +55,7 @@ async def delete_user(user: Any = Depends(get_current_user)):
         response = (
             supabase_client.table("users")
             .delete()
-            .eq("id", user.id)
+            .eq("id", data.user.id)
             .execute()
         )
         return response
@@ -112,12 +113,13 @@ async def create_meal_plan(body: meal_plan_request):
 
 
 @router.get("/get/")
-async def get_user_info(user: Any = Depends(get_current_user)):
+async def get_user_info():
+    data = supabase_client.auth.get_user()
     try:
         response = (
             supabase_client.table("users")
             .select("*")
-            .eq("id", user.id)
+            .eq("id", data.user.id)
             .execute()
         )
         return response
@@ -130,15 +132,15 @@ class data_request(BaseModel):
 
 @router.get("/get_data/")
 async def get_user_info_specific(
-    body: data_request, # List of column names in json string format
-    user: Any = Depends(get_current_user)
+    body: data_request # List of column names in json string format
     ) -> Exception|APIResponse:
+    data = supabase_client.auth.get_user()
     columns = json.loads(body.column_list)
     try:
         response = (
         supabase_client.table(body.table_name)
         .select(", ".join(columns))
-        .eq("id",user.id)
+        .eq("id", data.user.id)
         .execute()
         )
         return response

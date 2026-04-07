@@ -14,7 +14,15 @@ export default function Nav() {
 
   useEffect(() => setMenuOpen(false), [location.pathname])
 
+  const [loggedIn, setLoggedIn] = React.useState(!!localStorage.getItem('sw_logged_in'))
+
   const isActive = (path) => location.pathname === path
+
+  const handleSignOut = () => {
+    localStorage.removeItem('sw_logged_in')
+    localStorage.removeItem('nomnom_profile')
+    setLoggedIn(false)
+  }
 
   const navLinks = [
     { to: '/dashboard',      label: 'Dashboard' },
@@ -32,10 +40,10 @@ export default function Nav() {
         position: 'sticky', top: 0, zIndex: 1000,
         transition: 'border-color 0.2s, box-shadow 0.2s',
       }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 2rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: '58px' }}>
+        <div style={{ width: '100%', padding: '0 1.5rem 0 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: '58px' }}>
 
-          {/* Logo */}
-          <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none', marginLeft: '-6px' }}>
+          {/* Logo — flush left */}
+          <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none' }}>
             <div style={{ width: '4px', height: '28px', background: '#D42B2B', borderRadius: '2px', flexShrink: 0 }} />
             <span style={{ fontFamily: "'Chicle', serif", fontSize: '1.35rem', fontWeight: 700, color: '#1a1a1a', letterSpacing: '0.01em' }}>SwipeWise</span>
           </Link>
@@ -64,22 +72,31 @@ export default function Nav() {
 
           {/* Sign in + mobile toggle */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <Link to="/login" style={{
-              fontFamily: "'Bebas Neue', sans-serif",
-              fontSize: '0.88rem', letterSpacing: '0.08em',
-              color: '#fff', textDecoration: 'none',
-              padding: '7px 18px',
-              background: '#D42B2B',
-              border: '2px solid #1a1a1a',
-              borderRadius: '6px',
-              boxShadow: '2px 3px 0 #1a1a1a',
-              transition: 'all 0.12s ease',
-            }}
-              onMouseEnter={e => { e.currentTarget.style.transform = 'translate(-1px,-1px)'; e.currentTarget.style.boxShadow = '3px 4px 0 #1a1a1a' }}
-              onMouseLeave={e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '2px 3px 0 #1a1a1a' }}
-            >
-              Sign In
-            </Link>
+            {loggedIn ? (
+              <button onClick={handleSignOut} style={{
+                fontFamily: "'Bebas Neue', sans-serif",
+                fontSize: '0.88rem', letterSpacing: '0.08em',
+                color: '#fff', padding: '7px 18px',
+                background: '#1a1a1a', border: '2px solid #1a1a1a',
+                borderRadius: '6px', boxShadow: '2px 3px 0 rgba(0,0,0,0.3)',
+                cursor: 'pointer', transition: 'all 0.12s ease',
+              }}
+                onMouseEnter={e => { e.currentTarget.style.transform = 'translate(-1px,-1px)'; e.currentTarget.style.boxShadow = '3px 4px 0 rgba(0,0,0,0.3)' }}
+                onMouseLeave={e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '2px 3px 0 rgba(0,0,0,0.3)' }}
+              >Sign Out</button>
+            ) : (
+              <Link to="/login" style={{
+                fontFamily: "'Bebas Neue', sans-serif",
+                fontSize: '0.88rem', letterSpacing: '0.08em',
+                color: '#fff', textDecoration: 'none',
+                padding: '7px 18px', background: '#D42B2B',
+                border: '2px solid #1a1a1a', borderRadius: '6px',
+                boxShadow: '2px 3px 0 #1a1a1a', transition: 'all 0.12s ease',
+              }}
+                onMouseEnter={e => { e.currentTarget.style.transform = 'translate(-1px,-1px)'; e.currentTarget.style.boxShadow = '3px 4px 0 #1a1a1a' }}
+                onMouseLeave={e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '2px 3px 0 #1a1a1a' }}
+              >Sign In</Link>
+            )}
 
             {/* Mobile hamburger */}
             <button
@@ -125,6 +142,10 @@ export default function Nav() {
                 {label}
               </Link>
             ))}
+            {loggedIn
+              ? <button onClick={handleSignOut} style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:'0.95rem', letterSpacing:'0.08em', color:'#1a1a1a', background:'none', border:'none', cursor:'pointer', padding:'10px 12px', textAlign:'left' }}>Sign Out</button>
+              : <Link to="/login" style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:'0.95rem', letterSpacing:'0.08em', color:'#D42B2B', textDecoration:'none', padding:'10px 12px', display:'block' }}>Sign In</Link>
+            }
           </div>
         )}
       </nav>

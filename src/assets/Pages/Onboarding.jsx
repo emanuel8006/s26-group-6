@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 
 const PLANS = [
   { id: 'unlimited', name: 'NU – Unlimited', price: 4450, swipes: null, diningDollars: 400, guestPasses: 10, tag: 'Most Flexible' },
@@ -108,6 +108,13 @@ function calcEffectiveDays(startStr, endStr, breaks, customOffDays) {
   const allOff=new Set([...getBreakOffDays(breaks),...customOffDays])
   let count=0; allOff.forEach(d=>{ const date=new Date(d+'T12:00:00'); if(date>=start&&date<=end) count++ })
   return Math.max(1,total-count)
+}
+
+function calcDaysRemaining(endStr) {
+  if (!endStr) return null
+  const today = new Date(); today.setHours(0,0,0,0)
+  const end = new Date(endStr + 'T12:00:00')
+  return Math.max(0, Math.ceil((end - today) / (1000 * 60 * 60 * 24)))
 }
 
 function calcOutOfPocket(dollarsPerWeek, effDays, planDiningDollars) {
@@ -292,6 +299,7 @@ function MonthCard({ year, month, semesterStart, semesterEnd, breakOffDays, cust
 }
 
 function CalendarView({ semesterStart, semesterEnd, breaks, customOffDays, onToggleDay, onClearCustom }) {
+  const daysLeft = calcDaysRemaining(semesterEnd)
   if(!semesterStart||!semesterEnd) return null
   const breakOffDays=getBreakOffDays(breaks), months=getMonthsBetween(semesterStart,semesterEnd)
   const effDays=calcEffectiveDays(semesterStart,semesterEnd,breaks,customOffDays)
@@ -314,7 +322,7 @@ function CalendarView({ semesterStart, semesterEnd, breaks, customOffDays, onTog
         {months.map(({year,month})=><MonthCard key={`${year}-${month}`} year={year} month={month} semesterStart={semesterStart} semesterEnd={semesterEnd} breakOffDays={breakOffDays} customOffDays={customOffDays} onToggleDay={onToggleDay}/>)}
       </div>
       <div style={{display:'flex',borderRadius:'8px',overflow:'hidden',border:'2px solid #1a1a1a',boxShadow:'3px 3px 0 #1a1a1a'}}>
-        {[{label:'BREAK DAYS',value:totalBreakDays,bg:'#D42B2B',color:'#fff'},{label:'AWAY DAYS',value:customOffDays.length,bg:'#FFE45C',color:'#1a1a1a'},{label:'ACTIVE DAYS',value:effDays,bg:'#FBF2D8',color:'#1a1a1a'}].map(({label,value,bg,color},i)=>(
+        {[{label:'BREAK DAYS',value:totalBreakDays,bg:'#D42B2B',color:'#fff'},{label:'AWAY DAYS',value:customOffDays.length,bg:'#FFE45C',color:'#1a1a1a'},{label:'DAYS REMAINING',value:daysLeft,bg:'#FBF2D8',color:'#1a1a1a'}].map(({label,value,bg,color},i)=>(
           <div key={label} style={{flex:1,background:bg,padding:'10px 8px',textAlign:'center',borderRight:i<2?'2px solid #1a1a1a':'none'}}>
             <p style={{fontFamily:"'Playfair Display',serif",fontWeight:700,fontSize:'1.3rem',color,margin:'0 0 2px'}}>{value}</p>
             <p style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:'0.6rem',letterSpacing:'0.08em',color,opacity:0.85,margin:0}}>{label}</p>
@@ -466,22 +474,14 @@ function HabitsStep({ answers, set, onBack, onNext, step }) {
 
 export default function Onboarding() {
   const navigate = useNavigate()
-  const location = useLocation()
 
-  // pathParam: 'hasplan' = came from signup with plan, 'noplan' = no plan, null = direct nav
-  const pathParam = new URLSearchParams(location.search).get('path')
-  const knownPath = pathParam === 'hasplan' ? true : pathParam === 'noplan' ? false : null
-
-  // Read signup plan limits from localStorage (stored during signup)
-  const signupLimits = (() => {
-    try { return JSON.parse(localStorage.getItem('sw_signup_limits') || 'null') } catch { return null }
-  })()
-  const maxSwipes = signupLimits?.swipes ?? 999
-  const maxDD = signupLimits?.diningDollars ?? 9999
+  // Always start with yes/no question — onPlan starts as null
+  const maxSwipes = 999
+  const maxDD = 9999
 
   const [step, setStep] = useState(1)
   const [answers, setAnswers] = useState({
-    onPlan: knownPath, planId: null,
+    onPlan: null, planId: null,
     swipesLeft: '', diningDollarsLeft: '',
     semesterPreset: null, semesterStart: '', semesterEnd: '2026-04-26',
     semesterBreaks: [], customOffDays: [],
@@ -501,6 +501,7 @@ export default function Onboarding() {
 
   const semesterCalendarReady = !!(answers.semesterPreset && answers.semesterStart && answers.semesterEnd)
   const effDays = calcEffectiveDays(answers.semesterStart, answers.semesterEnd, answers.semesterBreaks, answers.customOffDays)
+  const daysRemaining = calcDaysRemaining(answers.semesterEnd)
   const projSwipes = Math.round((parseInt(answers.swipesAmt)||0) * (effDays/7))
   const selectedPlan = PLANS.find(p => p.id === answers.planId)
 
@@ -636,29 +637,77 @@ export default function Onboarding() {
           <div>
             <span style={st.eyebrow}>ALL DONE</span>
             <h2 style={st.heading}>Here's your summary</h2>
-            <p style={st.sub}>Confirm everything looks right before we set up your dashboard.</p>
+            <p style={st.sub}>Everything we'll use to set up your dashboard. Make sure it looks right!</p>
+
+            {/* Balances */}
             <div style={st.summaryCard}>
               <span style={st.summaryLabel}>CURRENT BALANCES</span>
-              <div style={{display:'flex',gap:'2rem',flexWrap:'wrap'}}>
-                {answers.swipesLeft && <div><p style={{fontFamily:"'Playfair Display',serif",fontWeight:700,fontSize:'1.4rem',color:'#1a1a1a',margin:'0 0 2px'}}>{answers.swipesLeft}</p><p style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:'0.68rem',letterSpacing:'0.08em',color:'#9CA3AF',margin:0}}>SWIPES LEFT</p></div>}
-                <div><p style={{fontFamily:"'Playfair Display',serif",fontWeight:700,fontSize:'1.4rem',color:'#1a1a1a',margin:'0 0 2px'}}>${answers.diningDollarsLeft||'—'}</p><p style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:'0.68rem',letterSpacing:'0.08em',color:'#9CA3AF',margin:0}}>DINING DOLLARS</p></div>
+              <div style={{display:'flex',gap:'0',borderRadius:'8px',overflow:'hidden',border:'2px solid #1a1a1a',boxShadow:'3px 3px 0 #1a1a1a',marginTop:'8px'}}>
+                {[
+                  { label: answers.swipesLeft ? `${answers.swipesLeft} SWIPES` : 'UNLIMITED', sub: 'REMAINING', bg: '#1a1a1a', color: '#fff' },
+                  { label: `$${answers.diningDollarsLeft||'0'}`, sub: 'DINING DOLLARS', bg: '#FFE45C', color: '#1a1a1a' },
+                ].map(({ label, sub, bg, color }, i) => (
+                  <div key={sub} style={{ flex:1, background:bg, padding:'12px 14px', textAlign:'center', borderRight: i===0 ? '2px solid #1a1a1a' : 'none' }}>
+                    <p style={{ fontFamily:"'Playfair Display',serif", fontWeight:700, fontSize:'1.3rem', color, margin:'0 0 2px' }}>{label}</p>
+                    <p style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:'0.62rem', letterSpacing:'0.1em', color, opacity:0.7, margin:0 }}>{sub}</p>
+                  </div>
+                ))}
               </div>
             </div>
+
+            {/* Semester */}
             <div style={st.summaryCard}>
               <span style={st.summaryLabel}>SEMESTER</span>
-              <p style={{fontFamily:"'Playfair Display',serif",fontWeight:700,fontSize:'0.95rem',color:'#1a1a1a',margin:'0 0 3px'}}>{answers.semesterPreset?SEMESTERS[answers.semesterPreset]?.label:'—'}</p>
-              <p style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:'0.84rem',letterSpacing:'0.04em',color:'#9CA3AF',margin:0}}>{effDays} active days · {getBreakOffDays(answers.semesterBreaks).length} break days · {answers.customOffDays.length} days away</p>
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:'8px'}}>
+                <p style={{fontFamily:"'Playfair Display',serif",fontWeight:700,fontSize:'1rem',color:'#1a1a1a',margin:0}}>{answers.semesterPreset?SEMESTERS[answers.semesterPreset]?.label:'—'}</p>
+                <span style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:'0.78rem',letterSpacing:'0.06em',padding:'3px 10px',borderRadius:'99px',background:'#FBF2D8',border:'1.5px solid #1a1a1a',color:'#1a1a1a'}}>{daysRemaining ?? effDays} DAYS REMAINING</span>
+              </div>
+              {(answers.semesterBreaks.some(b=>b.enabled) || answers.customOffDays.length > 0) && (
+                <div style={{marginTop:'8px',display:'flex',gap:'8px',flexWrap:'wrap'}}>
+                  {answers.semesterBreaks.filter(b=>b.enabled).map(b=>(
+                    <span key={b.id} style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:'0.65rem',letterSpacing:'0.06em',padding:'2px 8px',borderRadius:'4px',background:'#D42B2B',color:'#fff',border:'1px solid #a82020'}}>{b.label.toUpperCase()}</span>
+                  ))}
+                  {answers.customOffDays.length > 0 && (
+                    <span style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:'0.65rem',letterSpacing:'0.06em',padding:'2px 8px',borderRadius:'4px',background:'#FFE45C',color:'#1a1a1a',border:'1px solid #c8a800'}}>{answers.customOffDays.length} DAYS AWAY</span>
+                  )}
+                </div>
+              )}
             </div>
-            {([...answers.diet,...answers.cuisines,...answers.allergens,...(answers.foodTypes||[]),...(answers.diningStyle||[])].length > 0) && (
+
+            {/* Projections */}
+            {answers.diningDollarsLeft && effDays > 0 && (
               <div style={st.summaryCard}>
-                <span style={st.summaryLabel}>PREFERENCES</span>
-                <div style={{display:'flex',flexWrap:'wrap',gap:'6px'}}>
-                  {[...answers.diet,...answers.cuisines,...answers.allergens,...(answers.foodTypes||[]),...(answers.diningStyle||[])].map(tag=>(
-                    <span key={tag} style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:'0.7rem',letterSpacing:'0.06em',padding:'3px 10px',borderRadius:'99px',background:'#FFE45C',border:'1.5px solid #1a1a1a',color:'#1a1a1a'}}>{tag}</span>
+                <span style={st.summaryLabel}>WHAT THIS MEANS FOR YOU</span>
+                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'10px',marginTop:'6px'}}>
+                  {[
+                    { val: `$${(parseFloat(answers.diningDollarsLeft)/effDays).toFixed(2)}`, label:'DINING $ / DAY' },
+                    { val: answers.swipesLeft ? `${(parseInt(answers.swipesLeft)/effDays).toFixed(1)}` : '∞', label:'SWIPES / DAY' },
+                    { val: `$${(parseFloat(answers.diningDollarsLeft)/(effDays/7)).toFixed(2)}`, label:'DINING $ / WEEK' },
+                    { val: answers.swipesLeft ? `${Math.round(parseInt(answers.swipesLeft)/(effDays/7))}` : '∞', label:'SWIPES / WEEK' },
+                  ].map(({val,label})=>(
+                    <div key={label} style={{background:'#FAF9F6',border:'1.5px solid rgba(0,0,0,0.08)',borderRadius:'8px',padding:'10px 12px',textAlign:'center'}}>
+                      <p style={{fontFamily:"'Playfair Display',serif",fontWeight:700,fontSize:'1.2rem',color:'#1a1a1a',margin:'0 0 2px'}}>{val}</p>
+                      <p style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:'0.6rem',letterSpacing:'0.1em',color:'#9CA3AF',margin:0}}>{label}</p>
+                    </div>
                   ))}
                 </div>
               </div>
             )}
+
+            {/* Preferences */}
+            {([...answers.diet,...answers.allergens,...answers.cuisines,...(answers.foodTypes||[]),...(answers.diningStyle||[])].length > 0 || answers.spiceLevel || answers.portionSize) && (
+              <div style={st.summaryCard}>
+                <span style={st.summaryLabel}>YOUR FOOD PREFERENCES</span>
+                <div style={{display:'flex',flexWrap:'wrap',gap:'6px',marginTop:'6px'}}>
+                  {[...answers.diet,...answers.allergens,...answers.cuisines,...(answers.foodTypes||[]),...(answers.diningStyle||[])].map(tag=>(
+                    <span key={tag} style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:'0.7rem',letterSpacing:'0.06em',padding:'3px 10px',borderRadius:'99px',background:'#FFE45C',border:'1.5px solid #1a1a1a',color:'#1a1a1a'}}>{tag}</span>
+                  ))}
+                  {answers.spiceLevel && <span style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:'0.7rem',letterSpacing:'0.06em',padding:'3px 10px',borderRadius:'99px',background:'#FBF2D8',border:'1.5px solid #1a1a1a',color:'#1a1a1a'}}>{answers.spiceLevel} SPICE</span>}
+                  {answers.portionSize && <span style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:'0.7rem',letterSpacing:'0.06em',padding:'3px 10px',borderRadius:'99px',background:'#FBF2D8',border:'1.5px solid #1a1a1a',color:'#1a1a1a'}}>{answers.portionSize} PORTIONS</span>}
+                </div>
+              </div>
+            )}
+
             <NavButtons step={step} onBack={back} onNext={finish} nextLabel="GO TO MY DASHBOARD"/>
           </div>
         )}
@@ -692,7 +741,7 @@ export default function Onboarding() {
               <span style={st.pathPill}>FINDING YOU THE RIGHT PLAN</span>
               <span style={{display:'block',...st.eyebrow}}>PLAN SUGGESTION</span>
               <h2 style={st.heading}>Here's what we'd recommend</h2>
-              <p style={st.sub}>Based on ~{projSwipes} projected swipes and ~${projPlanDD} in dining dollars over {effDays} active days.</p>
+              <p style={st.sub}>Based on ~{projSwipes} projected swipes and ~${projPlanDD} in dining dollars over {effDays} days remaining.</p>
               {PLANS.map(plan => {
                 const isRec=plan.id===rec?.id, isSelected=answers.planId?answers.planId===plan.id:isRec
                 const ddDiff=plan.diningDollars-projPlanDD, swipeDiff=plan.swipes!==null?plan.swipes-projSwipes:null
@@ -721,22 +770,81 @@ export default function Onboarding() {
           <div>
             <span style={st.eyebrow}>ALL DONE</span>
             <h2 style={st.heading}>Here's your summary</h2>
-            <p style={st.sub}>Confirm everything looks right before we set up your dashboard.</p>
+            <p style={st.sub}>Everything we'll use to set up your dashboard. Make sure it looks right!</p>
+
+            {/* Recommended plan */}
+            {(() => {
+              const pickedPlan = selectedPlan || suggestPlan(projSwipes, answers.dollarsPerWeek, effDays)
+              return pickedPlan ? (
+                <div style={st.summaryCard}>
+                  <span style={st.summaryLabel}>YOUR PLAN</span>
+                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginTop:'6px',flexWrap:'wrap',gap:'8px'}}>
+                    <div>
+                      <p style={{fontFamily:"'Playfair Display',serif",fontWeight:700,fontSize:'1rem',color:'#1a1a1a',margin:'0 0 4px'}}>{pickedPlan.name}</p>
+                      <div style={{display:'flex',gap:'12px',flexWrap:'wrap'}}>
+                        <span style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:'0.75rem',letterSpacing:'0.05em',color:'#6B7280'}}>{pickedPlan.swipes===null?'UNLIMITED SWIPES':`${pickedPlan.swipes} SWIPES`}</span>
+                        <span style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:'0.75rem',letterSpacing:'0.05em',color:'#6B7280'}}>${pickedPlan.diningDollars} DINING DOLLARS</span>
+                      </div>
+                    </div>
+                    <span style={{fontFamily:"'Playfair Display',serif",fontWeight:700,fontSize:'1.1rem',color:'#1a1a1a'}}>${pickedPlan.price.toLocaleString()}/sem</span>
+                  </div>
+                </div>
+              ) : null
+            })()}
+
+            {/* Semester */}
             <div style={st.summaryCard}>
               <span style={st.summaryLabel}>SEMESTER</span>
-              <p style={{fontFamily:"'Playfair Display',serif",fontWeight:700,fontSize:'0.95rem',color:'#1a1a1a',margin:'0 0 3px'}}>{answers.semesterPreset?SEMESTERS[answers.semesterPreset]?.label:'—'}</p>
-              <p style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:'0.84rem',letterSpacing:'0.04em',color:'#9CA3AF',margin:0}}>{effDays} active days · {answers.customOffDays.length} days away</p>
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:'8px'}}>
+                <p style={{fontFamily:"'Playfair Display',serif",fontWeight:700,fontSize:'1rem',color:'#1a1a1a',margin:0}}>{answers.semesterPreset?SEMESTERS[answers.semesterPreset]?.label:'—'}</p>
+                <span style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:'0.78rem',letterSpacing:'0.06em',padding:'3px 10px',borderRadius:'99px',background:'#FBF2D8',border:'1.5px solid #1a1a1a',color:'#1a1a1a'}}>{daysRemaining ?? effDays} DAYS REMAINING</span>
+              </div>
+              {(answers.semesterBreaks.some(b=>b.enabled) || answers.customOffDays.length > 0) && (
+                <div style={{marginTop:'8px',display:'flex',gap:'8px',flexWrap:'wrap'}}>
+                  {answers.semesterBreaks.filter(b=>b.enabled).map(b=>(
+                    <span key={b.id} style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:'0.65rem',letterSpacing:'0.06em',padding:'2px 8px',borderRadius:'4px',background:'#D42B2B',color:'#fff',border:'1px solid #a82020'}}>{b.label.toUpperCase()}</span>
+                  ))}
+                  {answers.customOffDays.length > 0 && (
+                    <span style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:'0.65rem',letterSpacing:'0.06em',padding:'2px 8px',borderRadius:'4px',background:'#FFE45C',color:'#1a1a1a',border:'1px solid #c8a800'}}>{answers.customOffDays.length} DAYS AWAY</span>
+                  )}
+                </div>
+              )}
             </div>
-            {([...answers.diet,...answers.cuisines,...answers.allergens,...(answers.foodTypes||[]),...(answers.diningStyle||[])].length > 0) && (
+
+            {/* Projected usage */}
+            {(answers.swipesAmt || answers.dollarsPerWeek) && (
               <div style={st.summaryCard}>
-                <span style={st.summaryLabel}>PREFERENCES</span>
-                <div style={{display:'flex',flexWrap:'wrap',gap:'6px'}}>
-                  {[...answers.diet,...answers.cuisines,...answers.allergens,...(answers.foodTypes||[]),...(answers.diningStyle||[])].map(tag=>(
-                    <span key={tag} style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:'0.7rem',letterSpacing:'0.06em',padding:'3px 10px',borderRadius:'99px',background:'#FFE45C',border:'1.5px solid #1a1a1a',color:'#1a1a1a'}}>{tag}</span>
+                <span style={st.summaryLabel}>YOUR PROJECTED USAGE</span>
+                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'10px',marginTop:'6px'}}>
+                  {[
+                    answers.swipesAmt ? { val: `~${projSwipes}`, label:'PROJECTED SWIPES' } : null,
+                    answers.dollarsPerWeek ? { val: `$${answers.dollarsPerWeek}/wk`, label:'DINING $ / WEEK' } : null,
+                    answers.swipesAmt ? { val: `${answers.swipesAmt}/wk`, label:'SWIPES / WEEK' } : null,
+                    answers.dollarsPerWeek ? { val: `~$${Math.round((parseFloat(answers.dollarsPerWeek)||0)*(effDays/7))}`, label:'TOTAL DINING $ SEMESTER' } : null,
+                  ].filter(Boolean).map(({val,label})=>(
+                    <div key={label} style={{background:'#FAF9F6',border:'1.5px solid rgba(0,0,0,0.08)',borderRadius:'8px',padding:'10px 12px',textAlign:'center'}}>
+                      <p style={{fontFamily:"'Playfair Display',serif",fontWeight:700,fontSize:'1.2rem',color:'#1a1a1a',margin:'0 0 2px'}}>{val}</p>
+                      <p style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:'0.6rem',letterSpacing:'0.1em',color:'#9CA3AF',margin:0}}>{label}</p>
+                    </div>
                   ))}
                 </div>
               </div>
             )}
+
+            {/* Preferences */}
+            {([...answers.diet,...answers.allergens,...answers.cuisines,...(answers.foodTypes||[]),...(answers.diningStyle||[])].length > 0 || answers.spiceLevel || answers.portionSize) && (
+              <div style={st.summaryCard}>
+                <span style={st.summaryLabel}>YOUR FOOD PREFERENCES</span>
+                <div style={{display:'flex',flexWrap:'wrap',gap:'6px',marginTop:'6px'}}>
+                  {[...answers.diet,...answers.allergens,...answers.cuisines,...(answers.foodTypes||[]),...(answers.diningStyle||[])].map(tag=>(
+                    <span key={tag} style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:'0.7rem',letterSpacing:'0.06em',padding:'3px 10px',borderRadius:'99px',background:'#FFE45C',border:'1.5px solid #1a1a1a',color:'#1a1a1a'}}>{tag}</span>
+                  ))}
+                  {answers.spiceLevel && <span style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:'0.7rem',letterSpacing:'0.06em',padding:'3px 10px',borderRadius:'99px',background:'#FBF2D8',border:'1.5px solid #1a1a1a',color:'#1a1a1a'}}>{answers.spiceLevel} SPICE</span>}
+                  {answers.portionSize && <span style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:'0.7rem',letterSpacing:'0.06em',padding:'3px 10px',borderRadius:'99px',background:'#FBF2D8',border:'1.5px solid #1a1a1a',color:'#1a1a1a'}}>{answers.portionSize} PORTIONS</span>}
+                </div>
+              </div>
+            )}
+
             <NavButtons step={step} onBack={back} onNext={finish} nextLabel="GO TO MY DASHBOARD"/>
           </div>
         )}

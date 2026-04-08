@@ -3,8 +3,6 @@ import { useNavigate } from 'react-router-dom'
 
 const API_BASE = 'http://localhost:8000'
 
-const API_BASE = 'http://localhost:8000'
-
 // ── Helpers ───────────────────────────────────────────────────────
 function parseDate(str) { return str ? new Date(str + 'T12:00:00') : null }
 function daysUntil(str) {

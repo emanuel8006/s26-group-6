@@ -42,9 +42,8 @@ export default function Nav() {
       }}>
         <div style={{ width: '100%', padding: '0 1.5rem 0 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: '58px' }}>
 
-          {/* Logo — flush left */}
-          <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none' }}>
-            <div style={{ width: '4px', height: '28px', background: '#D42B2B', borderRadius: '2px', flexShrink: 0 }} />
+          {/* Logo — flush left, no red line */}
+          <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none', paddingLeft: '1.5rem' }}>
             <span style={{ fontFamily: "'Chicle', serif", fontSize: '1.35rem', fontWeight: 700, color: '#1a1a1a', letterSpacing: '0.01em' }}>SwipeWise</span>
           </Link>
 

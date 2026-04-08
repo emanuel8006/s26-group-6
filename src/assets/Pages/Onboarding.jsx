@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 
 const PLANS = [
   { id: 'unlimited', name: 'NU – Unlimited', price: 4450, swipes: null, diningDollars: 400, guestPasses: 10, tag: 'Most Flexible' },
@@ -42,9 +42,6 @@ const FOOD_TYPE_OPTIONS = ['Bowls & salads', 'Sandwiches & wraps', 'Burgers & wi
 const SPICE_OPTIONS = ['None', 'Mild', 'Medium', 'Spicy', 'Extra Spicy']
 const PORTION_OPTIONS = ['Small', 'Regular', 'Large']
 const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December']
-
-// "Yes I have a plan" path: balances → semester → preferences → summary = 4 steps
-// "No plan yet" path: preferences → habits → semester → plan suggestion → summary = 5 steps
 
 const BREAK_ART = {
   spring_break: (
@@ -111,6 +108,13 @@ function calcEffectiveDays(startStr, endStr, breaks, customOffDays) {
   const allOff=new Set([...getBreakOffDays(breaks),...customOffDays])
   let count=0; allOff.forEach(d=>{ const date=new Date(d+'T12:00:00'); if(date>=start&&date<=end) count++ })
   return Math.max(1,total-count)
+}
+
+function calcDaysRemaining(endStr) {
+  if (!endStr) return null
+  const today = new Date(); today.setHours(0,0,0,0)
+  const end = new Date(endStr + 'T12:00:00')
+  return Math.max(0, Math.ceil((end - today) / (1000 * 60 * 60 * 24)))
 }
 
 function calcOutOfPocket(dollarsPerWeek, effDays, planDiningDollars) {
@@ -295,6 +299,7 @@ function MonthCard({ year, month, semesterStart, semesterEnd, breakOffDays, cust
 }
 
 function CalendarView({ semesterStart, semesterEnd, breaks, customOffDays, onToggleDay, onClearCustom }) {
+  const daysLeft = calcDaysRemaining(semesterEnd)
   if(!semesterStart||!semesterEnd) return null
   const breakOffDays=getBreakOffDays(breaks), months=getMonthsBetween(semesterStart,semesterEnd)
   const effDays=calcEffectiveDays(semesterStart,semesterEnd,breaks,customOffDays)
@@ -317,7 +322,7 @@ function CalendarView({ semesterStart, semesterEnd, breaks, customOffDays, onTog
         {months.map(({year,month})=><MonthCard key={`${year}-${month}`} year={year} month={month} semesterStart={semesterStart} semesterEnd={semesterEnd} breakOffDays={breakOffDays} customOffDays={customOffDays} onToggleDay={onToggleDay}/>)}
       </div>
       <div style={{display:'flex',borderRadius:'8px',overflow:'hidden',border:'2px solid #1a1a1a',boxShadow:'3px 3px 0 #1a1a1a'}}>
-        {[{label:'BREAK DAYS',value:totalBreakDays,bg:'#D42B2B',color:'#fff'},{label:'AWAY DAYS',value:customOffDays.length,bg:'#FFE45C',color:'#1a1a1a'},{label:'ACTIVE DAYS',value:effDays,bg:'#FBF2D8',color:'#1a1a1a'}].map(({label,value,bg,color},i)=>(
+        {[{label:'BREAK DAYS',value:totalBreakDays,bg:'#D42B2B',color:'#fff'},{label:'AWAY DAYS',value:customOffDays.length,bg:'#FFE45C',color:'#1a1a1a'},{label:'DAYS REMAINING',value:daysLeft,bg:'#FBF2D8',color:'#1a1a1a'}].map(({label,value,bg,color},i)=>(
           <div key={label} style={{flex:1,background:bg,padding:'10px 8px',textAlign:'center',borderRight:i<2?'2px solid #1a1a1a':'none'}}>
             <p style={{fontFamily:"'Playfair Display',serif",fontWeight:700,fontSize:'1.3rem',color,margin:'0 0 2px'}}>{value}</p>
             <p style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:'0.6rem',letterSpacing:'0.08em',color,opacity:0.85,margin:0}}>{label}</p>
@@ -393,38 +398,32 @@ function PreferencesStep({ answers, toggleArr, set, onBack, onNext, step, isNewP
       <span style={{display:'block',...st.eyebrow}}>DINING DOLLAR PREFERENCES</span>
       <h2 style={st.heading}>What are your food preferences?</h2>
       <p style={st.sub}>We'll use these to recommend dining dollar vendors near campus that match your taste, needs, and lifestyle.</p>
-
       <div style={{display:'flex',alignItems:'center',gap:'6px',margin:'1.4rem 0 0.7rem'}}>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 21 C11.4 21 5.8 16.8 6 11 C6.2 5.5 10.2 3.8 12 4 C13.8 3.8 18 5.5 18 11 C18 16.8 12.6 21 12 21Z" stroke="#9CA3AF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
         <span style={{...st.sectionLabel,margin:0,display:'inline'}}>DIETARY RESTRICTIONS & GOALS</span>
       </div>
       <div style={{display:'flex',flexWrap:'wrap',gap:'8px',marginBottom:'0.5rem'}}>{DIET_OPTIONS.map(opt=><Chip key={opt} label={opt} selected={answers.diet.includes(opt)} onToggle={()=>toggleArr('diet',opt)}/>)}</div>
-
       <div style={{display:'flex',alignItems:'center',gap:'6px',margin:'1.4rem 0 0.7rem'}}>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 3.5 L21 20.5 L3 20.5 Z" stroke="#9CA3AF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><line x1="12" y1="10" x2="12" y2="15" stroke="#9CA3AF" strokeWidth="1.5" strokeLinecap="round"/></svg>
         <span style={{...st.sectionLabel,margin:0,display:'inline'}}>ALLERGENS TO AVOID</span>
       </div>
       <div style={{display:'flex',flexWrap:'wrap',gap:'8px',marginBottom:'0.5rem'}}>{ALLERGEN_OPTIONS.map(opt=><Chip key={opt} label={opt} selected={answers.allergens.includes(opt)} onToggle={()=>toggleArr('allergens',opt)}/>)}</div>
-
       <div style={{display:'flex',alignItems:'center',gap:'6px',margin:'1.4rem 0 0.7rem'}}>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.5" stroke="#9CA3AF" strokeWidth="1.5"/><path d="M3.5 12 L20.5 12" stroke="#9CA3AF" strokeWidth="1" strokeLinecap="round"/></svg>
         <span style={{...st.sectionLabel,margin:0,display:'inline'}}>CUISINE PREFERENCES</span>
       </div>
       <p style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:'0.72rem',letterSpacing:'0.03em',color:'#9CA3AF',margin:'-4px 0 8px'}}>Based on vendors near Northeastern</p>
       <div style={{display:'flex',flexWrap:'wrap',gap:'8px',marginBottom:'0.5rem'}}>{CUISINE_OPTIONS.map(opt=><Chip key={opt} label={opt} selected={answers.cuisines.includes(opt)} onToggle={()=>toggleArr('cuisines',opt)}/>)}</div>
-
       <div style={{display:'flex',alignItems:'center',gap:'6px',margin:'1.4rem 0 0.7rem'}}>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4.5 10.5 C4.5 16.5 7.8 20.5 12 20.5 C16.2 20.5 19.5 16.5 19.5 10.5 Z" stroke="#9CA3AF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><line x1="3" y1="10.5" x2="21" y2="10.5" stroke="#9CA3AF" strokeWidth="1.5" strokeLinecap="round"/></svg>
         <span style={{...st.sectionLabel,margin:0,display:'inline'}}>WHAT DO YOU USUALLY EAT?</span>
       </div>
       <div style={{display:'flex',flexWrap:'wrap',gap:'8px',marginBottom:'0.5rem'}}>{FOOD_TYPE_OPTIONS.map(opt=><Chip key={opt} label={opt} selected={(answers.foodTypes||[]).includes(opt)} onToggle={()=>toggleArr('foodTypes',opt)}/>)}</div>
-
       <div style={{display:'flex',alignItems:'center',gap:'6px',margin:'1.4rem 0 0.7rem'}}>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><rect x="3" y="6" width="18" height="13" rx="2" stroke="#9CA3AF" strokeWidth="1.5"/><line x1="3" y1="11" x2="21" y2="11" stroke="#9CA3AF" strokeWidth="1.5"/></svg>
         <span style={{...st.sectionLabel,margin:0,display:'inline'}}>DINING STYLE</span>
       </div>
       <div style={{display:'flex',flexWrap:'wrap',gap:'8px',marginBottom:'0.5rem'}}>{DINING_STYLE_OPTIONS.map(opt=><Chip key={opt} label={opt} selected={(answers.diningStyle||[]).includes(opt)} onToggle={()=>toggleArr('diningStyle',opt)}/>)}</div>
-
       <div style={{display:'flex',alignItems:'center',gap:'6px',margin:'1.4rem 0 0.7rem'}}>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 21 C9 21 6 18 6 14 C6 10 8.5 8 10 6 C10 6 9.2 10 12 11 C12 11 10.5 8 14 6 C16 8 18 10.5 18 14 C18 18 15 21 12 21Z" stroke="#9CA3AF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
         <span style={{...st.sectionLabel,margin:0,display:'inline'}}>SPICE PREFERENCE</span>
@@ -432,7 +431,6 @@ function PreferencesStep({ answers, toggleArr, set, onBack, onNext, step, isNewP
       <div style={{display:'flex',gap:'8px',flexWrap:'wrap',marginBottom:'0.5rem'}}>
         {SPICE_OPTIONS.map(opt=><button key={opt} type="button" onClick={()=>set('spiceLevel',opt)} style={{...st.chip(answers.spiceLevel===opt),marginBottom:0}}>{opt}</button>)}
       </div>
-
       <div style={{display:'flex',alignItems:'center',gap:'6px',margin:'1.4rem 0 0.7rem'}}>
         <span style={{...st.sectionLabel,margin:0,display:'inline'}}>PORTION SIZE</span>
       </div>
@@ -476,12 +474,14 @@ function HabitsStep({ answers, set, onBack, onNext, step }) {
 
 export default function Onboarding() {
   const navigate = useNavigate()
-  const location = useLocation()
-  const isNoPlan = new URLSearchParams(location.search).get('path') === 'noplan'
+
+  // Always start with yes/no question — onPlan starts as null
+  const maxSwipes = 999
+  const maxDD = 9999
 
   const [step, setStep] = useState(1)
   const [answers, setAnswers] = useState({
-    onPlan: !isNoPlan, planId: null,
+    onPlan: null, planId: null,
     swipesLeft: '', diningDollarsLeft: '',
     semesterPreset: null, semesterStart: '', semesterEnd: '2026-04-26',
     semesterBreaks: [], customOffDays: [],
@@ -494,17 +494,18 @@ export default function Onboarding() {
   const toggleArr = (key, val) => setAnswers(a => ({ ...a, [key]: a[key].includes(val) ? a[key].filter(x => x !== val) : [...a[key], val] }))
   const toggleOffDay = (dateStr) => setAnswers(a => ({ ...a, customOffDays: a.customOffDays.includes(dateStr) ? a.customOffDays.filter(d => d !== dateStr) : [...a.customOffDays, dateStr] }))
 
-  const totalSteps = answers.onPlan ? 4 : 5
+  // null = showing yes/no (no progress bar), true = yes path (4 steps), false = no path (5 steps)
+  const totalSteps = answers.onPlan === null ? 0 : answers.onPlan ? 4 : 5
   const next = () => setStep(s => Math.min(s + 1, totalSteps))
   const back = () => setStep(s => Math.max(s - 1, 1))
 
   const semesterCalendarReady = !!(answers.semesterPreset && answers.semesterStart && answers.semesterEnd)
   const effDays = calcEffectiveDays(answers.semesterStart, answers.semesterEnd, answers.semesterBreaks, answers.customOffDays)
+  const daysRemaining = calcDaysRemaining(answers.semesterEnd)
   const projSwipes = Math.round((parseInt(answers.swipesAmt)||0) * (effDays/7))
   const selectedPlan = PLANS.find(p => p.id === answers.planId)
 
   const finish = () => {
-    // For "yes I have a plan" path, synthesize planData from entered balances
     const planData = selectedPlan || (answers.onPlan ? {
       id: 'custom', name: 'My Dining Plan', price: 0, guestPasses: 10,
       swipes: answers.swipesLeft ? parseInt(answers.swipesLeft) : null,
@@ -522,16 +523,13 @@ export default function Onboarding() {
 
   return (
     <div style={st.page}>
-      {/* Background decorations */}
       <div style={{position:'fixed',inset:0,zIndex:0,pointerEvents:'none',overflow:'hidden'}}>
         <div style={{position:'absolute',inset:0,backgroundImage:'linear-gradient(rgba(0,0,0,0.035) 1px,transparent 1px),linear-gradient(90deg,rgba(0,0,0,0.035) 1px,transparent 1px)',backgroundSize:'28px 28px'}}/>
         <div style={{position:'absolute',left:0,top:0,bottom:0,width:'4px',background:'#D42B2B'}}/>
       </div>
 
-      {/* Topbar */}
       <div style={{...st.topbar,position:'sticky',zIndex:100}}>
         <div style={{display:'flex',alignItems:'center',gap:'12px'}}>
-          <div style={{width:'4px',height:'28px',borderRadius:'2px'}}/>
           <span style={{...st.logo,cursor:'pointer'}} onClick={()=>navigate('/')}>SwipeWise</span>
         </div>
         <div style={{position:'absolute',left:0,right:0,bottom:-20,height:20,zIndex:999,pointerEvents:'none'}}>
@@ -542,11 +540,37 @@ export default function Onboarding() {
       </div>
 
       <div style={{...st.container,position:'relative',zIndex:1}}>
-        <ProgressBar step={step} total={totalSteps}/>
+
+        {/* Only show progress bar once user has chosen a path */}
+        {answers.onPlan !== null && <ProgressBar step={step} total={totalSteps}/>}
+
+        {/* ── Yes/No question (shown when navigating directly with no URL param) ── */}
+        {answers.onPlan === null && (
+          <div>
+            <span style={st.eyebrow}>LET'S GET STARTED</span>
+            <h2 style={st.heading}>Are you currently on a dining plan?</h2>
+            <p style={st.sub}>Tell us where you're at so we can set up the right experience for you.</p>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'14px'}}>
+              {[
+                { val: true,  title: 'Yes, I am',  sub: "I'm currently enrolled in a plan this semester and want to track my balance and usage.", icon: <svg width="32" height="32" viewBox="0 0 32 32" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="16" cy="16" r="12"/><polyline points="10,16 14,20 22,12"/></svg> },
+                { val: false, title: 'Not yet',    sub: "I'm choosing a plan for an upcoming semester and want help finding the right one.", icon: <svg width="32" height="32" viewBox="0 0 32 32" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="14" cy="14" r="8"/><line x1="20" y1="20" x2="27" y2="27"/></svg> },
+              ].map(({ val, title, sub, icon }) => {
+                const sel = answers.onPlan === val
+                return (
+                  <button key={String(val)} onClick={() => { set('onPlan', val); setStep(1) }} style={st.card(sel)}>
+                    <div style={{color:sel?'#D42B2B':'#CBCBCB',marginBottom:'12px',transition:'color 0.15s'}}>{icon}</div>
+                    <p style={{fontFamily:"'Playfair Display',serif",fontWeight:700,fontSize:'1rem',color:'#1a1a1a',margin:'0 0 6px'}}>{title}</p>
+                    <p style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:'0.78rem',letterSpacing:'0.03em',color:'#6B7280',margin:0,lineHeight:1.55}}>{sub}</p>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        )}
 
         {/* ── "Yes I have a plan" path ── */}
 
-        {answers.onPlan && step === 1 && (
+        {answers.onPlan === true && step === 1 && (
           <div>
             <span style={st.eyebrow}>YOUR CURRENT BALANCES</span>
             <h2 style={st.heading}>How much do you have left?</h2>
@@ -554,26 +578,48 @@ export default function Onboarding() {
             <div style={{display:'flex',flexDirection:'column',gap:'1.4rem'}}>
               <div>
                 <label style={st.label}>SWIPES REMAINING</label>
-                <input type="text" inputMode="numeric" placeholder="e.g. 80" value={answers.swipesLeft}
-                  onChange={e=>{ const val=e.target.value; if(val===''||/^\d+$/.test(val)) set('swipesLeft',val) }} style={st.input}/>
-                <p style={st.hint}>Leave blank if you have an unlimited swipes plan.</p>
+                <input type="text" inputMode="numeric"
+                  placeholder={maxSwipes < 999 ? `e.g. ${Math.floor(maxSwipes * 0.6)}` : 'e.g. 80'}
+                  value={answers.swipesLeft}
+                  onChange={e=>{
+                    const val=e.target.value
+                    if(val===''||/^\d+$/.test(val)){
+                      if(val!==''&&parseInt(val)>maxSwipes){ set('swipesLeft',String(maxSwipes)); return }
+                      set('swipesLeft',val)
+                    }
+                  }}
+                  style={st.input}/>
+                <p style={st.hint}>
+                  {maxSwipes < 999 ? `Your plan has ${maxSwipes} swipes total.` : 'Leave blank if you have an unlimited swipes plan.'}
+                </p>
               </div>
               <div>
                 <label style={st.label}>DINING DOLLARS REMAINING</label>
                 <div style={{position:'relative'}}>
                   <span style={{position:'absolute',left:'12px',top:'50%',transform:'translateY(-50%)',color:'#9CA3AF',fontSize:'0.9rem'}}>$</span>
-                  <input type="text" inputMode="decimal" placeholder="e.g. 250.00" value={answers.diningDollarsLeft}
-                    onChange={e=>{ const val=e.target.value; if(val===''||/^\d*\.?\d*$/.test(val)) set('diningDollarsLeft',val) }}
+                  <input type="text" inputMode="decimal"
+                    placeholder={maxDD < 9999 ? `e.g. ${Math.floor(maxDD * 0.6)}` : 'e.g. 250.00'}
+                    value={answers.diningDollarsLeft}
+                    onChange={e=>{
+                      const val=e.target.value
+                      if(val===''||/^\d*\.?\d*$/.test(val)){
+                        const parts=val.split('.'); if(parts[1]&&parts[1].length>2) return
+                        if(val!==''&&parseFloat(val)>maxDD){ set('diningDollarsLeft',String(maxDD)); return }
+                        set('diningDollarsLeft',val)
+                      }
+                    }}
                     style={{...st.input,paddingLeft:'28px'}}/>
                 </div>
-                <p style={st.hint}>Check the GET app or Dining portal for your current balance.</p>
+                <p style={st.hint}>
+                  {maxDD < 9999 ? `Your plan has $${maxDD} dining dollars total. Check the GET app for your current balance.` : 'Check the GET app or Dining portal for your current balance.'}
+                </p>
               </div>
             </div>
             <NavButtons step={step} onBack={back} onNext={next} nextDisabled={!answers.diningDollarsLeft}/>
           </div>
         )}
 
-        {answers.onPlan && step === 2 && (
+        {answers.onPlan === true && step === 2 && (
           <div>
             <span style={st.eyebrow}>SEMESTER</span>
             <h2 style={st.heading}>When is your semester?</h2>
@@ -583,52 +629,100 @@ export default function Onboarding() {
           </div>
         )}
 
-        {answers.onPlan && step === 3 && (
+        {answers.onPlan === true && step === 3 && (
           <PreferencesStep answers={answers} toggleArr={toggleArr} set={set} onBack={back} onNext={next} step={step} isNewPlan={false}/>
         )}
 
-        {answers.onPlan && step === 4 && (
+        {answers.onPlan === true && step === 4 && (
           <div>
             <span style={st.eyebrow}>ALL DONE</span>
             <h2 style={st.heading}>Here's your summary</h2>
-            <p style={st.sub}>Confirm everything looks right before we set up your dashboard.</p>
+            <p style={st.sub}>Everything we'll use to set up your dashboard. Make sure it looks right!</p>
+
+            {/* Balances */}
             <div style={st.summaryCard}>
               <span style={st.summaryLabel}>CURRENT BALANCES</span>
-              <div style={{display:'flex',gap:'2rem',flexWrap:'wrap'}}>
-                {answers.swipesLeft && <div><p style={{fontFamily:"'Playfair Display',serif",fontWeight:700,fontSize:'1.4rem',color:'#1a1a1a',margin:'0 0 2px'}}>{answers.swipesLeft}</p><p style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:'0.68rem',letterSpacing:'0.08em',color:'#9CA3AF',margin:0}}>SWIPES LEFT</p></div>}
-                <div><p style={{fontFamily:"'Playfair Display',serif",fontWeight:700,fontSize:'1.4rem',color:'#1a1a1a',margin:'0 0 2px'}}>${answers.diningDollarsLeft||'—'}</p><p style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:'0.68rem',letterSpacing:'0.08em',color:'#9CA3AF',margin:0}}>DINING DOLLARS</p></div>
+              <div style={{display:'flex',gap:'0',borderRadius:'8px',overflow:'hidden',border:'2px solid #1a1a1a',boxShadow:'3px 3px 0 #1a1a1a',marginTop:'8px'}}>
+                {[
+                  { label: answers.swipesLeft ? `${answers.swipesLeft} SWIPES` : 'UNLIMITED', sub: 'REMAINING', bg: '#1a1a1a', color: '#fff' },
+                  { label: `$${answers.diningDollarsLeft||'0'}`, sub: 'DINING DOLLARS', bg: '#FFE45C', color: '#1a1a1a' },
+                ].map(({ label, sub, bg, color }, i) => (
+                  <div key={sub} style={{ flex:1, background:bg, padding:'12px 14px', textAlign:'center', borderRight: i===0 ? '2px solid #1a1a1a' : 'none' }}>
+                    <p style={{ fontFamily:"'Playfair Display',serif", fontWeight:700, fontSize:'1.3rem', color, margin:'0 0 2px' }}>{label}</p>
+                    <p style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:'0.62rem', letterSpacing:'0.1em', color, opacity:0.7, margin:0 }}>{sub}</p>
+                  </div>
+                ))}
               </div>
             </div>
+
+            {/* Semester */}
             <div style={st.summaryCard}>
               <span style={st.summaryLabel}>SEMESTER</span>
-              <p style={{fontFamily:"'Playfair Display',serif",fontWeight:700,fontSize:'0.95rem',color:'#1a1a1a',margin:'0 0 3px'}}>{answers.semesterPreset?SEMESTERS[answers.semesterPreset]?.label:'—'}</p>
-              <p style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:'0.84rem',letterSpacing:'0.04em',color:'#9CA3AF',margin:0}}>{effDays} active days · {getBreakOffDays(answers.semesterBreaks).length} break days · {answers.customOffDays.length} days away</p>
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:'8px'}}>
+                <p style={{fontFamily:"'Playfair Display',serif",fontWeight:700,fontSize:'1rem',color:'#1a1a1a',margin:0}}>{answers.semesterPreset?SEMESTERS[answers.semesterPreset]?.label:'—'}</p>
+                <span style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:'0.78rem',letterSpacing:'0.06em',padding:'3px 10px',borderRadius:'99px',background:'#FBF2D8',border:'1.5px solid #1a1a1a',color:'#1a1a1a'}}>{daysRemaining ?? effDays} DAYS REMAINING</span>
+              </div>
+              {(answers.semesterBreaks.some(b=>b.enabled) || answers.customOffDays.length > 0) && (
+                <div style={{marginTop:'8px',display:'flex',gap:'8px',flexWrap:'wrap'}}>
+                  {answers.semesterBreaks.filter(b=>b.enabled).map(b=>(
+                    <span key={b.id} style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:'0.65rem',letterSpacing:'0.06em',padding:'2px 8px',borderRadius:'4px',background:'#D42B2B',color:'#fff',border:'1px solid #a82020'}}>{b.label.toUpperCase()}</span>
+                  ))}
+                  {answers.customOffDays.length > 0 && (
+                    <span style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:'0.65rem',letterSpacing:'0.06em',padding:'2px 8px',borderRadius:'4px',background:'#FFE45C',color:'#1a1a1a',border:'1px solid #c8a800'}}>{answers.customOffDays.length} DAYS AWAY</span>
+                  )}
+                </div>
+              )}
             </div>
-            {([...answers.diet,...answers.cuisines,...answers.allergens,...(answers.foodTypes||[]),...(answers.diningStyle||[])].length > 0) && (
+
+            {/* Projections */}
+            {answers.diningDollarsLeft && effDays > 0 && (
               <div style={st.summaryCard}>
-                <span style={st.summaryLabel}>PREFERENCES</span>
-                <div style={{display:'flex',flexWrap:'wrap',gap:'6px'}}>
-                  {[...answers.diet,...answers.cuisines,...answers.allergens,...(answers.foodTypes||[]),...(answers.diningStyle||[])].map(tag=>(
-                    <span key={tag} style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:'0.7rem',letterSpacing:'0.06em',padding:'3px 10px',borderRadius:'99px',background:'#FFE45C',border:'1.5px solid #1a1a1a',color:'#1a1a1a'}}>{tag}</span>
+                <span style={st.summaryLabel}>WHAT THIS MEANS FOR YOU</span>
+                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'10px',marginTop:'6px'}}>
+                  {[
+                    { val: `$${(parseFloat(answers.diningDollarsLeft)/effDays).toFixed(2)}`, label:'DINING $ / DAY' },
+                    { val: answers.swipesLeft ? `${(parseInt(answers.swipesLeft)/effDays).toFixed(1)}` : '∞', label:'SWIPES / DAY' },
+                    { val: `$${(parseFloat(answers.diningDollarsLeft)/(effDays/7)).toFixed(2)}`, label:'DINING $ / WEEK' },
+                    { val: answers.swipesLeft ? `${Math.round(parseInt(answers.swipesLeft)/(effDays/7))}` : '∞', label:'SWIPES / WEEK' },
+                  ].map(({val,label})=>(
+                    <div key={label} style={{background:'#FAF9F6',border:'1.5px solid rgba(0,0,0,0.08)',borderRadius:'8px',padding:'10px 12px',textAlign:'center'}}>
+                      <p style={{fontFamily:"'Playfair Display',serif",fontWeight:700,fontSize:'1.2rem',color:'#1a1a1a',margin:'0 0 2px'}}>{val}</p>
+                      <p style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:'0.6rem',letterSpacing:'0.1em',color:'#9CA3AF',margin:0}}>{label}</p>
+                    </div>
                   ))}
                 </div>
               </div>
             )}
+
+            {/* Preferences */}
+            {([...answers.diet,...answers.allergens,...answers.cuisines,...(answers.foodTypes||[]),...(answers.diningStyle||[])].length > 0 || answers.spiceLevel || answers.portionSize) && (
+              <div style={st.summaryCard}>
+                <span style={st.summaryLabel}>YOUR FOOD PREFERENCES</span>
+                <div style={{display:'flex',flexWrap:'wrap',gap:'6px',marginTop:'6px'}}>
+                  {[...answers.diet,...answers.allergens,...answers.cuisines,...(answers.foodTypes||[]),...(answers.diningStyle||[])].map(tag=>(
+                    <span key={tag} style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:'0.7rem',letterSpacing:'0.06em',padding:'3px 10px',borderRadius:'99px',background:'#FFE45C',border:'1.5px solid #1a1a1a',color:'#1a1a1a'}}>{tag}</span>
+                  ))}
+                  {answers.spiceLevel && <span style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:'0.7rem',letterSpacing:'0.06em',padding:'3px 10px',borderRadius:'99px',background:'#FBF2D8',border:'1.5px solid #1a1a1a',color:'#1a1a1a'}}>{answers.spiceLevel} SPICE</span>}
+                  {answers.portionSize && <span style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:'0.7rem',letterSpacing:'0.06em',padding:'3px 10px',borderRadius:'99px',background:'#FBF2D8',border:'1.5px solid #1a1a1a',color:'#1a1a1a'}}>{answers.portionSize} PORTIONS</span>}
+                </div>
+              </div>
+            )}
+
             <NavButtons step={step} onBack={back} onNext={finish} nextLabel="GO TO MY DASHBOARD"/>
           </div>
         )}
 
         {/* ── "No plan yet" path ── */}
 
-        {!answers.onPlan && step === 1 && (
+        {answers.onPlan === false && step === 1 && (
           <PreferencesStep answers={answers} toggleArr={toggleArr} set={set} onBack={back} onNext={next} step={step} isNewPlan={true}/>
         )}
 
-        {!answers.onPlan && step === 2 && (
+        {answers.onPlan === false && step === 2 && (
           <HabitsStep answers={answers} set={set} onBack={back} onNext={next} step={step}/>
         )}
 
-        {!answers.onPlan && step === 3 && (
+        {answers.onPlan === false && step === 3 && (
           <div>
             <span style={st.pathPill}>FINDING YOU THE RIGHT PLAN</span>
             <span style={{display:'block',...st.eyebrow}}>SEMESTER DATES</span>
@@ -639,7 +733,7 @@ export default function Onboarding() {
           </div>
         )}
 
-        {!answers.onPlan && step === 4 && (() => {
+        {answers.onPlan === false && step === 4 && (() => {
           const rec = suggestPlan(projSwipes, answers.dollarsPerWeek, effDays)
           const projPlanDD = Math.round((parseFloat(answers.dollarsPerWeek)||0)*(effDays/7))
           return (
@@ -647,7 +741,7 @@ export default function Onboarding() {
               <span style={st.pathPill}>FINDING YOU THE RIGHT PLAN</span>
               <span style={{display:'block',...st.eyebrow}}>PLAN SUGGESTION</span>
               <h2 style={st.heading}>Here's what we'd recommend</h2>
-              <p style={st.sub}>Based on ~{projSwipes} projected swipes and ~${projPlanDD} in dining dollars over {effDays} active days.</p>
+              <p style={st.sub}>Based on ~{projSwipes} projected swipes and ~${projPlanDD} in dining dollars over {effDays} days remaining.</p>
               {PLANS.map(plan => {
                 const isRec=plan.id===rec?.id, isSelected=answers.planId?answers.planId===plan.id:isRec
                 const ddDiff=plan.diningDollars-projPlanDD, swipeDiff=plan.swipes!==null?plan.swipes-projSwipes:null
@@ -672,26 +766,85 @@ export default function Onboarding() {
           )
         })()}
 
-        {!answers.onPlan && step === 5 && (
+        {answers.onPlan === false && step === 5 && (
           <div>
             <span style={st.eyebrow}>ALL DONE</span>
             <h2 style={st.heading}>Here's your summary</h2>
-            <p style={st.sub}>Confirm everything looks right before we set up your dashboard.</p>
+            <p style={st.sub}>Everything we'll use to set up your dashboard. Make sure it looks right!</p>
+
+            {/* Recommended plan */}
+            {(() => {
+              const pickedPlan = selectedPlan || suggestPlan(projSwipes, answers.dollarsPerWeek, effDays)
+              return pickedPlan ? (
+                <div style={st.summaryCard}>
+                  <span style={st.summaryLabel}>YOUR PLAN</span>
+                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginTop:'6px',flexWrap:'wrap',gap:'8px'}}>
+                    <div>
+                      <p style={{fontFamily:"'Playfair Display',serif",fontWeight:700,fontSize:'1rem',color:'#1a1a1a',margin:'0 0 4px'}}>{pickedPlan.name}</p>
+                      <div style={{display:'flex',gap:'12px',flexWrap:'wrap'}}>
+                        <span style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:'0.75rem',letterSpacing:'0.05em',color:'#6B7280'}}>{pickedPlan.swipes===null?'UNLIMITED SWIPES':`${pickedPlan.swipes} SWIPES`}</span>
+                        <span style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:'0.75rem',letterSpacing:'0.05em',color:'#6B7280'}}>${pickedPlan.diningDollars} DINING DOLLARS</span>
+                      </div>
+                    </div>
+                    <span style={{fontFamily:"'Playfair Display',serif",fontWeight:700,fontSize:'1.1rem',color:'#1a1a1a'}}>${pickedPlan.price.toLocaleString()}/sem</span>
+                  </div>
+                </div>
+              ) : null
+            })()}
+
+            {/* Semester */}
             <div style={st.summaryCard}>
               <span style={st.summaryLabel}>SEMESTER</span>
-              <p style={{fontFamily:"'Playfair Display',serif",fontWeight:700,fontSize:'0.95rem',color:'#1a1a1a',margin:'0 0 3px'}}>{answers.semesterPreset?SEMESTERS[answers.semesterPreset]?.label:'—'}</p>
-              <p style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:'0.84rem',letterSpacing:'0.04em',color:'#9CA3AF',margin:0}}>{effDays} active days · {answers.customOffDays.length} days away</p>
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:'8px'}}>
+                <p style={{fontFamily:"'Playfair Display',serif",fontWeight:700,fontSize:'1rem',color:'#1a1a1a',margin:0}}>{answers.semesterPreset?SEMESTERS[answers.semesterPreset]?.label:'—'}</p>
+                <span style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:'0.78rem',letterSpacing:'0.06em',padding:'3px 10px',borderRadius:'99px',background:'#FBF2D8',border:'1.5px solid #1a1a1a',color:'#1a1a1a'}}>{daysRemaining ?? effDays} DAYS REMAINING</span>
+              </div>
+              {(answers.semesterBreaks.some(b=>b.enabled) || answers.customOffDays.length > 0) && (
+                <div style={{marginTop:'8px',display:'flex',gap:'8px',flexWrap:'wrap'}}>
+                  {answers.semesterBreaks.filter(b=>b.enabled).map(b=>(
+                    <span key={b.id} style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:'0.65rem',letterSpacing:'0.06em',padding:'2px 8px',borderRadius:'4px',background:'#D42B2B',color:'#fff',border:'1px solid #a82020'}}>{b.label.toUpperCase()}</span>
+                  ))}
+                  {answers.customOffDays.length > 0 && (
+                    <span style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:'0.65rem',letterSpacing:'0.06em',padding:'2px 8px',borderRadius:'4px',background:'#FFE45C',color:'#1a1a1a',border:'1px solid #c8a800'}}>{answers.customOffDays.length} DAYS AWAY</span>
+                  )}
+                </div>
+              )}
             </div>
-            {([...answers.diet,...answers.cuisines,...answers.allergens,...(answers.foodTypes||[]),...(answers.diningStyle||[])].length > 0) && (
+
+            {/* Projected usage */}
+            {(answers.swipesAmt || answers.dollarsPerWeek) && (
               <div style={st.summaryCard}>
-                <span style={st.summaryLabel}>PREFERENCES</span>
-                <div style={{display:'flex',flexWrap:'wrap',gap:'6px'}}>
-                  {[...answers.diet,...answers.cuisines,...answers.allergens,...(answers.foodTypes||[]),...(answers.diningStyle||[])].map(tag=>(
-                    <span key={tag} style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:'0.7rem',letterSpacing:'0.06em',padding:'3px 10px',borderRadius:'99px',background:'#FFE45C',border:'1.5px solid #1a1a1a',color:'#1a1a1a'}}>{tag}</span>
+                <span style={st.summaryLabel}>YOUR PROJECTED USAGE</span>
+                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'10px',marginTop:'6px'}}>
+                  {[
+                    answers.swipesAmt ? { val: `~${projSwipes}`, label:'PROJECTED SWIPES' } : null,
+                    answers.dollarsPerWeek ? { val: `$${answers.dollarsPerWeek}/wk`, label:'DINING $ / WEEK' } : null,
+                    answers.swipesAmt ? { val: `${answers.swipesAmt}/wk`, label:'SWIPES / WEEK' } : null,
+                    answers.dollarsPerWeek ? { val: `~$${Math.round((parseFloat(answers.dollarsPerWeek)||0)*(effDays/7))}`, label:'TOTAL DINING $ SEMESTER' } : null,
+                  ].filter(Boolean).map(({val,label})=>(
+                    <div key={label} style={{background:'#FAF9F6',border:'1.5px solid rgba(0,0,0,0.08)',borderRadius:'8px',padding:'10px 12px',textAlign:'center'}}>
+                      <p style={{fontFamily:"'Playfair Display',serif",fontWeight:700,fontSize:'1.2rem',color:'#1a1a1a',margin:'0 0 2px'}}>{val}</p>
+                      <p style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:'0.6rem',letterSpacing:'0.1em',color:'#9CA3AF',margin:0}}>{label}</p>
+                    </div>
                   ))}
                 </div>
               </div>
             )}
+
+            {/* Preferences */}
+            {([...answers.diet,...answers.allergens,...answers.cuisines,...(answers.foodTypes||[]),...(answers.diningStyle||[])].length > 0 || answers.spiceLevel || answers.portionSize) && (
+              <div style={st.summaryCard}>
+                <span style={st.summaryLabel}>YOUR FOOD PREFERENCES</span>
+                <div style={{display:'flex',flexWrap:'wrap',gap:'6px',marginTop:'6px'}}>
+                  {[...answers.diet,...answers.allergens,...answers.cuisines,...(answers.foodTypes||[]),...(answers.diningStyle||[])].map(tag=>(
+                    <span key={tag} style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:'0.7rem',letterSpacing:'0.06em',padding:'3px 10px',borderRadius:'99px',background:'#FFE45C',border:'1.5px solid #1a1a1a',color:'#1a1a1a'}}>{tag}</span>
+                  ))}
+                  {answers.spiceLevel && <span style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:'0.7rem',letterSpacing:'0.06em',padding:'3px 10px',borderRadius:'99px',background:'#FBF2D8',border:'1.5px solid #1a1a1a',color:'#1a1a1a'}}>{answers.spiceLevel} SPICE</span>}
+                  {answers.portionSize && <span style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:'0.7rem',letterSpacing:'0.06em',padding:'3px 10px',borderRadius:'99px',background:'#FBF2D8',border:'1.5px solid #1a1a1a',color:'#1a1a1a'}}>{answers.portionSize} PORTIONS</span>}
+                </div>
+              </div>
+            )}
+
             <NavButtons step={step} onBack={back} onNext={finish} nextLabel="GO TO MY DASHBOARD"/>
           </div>
         )}

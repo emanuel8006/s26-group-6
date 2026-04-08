@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { login, register, updateMealPlan } from '../Components/APICalls'
+import { login, register } from '../Components/APICalls'
 
 const inputCls = {
   width: '100%',
@@ -17,14 +17,6 @@ const inputCls = {
   transition: 'border-color 0.15s',
 }
 
-const PLAN_OPTIONS = [
-  { id: '999', dd: '400', label: 'NU - Unlimited' },
-  { id: '225', dd: '600', label: 'NU - 225' },
-  { id: '180', dd: '300', label: 'NU - 180' },
-  { id: '150', dd: '200', label: 'NU - 150' },
-  { id: '100', dd: '200', label: 'NU - 100' },
-  { id: 'none', dd: '0', label: "I don't have a plan yet" },
-]
 
 function ErrorBox({ message }) {
   if (!message) return null
@@ -74,19 +66,12 @@ export default function Login() {
     const username = formData.get('username')?.trim()
     const email = formData.get('email')?.trim()
     const password = formData.get('password')
-    const diningPlanId = formData.get('diningPlan')
-
     // Validation
     if (!fullName) return setSignUpError('Please enter your full name.')
     if (!username) return setSignUpError('Please enter a username.')
     if (!email) return setSignUpError('Please enter your email.')
     if (!password) return setSignUpError('Please enter a password.')
     if (password.length < 6) return setSignUpError('Password must be at least 6 characters.')
-    if (!diningPlanId) return setSignUpError('Please select your dining plan.')
-
-    const diningPlanObject = PLAN_OPTIONS.find(u => u.id === diningPlanId)
-    if (!diningPlanObject) return setSignUpError('Invalid dining plan selected.')
-    const hasNoPlan = diningPlanId === 'none'
 
     setLoading(true)
     try {
@@ -106,17 +91,8 @@ export default function Login() {
       }
 
       localStorage.setItem('sw_logged_in', 'true')
-
-      if (!hasNoPlan) {
-        await updateMealPlan({
-          planName: diningPlanObject.label,
-          swipesStart: Number(diningPlanObject.id),
-          diningDollarsStart: Number(diningPlanObject.dd),
-        })
-      }
-
       setSignUpSuccess('Account created! Redirecting...')
-      setTimeout(() => navigate(hasNoPlan ? '/onboarding?path=noplan' : '/onboarding'), 1000)
+      setTimeout(() => navigate('/onboarding'), 1000)
     } catch (err) {
       setSignUpError('You already have an account with this email. Sign in instead.')
     } finally {
@@ -293,13 +269,7 @@ export default function Login() {
                 <label style={{ display: 'block', fontFamily: "'Bebas Neue', sans-serif", fontSize: '1.1rem', letterSpacing: '0.1em', color: '#9CA3AF', marginBottom: '6px' }}>PASSWORD</label>
                 <input name="password" type="password" placeholder="Create a password (min 6 chars)" style={inputCls} />
               </div>
-              <div>
-                <label style={{ display: 'block', fontFamily: "'Bebas Neue', sans-serif", fontSize: '1.1rem', letterSpacing: '0.1em', color: '#9CA3AF', marginBottom: '6px' }}>DINING PLAN</label>
-                <select name="diningPlan" style={{ ...inputCls }}>
-                  <option value="">Select your plan...</option>
-                  {PLAN_OPTIONS.map(p => <option key={p.id} value={p.id}>{p.label}</option>)}
-                </select>
-              </div>
+
               <button type="submit" disabled={loading} style={{
                 padding: '13px', background: loading ? 'rgba(0,0,0,0.15)' : '#D42B2B', color: '#fff',
                 border: '2.5px solid #1a1a1a', borderRadius: '8px',

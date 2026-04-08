@@ -25,6 +25,7 @@ dist-ssr
 *.sw?
 
 .env
+.env.local
 
 __pycache__/
 .mypy_cache/

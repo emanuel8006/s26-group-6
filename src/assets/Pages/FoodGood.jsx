@@ -12,16 +12,16 @@ const st = {
   card: { background: '#fff', border: '2px solid rgba(0,0,0,0.09)', borderRadius: '12px', padding: '1.4rem', boxShadow: '3px 4px 0 rgba(0,0,0,0.06)' },
   skeleton: { background: 'linear-gradient(90deg,#f0f0f0 25%,#e8e8e8 50%,#f0f0f0 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.4s infinite', borderRadius: '6px' },
   periodBtn: (active) => ({
-    padding: '8px 22px', fontFamily: "'Bebas Neue',sans-serif", fontSize: '0.88rem',
+    padding: '8px 22px', fontFamily: "'Bebas Neue',sans-serif", fontSize: '0.98rem',
     letterSpacing: '0.1em', cursor: 'pointer', transition: 'all 0.15s', border: 'none',
     background: active ? '#D42B2B' : 'rgba(255,255,255,0.07)',
-    color: active ? '#fff' : 'rgba(255,255,255,0.45)',
+    color: active ? '#fff' : 'rgba(255,255,255,0.65)',
     borderBottom: active ? '3px solid #FFE45C' : '3px solid transparent',
   }),
   locationTab: (active) => ({
-    padding: '8px 16px', fontFamily: "'Bebas Neue',sans-serif", fontSize: '0.8rem',
+    padding: '8px 16px', fontFamily: "'Bebas Neue',sans-serif", fontSize: '0.9rem',
     letterSpacing: '0.07em', cursor: 'pointer', transition: 'all 0.12s', whiteSpace: 'nowrap',
-    background: active ? '#FBF2D8' : '#fff', color: active ? '#1a1a1a' : '#9CA3AF',
+    background: active ? '#FBF2D8' : '#fff', color: active ? '#1a1a1a' : '#4B5563',
     border: `2px solid ${active ? '#1a1a1a' : 'rgba(0,0,0,0.1)'}`, borderRadius: '8px',
     boxShadow: active ? '3px 3px 0 #1a1a1a' : '1px 2px 0 rgba(0,0,0,0.05)',
     transform: active ? 'translate(-1px,-1px)' : 'none', textTransform: 'capitalize',
@@ -29,7 +29,7 @@ const st = {
   searchInput: {
     width: '100%', padding: '10px 14px 10px 38px',
     border: '2px solid rgba(0,0,0,0.12)', borderRadius: '8px',
-    fontSize: '0.88rem', fontFamily: "'Inter',sans-serif",
+    fontSize: '0.95rem', fontFamily: "'Inter',sans-serif",
     background: '#fff', color: '#1a1a1a', outline: 'none',
     boxSizing: 'border-box', boxShadow: '2px 3px 0 rgba(0,0,0,0.06)',
   },
@@ -48,7 +48,7 @@ function StatusBadge({ status }) {
   return (
     <div style={{ display:'flex',alignItems:'center',gap:'6px',padding:'5px 12px',borderRadius:'99px', background: isOpen ? 'rgba(74,222,128,0.15)' : 'rgba(212,43,43,0.15)', border:`1.5px solid ${isOpen ? 'rgba(74,222,128,0.4)' : 'rgba(212,43,43,0.4)'}` }}>
       <div style={{ width:'7px',height:'7px',borderRadius:'50%',background: isOpen ? '#4ade80' : '#D42B2B', boxShadow: isOpen ? '0 0 6px #4ade80' : 'none' }} />
-      <span style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:'0.68rem',letterSpacing:'0.08em',color: isOpen ? '#4ade80' : '#D42B2B' }}>
+      <span style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:'0.78rem',letterSpacing:'0.08em',color: isOpen ? '#4ade80' : '#D42B2B' }}>
         {status.message || (isOpen ? 'OPEN' : 'CLOSED')}
       </span>
     </div>
@@ -59,8 +59,8 @@ function NutrientRow({ label, value, unit, highlight }) {
   if (value === null || value === undefined) return null
   return (
     <div style={{ display:'flex',justifyContent:'space-between',alignItems:'center',padding:'4px 0',borderBottom:'1px solid rgba(0,0,0,0.04)' }}>
-      <span style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:'0.68rem',letterSpacing:'0.06em',color:'#6B7280' }}>{label}</span>
-      <span style={{ fontFamily:"'Playfair Display',serif",fontWeight:700,fontSize:'0.8rem',color: highlight ? '#D42B2B' : '#1a1a1a' }}>{value}{unit ? <span style={{ fontFamily:"'Bebas Neue',sans-serif",fontWeight:400,fontSize:'0.65rem',color:'#9CA3AF',marginLeft:'2px' }}>{unit}</span> : null}</span>
+      <span style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:'0.78rem',letterSpacing:'0.06em',color:'#1a1a1a' }}>{label}</span>
+      <span style={{ fontFamily:"'Playfair Display',serif",fontWeight:700,fontSize:'0.88rem',color: highlight ? '#D42B2B' : '#1a1a1a' }}>{value}{unit ? <span style={{ fontFamily:"'Bebas Neue',sans-serif",fontWeight:400,fontSize:'0.75rem',color:'#4B5563',marginLeft:'2px' }}>{unit}</span> : null}</span>
     </div>
   )
 }
@@ -78,22 +78,20 @@ function DishCard({ item }) {
 
   return (
     <div style={{ background:'#fff',border:`1.5px solid ${expanded ? '#1a1a1a' : 'rgba(0,0,0,0.07)'}`,borderRadius:'8px',boxShadow: expanded ? '3px 3px 0 #1a1a1a' : '1px 2px 0 rgba(0,0,0,0.04)',transition:'all 0.15s',overflow:'hidden' }}>
-      {/* Main row */}
       <div
         style={{ padding:'10px 12px',cursor: hasNutrients ? 'pointer' : 'default' }}
         onClick={() => hasNutrients && setExpanded(e => !e)}
       >
         <div style={{ display:'flex',justifyContent:'space-between',alignItems:'flex-start',gap:'8px',marginBottom: cal ? '7px' : 0 }}>
           <div style={{ flex:1 }}>
-            <p style={{ fontFamily:"'Inter',sans-serif",fontWeight:500,fontSize:'0.85rem',color:'#1a1a1a',margin:'0 0 4px',lineHeight:1.35 }}>
+            <p style={{ fontFamily:"'Inter',sans-serif",fontWeight:500,fontSize:'0.92rem',color:'#1a1a1a',margin:'0 0 4px',lineHeight:1.35 }}>
               {item.name}
-              {hasNutrients && <span style={{ marginLeft:'6px',fontFamily:"'Bebas Neue',sans-serif",fontSize:'0.6rem',letterSpacing:'0.06em',color:'#C0C0C0' }}>{expanded ? '▲' : '▼'}</span>}
+              {hasNutrients && <span style={{ marginLeft:'6px',fontFamily:"'Bebas Neue',sans-serif",fontSize:'0.7rem',letterSpacing:'0.06em',color:'#4B5563' }}>{expanded ? '▲' : '▼'}</span>}
             </p>
-            {/* Tags */}
             {tags.length > 0 && (
               <div style={{ display:'flex',flexWrap:'wrap',gap:'4px' }}>
                 {tags.map(t => (
-                  <span key={t} style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:'0.58rem',letterSpacing:'0.06em',padding:'1px 6px',borderRadius:'99px',background: t === 'Vegetarian' ? '#f0f7eb' : t === 'Vegan' ? '#e0f2e9' : '#FBF2D8',color: t === 'Vegetarian' || t === 'Vegan' ? '#2d6a1f' : '#6B7280',border: `1px solid ${t === 'Vegetarian' || t === 'Vegan' ? '#c8deba' : 'rgba(0,0,0,0.08)'}` }}>
+                  <span key={t} style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:'0.68rem',letterSpacing:'0.06em',padding:'1px 6px',borderRadius:'99px',background: t === 'Vegetarian' ? '#f0f7eb' : t === 'Vegan' ? '#e0f2e9' : '#FBF2D8',color: t === 'Vegetarian' || t === 'Vegan' ? '#2d6a1f' : '#4B5563',border: `1px solid ${t === 'Vegetarian' || t === 'Vegan' ? '#c8deba' : 'rgba(0,0,0,0.08)'}` }}>
                     {t.toUpperCase()}
                   </span>
                 ))}
@@ -101,8 +99,8 @@ function DishCard({ item }) {
             )}
           </div>
           <div style={{ textAlign:'right',flexShrink:0 }}>
-            {cal !== null && <p style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:'0.72rem',letterSpacing:'0.06em',color,margin:0,whiteSpace:'nowrap' }}>{cal} cal</p>}
-            {portion && <p style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:'0.6rem',letterSpacing:'0.04em',color:'#C0C0C0',margin:'2px 0 0',whiteSpace:'nowrap' }}>{portion}</p>}
+            {cal !== null && <p style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:'0.82rem',letterSpacing:'0.06em',color,margin:0,whiteSpace:'nowrap' }}>{cal} cal</p>}
+            {portion && <p style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:'0.7rem',letterSpacing:'0.04em',color:'#4B5563',margin:'2px 0 0',whiteSpace:'nowrap' }}>{portion}</p>}
           </div>
         </div>
         {cal !== null && (
@@ -112,29 +110,26 @@ function DishCard({ item }) {
         )}
       </div>
 
-      {/* Expanded nutrition panel */}
       {expanded && (
         <div style={{ borderTop:'1px solid rgba(0,0,0,0.06)',padding:'10px 12px',background:'#FAFAFA',animation:'fadeIn 0.2s ease' }}>
           {item.description && (
-            <p style={{ fontFamily:"'Inter',sans-serif",fontSize:'0.78rem',color:'#6B7280',margin:'0 0 10px',lineHeight:1.5,fontStyle:'italic' }}>{item.description}</p>
+            <p style={{ fontFamily:"'Inter',sans-serif",fontSize:'0.85rem',color:'#4B5563',margin:'0 0 10px',lineHeight:1.5,fontStyle:'italic' }}>{item.description}</p>
           )}
 
-          {/* Macro highlights */}
           <div style={{ display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:'6px',marginBottom:'10px' }}>
             {[
               { label:'PROTEIN', val: n.protein, unit:'g', color:'#2d6a1f' },
               { label:'CARBS',   val: n.carbs,   unit:'g', color:'#1a4fa0' },
               { label:'FAT',     val: n.fat,      unit:'g', color:'#F57F17' },
-              { label:'SODIUM',  val: n.sodium,   unit:'mg', color: n.sodium > 600 ? '#D42B2B' : '#6B7280' },
+              { label:'SODIUM',  val: n.sodium,   unit:'mg', color: n.sodium > 600 ? '#D42B2B' : '#1a1a1a' },
             ].map(({ label, val, unit, color }) => val !== null && val !== undefined ? (
               <div key={label} style={{ background:'#fff',border:'1.5px solid rgba(0,0,0,0.07)',borderRadius:'6px',padding:'6px 8px',textAlign:'center' }}>
-                <p style={{ fontFamily:"'Playfair Display',serif",fontWeight:700,fontSize:'0.9rem',color,margin:'0 0 1px' }}>{val}<span style={{ fontSize:'0.74rem',color:'#9CA3AF',marginLeft:'1px' }}>{unit}</span></p>
-                <p style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:'0.58rem',letterSpacing:'0.08em',color:'#9CA3AF',margin:0 }}>{label}</p>
+                <p style={{ fontFamily:"'Playfair Display',serif",fontWeight:700,fontSize:'0.95rem',color,margin:'0 0 1px' }}>{val}<span style={{ fontSize:'0.78rem',color:'#4B5563',marginLeft:'1px' }}>{unit}</span></p>
+                <p style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:'0.68rem',letterSpacing:'0.08em',color:'#1a1a1a',margin:0 }}>{label}</p>
               </div>
             ) : null)}
           </div>
 
-          {/* Full nutrient list */}
           <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0 12px' }}>
             <NutrientRow label="Sat. Fat" value={n.sat_fat} unit="g" highlight={n.sat_fat > 5} />
             <NutrientRow label="Trans Fat" value={n.trans_fat} unit="g" highlight={n.trans_fat > 0} />
@@ -146,23 +141,21 @@ function DishCard({ item }) {
             <NutrientRow label="Iron" value={n.iron} unit="mg" />
           </div>
 
-          {/* Allergens */}
           {allergens.length > 0 && (
             <div style={{ marginTop:'8px',paddingTop:'8px',borderTop:'1px solid rgba(0,0,0,0.05)' }}>
-              <span style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:'0.6rem',letterSpacing:'0.08em',color:'#9CA3AF',display:'block',marginBottom:'4px' }}>CONTAINS</span>
+              <span style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:'0.7rem',letterSpacing:'0.08em',color:'#1a1a1a',display:'block',marginBottom:'4px' }}>CONTAINS</span>
               <div style={{ display:'flex',flexWrap:'wrap',gap:'4px' }}>
                 {allergens.map(a => (
-                  <span key={a} style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:'0.6rem',letterSpacing:'0.05em',padding:'2px 7px',borderRadius:'4px',background:'#FFF0EE',color:'#D42B2B',border:'1px solid rgba(212,43,43,0.2)' }}>{a.replace('*','')}</span>
+                  <span key={a} style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:'0.7rem',letterSpacing:'0.05em',padding:'2px 7px',borderRadius:'4px',background:'#FFF0EE',color:'#D42B2B',border:'1px solid rgba(212,43,43,0.2)' }}>{a.replace('*','')}</span>
                 ))}
               </div>
             </div>
           )}
 
-          {/* Ingredients */}
           {item.ingredients && (
             <div style={{ marginTop:'8px',paddingTop:'8px',borderTop:'1px solid rgba(0,0,0,0.05)' }}>
-              <span style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:'0.6rem',letterSpacing:'0.08em',color:'#9CA3AF',display:'block',marginBottom:'3px' }}>INGREDIENTS</span>
-              <p style={{ fontFamily:"'Inter',sans-serif",fontSize:'0.72rem',color:'#9CA3AF',margin:0,lineHeight:1.5 }}>{item.ingredients}</p>
+              <span style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:'0.7rem',letterSpacing:'0.08em',color:'#1a1a1a',display:'block',marginBottom:'3px' }}>INGREDIENTS</span>
+              <p style={{ fontFamily:"'Inter',sans-serif",fontSize:'0.8rem',color:'#4B5563',margin:0,lineHeight:1.5 }}>{item.ingredients}</p>
             </div>
           )}
         </div>
@@ -183,12 +176,12 @@ function StationSection({ station }) {
         style={{ display:'flex',alignItems:'center',gap:'10px',marginBottom: collapsed ? 0 : '10px',cursor:'pointer',userSelect:'none' }}
       >
         <div style={{ height:'2px',width:'18px',background:'#D42B2B',borderRadius:'1px',flexShrink:0 }} />
-        <p style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:'1.2rem',letterSpacing:'0.1em',color:'#6B7280',margin:0 }}>{station.station || station.name}</p>
+        <p style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:'1.1rem',letterSpacing:'0.1em',color:'#1a1a1a',margin:0 }}>{station.station || station.name}</p>
         <div style={{ flex:1,height:'1px',background:'rgba(0,0,0,0.06)' }} />
-        <span style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:'0.9rem',letterSpacing:'0.06em',color:'#C0C0C0' }}>
+        <span style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:'0.85rem',letterSpacing:'0.06em',color:'#4B5563' }}>
           {items.length} ITEMS{avgCal > 0 ? ` · ~${Math.round(avgCal)} CAL AVG` : ''}
         </span>
-        <span style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:'0.65rem',color:'#C0C0C0',marginLeft:'4px',transition:'transform 0.2s',display:'inline-block',transform: collapsed ? 'rotate(-90deg)' : 'rotate(0deg)' }}>▼</span>
+        <span style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:'0.72rem',color:'#4B5563',marginLeft:'4px',transition:'transform 0.2s',display:'inline-block',transform: collapsed ? 'rotate(-90deg)' : 'rotate(0deg)' }}>▼</span>
       </div>
       {!collapsed && (
         <div style={{ display:'grid',gridTemplateColumns:'repeat(auto-fill, minmax(210px,1fr))',gap:'7px',animation:'fadeIn 0.2s ease' }}>
@@ -282,7 +275,7 @@ export default function FoodGood() {
 
   if (loading) return (
     <div style={{ display:'flex',alignItems:'center',justifyContent:'center',minHeight:'60vh' }}>
-      <p style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:'0.82rem',letterSpacing:'0.1em',color:'#9CA3AF' }}>LOADING...</p>
+      <p style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:'0.92rem',letterSpacing:'0.1em',color:'#1a1a1a' }}>LOADING...</p>
     </div>
   )
   if (backendDown) return null
@@ -294,7 +287,6 @@ export default function FoodGood() {
         @keyframes fadeIn { from{opacity:0;transform:translateY(4px)} to{opacity:1;transform:none} }
       `}</style>
 
-      {/* ── Hero ── */}
       <div style={st.hero}>
         <div style={{ position:'absolute',top:'-60px',right:'-40px',width:'300px',height:'300px',background:'#D42B2B',opacity:0.06,borderRadius:'50%',zIndex:0 }} />
         <div style={{ position:'absolute',bottom:'-40px',left:'10%',width:'200px',height:'200px',background:'#FFE45C',opacity:0.05,borderRadius:'50%',zIndex:0 }} />
@@ -304,10 +296,10 @@ export default function FoodGood() {
             <div>
               <div style={{ display:'flex',alignItems:'center',gap:'8px',marginBottom:'10px' }}>
                 <div style={{ background:'#D42B2B',border:'2px solid rgba(255,255,255,0.2)',borderRadius:'4px',padding:'2px 8px' }}>
-                  <span style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:'0.72rem',letterSpacing:'0.12em',color:'#fff' }}>DINING HALLS</span>
+                  <span style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:'0.82rem',letterSpacing:'0.12em',color:'#fff' }}>DINING HALLS</span>
                 </div>
                 <div style={{ background:'rgba(255,255,255,0.08)',border:'1px solid rgba(255,255,255,0.1)',borderRadius:'4px',padding:'2px 8px' }}>
-                  <span style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:'0.72rem',letterSpacing:'0.1em',color:'rgba(255,255,255,0.5)' }}>{today.toUpperCase()}</span>
+                  <span style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:'0.82rem',letterSpacing:'0.1em',color:'rgba(255,255,255,0.7)' }}>{today.toUpperCase()}</span>
                 </div>
               </div>
               <h1 style={{ fontFamily:"'Playfair Display',serif",fontWeight:700,fontSize:'clamp(2rem,5vw,3.2rem)',color:'#fff',margin:0,lineHeight:1.05 }}>
@@ -325,7 +317,6 @@ export default function FoodGood() {
       </div>
 
       <div style={st.body}>
-        {/* Controls */}
         <div style={{ display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:'12px' }}>
           <div style={{ display:'flex',gap:'8px',flexWrap:'wrap' }}>
             {locations.map(loc => (
@@ -333,43 +324,41 @@ export default function FoodGood() {
             ))}
           </div>
           <div style={{ position:'relative',minWidth:'200px',maxWidth:'280px',flex:1 }}>
-            <svg style={{ position:'absolute',left:'11px',top:'50%',transform:'translateY(-50%)',opacity:0.3 }} width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="#1a1a1a" strokeWidth="2" strokeLinecap="round"><circle cx="6.5" cy="6.5" r="4.5"/><line x1="10.5" y1="10.5" x2="14" y2="14"/></svg>
+            <svg style={{ position:'absolute',left:'11px',top:'50%',transform:'translateY(-50%)',opacity:0.5 }} width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="#1a1a1a" strokeWidth="2" strokeLinecap="round"><circle cx="6.5" cy="6.5" r="4.5"/><line x1="10.5" y1="10.5" x2="14" y2="14"/></svg>
             <input type="text" placeholder="Search dishes..." value={query} onChange={e => setQuery(e.target.value)} style={st.searchInput} />
-            {query && <button onClick={() => setQuery('')} style={{ position:'absolute',right:'10px',top:'50%',transform:'translateY(-50%)',background:'none',border:'none',cursor:'pointer',color:'#9CA3AF',fontSize:'1.1rem',lineHeight:1,padding:0 }}>×</button>}
+            {query && <button onClick={() => setQuery('')} style={{ position:'absolute',right:'10px',top:'50%',transform:'translateY(-50%)',background:'none',border:'none',cursor:'pointer',color:'#4B5563',fontSize:'1.1rem',lineHeight:1,padding:0 }}>×</button>}
           </div>
         </div>
 
-        {/* Cal legend + tap hint */}
         <div style={{ display:'flex',alignItems:'center',gap:'16px',flexWrap:'wrap',justifyContent:'space-between' }}>
           <div style={{ display:'flex',alignItems:'center',gap:'16px',flexWrap:'wrap' }}>
-            <span style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:'0.95rem',letterSpacing:'0.1em',color:'#C0C0C0' }}>CALORIE GUIDE:</span>
+            <span style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:'0.88rem',letterSpacing:'0.1em',color:'#1a1a1a' }}>CALORIE GUIDE:</span>
             {[{ color:'#4ade80', label:'LIGHT (≤150)' }, { color:'#FFB300', label:'MODERATE (≤350)' }, { color:'#D42B2B', label:'HIGH (350+)' }].map(({ color, label }) => (
               <div key={label} style={{ display:'flex',alignItems:'center',gap:'5px' }}>
                 <div style={{ width:'24px',height:'3px',background:color,borderRadius:'99px' }} />
-                <span style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:'0.92rem',letterSpacing:'0.06em',color:'#9CA3AF' }}>{label}</span>
+                <span style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:'0.85rem',letterSpacing:'0.06em',color:'#1a1a1a' }}>{label}</span>
               </div>
             ))}
           </div>
-          <span style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:'0.92rem',letterSpacing:'0.06em',color:'#C0C0C0' }}>TAP A DISH FOR NUTRITION INFO</span>
+          <span style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:'0.85rem',letterSpacing:'0.06em',color:'#4B5563' }}>TAP A DISH FOR NUTRITION INFO</span>
         </div>
 
-        {/* Menu card */}
         <div style={st.card}>
           <div style={{ display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'1.4rem',paddingBottom:'1rem',borderBottom:'1px solid rgba(0,0,0,0.06)',flexWrap:'wrap',gap:'8px' }}>
             <div>
               <div style={{ display:'flex',alignItems:'center',gap:'8px' }}>
                 <span style={{ fontFamily:"'Playfair Display',serif",fontWeight:700,fontSize:'1.2rem',color:'#1a1a1a' }}>{locationLabel}</span>
-                <span style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:'0.85rem',letterSpacing:'0.08em',color:'#D42B2B' }}>{selectedPeriod.toUpperCase()}</span>
+                <span style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:'0.92rem',letterSpacing:'0.08em',color:'#D42B2B' }}>{selectedPeriod.toUpperCase()}</span>
               </div>
               {!menuLoading && !error && query && (
-                <p style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:'0.72rem',letterSpacing:'0.06em',color:'#9CA3AF',margin:'3px 0 0' }}>
+                <p style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:'0.82rem',letterSpacing:'0.06em',color:'#4B5563',margin:'3px 0 0' }}>
                   {filteredStations.reduce((n,s)=>n+s.items.length,0)} RESULTS FOR "{query.toUpperCase()}"
                 </p>
               )}
             </div>
             <div style={{ display:'flex',alignItems:'center',gap:'6px' }}>
               <div style={{ width:'7px',height:'7px',borderRadius:'50%',background: menuLoading ? '#F59E0B' : error ? '#9CA3AF' : '#4ade80', boxShadow: !menuLoading && !error ? '0 0 5px #4ade80' : 'none' }} />
-              <span style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:'0.85rem',letterSpacing:'0.08em',color:'#9CA3AF' }}>
+              <span style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:'0.85rem',letterSpacing:'0.08em',color:'#1a1a1a' }}>
                 {menuLoading ? 'LOADING' : error ? 'UNAVAILABLE' : `LIVE · ${totalItems} ITEMS`}
               </span>
             </div>
@@ -379,8 +368,8 @@ export default function FoodGood() {
 
           {!menuLoading && error && (
             <div style={{ border:'2px dashed rgba(0,0,0,0.1)',borderRadius:'10px',padding:'3rem',textAlign:'center' }}>
-              <p style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:'0.72rem',letterSpacing:'0.1em',color:'#9CA3AF',margin:'0 0 6px' }}>MENU UNAVAILABLE</p>
-              <p style={{ fontFamily:"'Playfair Display',serif",fontWeight:700,fontSize:'1rem',color:'#1a1a1a',margin:0,opacity:0.4 }}>{error}</p>
+              <p style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:'0.82rem',letterSpacing:'0.1em',color:'#4B5563',margin:'0 0 6px' }}>MENU UNAVAILABLE</p>
+              <p style={{ fontFamily:"'Playfair Display',serif",fontWeight:700,fontSize:'1rem',color:'#1a1a1a',margin:0,opacity:0.6 }}>{error}</p>
             </div>
           )}
 
@@ -392,15 +381,15 @@ export default function FoodGood() {
 
           {!menuLoading && !error && stations.length > 0 && filteredStations.length === 0 && (
             <div style={{ border:'2px dashed rgba(0,0,0,0.1)',borderRadius:'10px',padding:'2.5rem',textAlign:'center' }}>
-              <p style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:'0.72rem',letterSpacing:'0.1em',color:'#9CA3AF',margin:'0 0 4px' }}>NO RESULTS</p>
-              <p style={{ fontFamily:"'Playfair Display',serif",fontWeight:700,fontSize:'0.95rem',color:'#1a1a1a',margin:0,opacity:0.4 }}>Nothing matched "{query}"</p>
+              <p style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:'0.82rem',letterSpacing:'0.1em',color:'#4B5563',margin:'0 0 4px' }}>NO RESULTS</p>
+              <p style={{ fontFamily:"'Playfair Display',serif",fontWeight:700,fontSize:'0.95rem',color:'#1a1a1a',margin:0,opacity:0.6 }}>Nothing matched "{query}"</p>
             </div>
           )}
 
           {!menuLoading && !error && stations.length === 0 && menu && (
             <div style={{ border:'2px dashed rgba(0,0,0,0.1)',borderRadius:'10px',padding:'2.5rem',textAlign:'center' }}>
-              <p style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:'0.72rem',letterSpacing:'0.1em',color:'#9CA3AF',margin:'0 0 4px' }}>NO MENU POSTED YET</p>
-              <p style={{ fontFamily:"'Playfair Display',serif",fontWeight:700,fontSize:'0.95rem',color:'#1a1a1a',margin:0,opacity:0.4 }}>No {selectedPeriod.toLowerCase()} menu for {locationLabel}</p>
+              <p style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:'0.82rem',letterSpacing:'0.1em',color:'#4B5563',margin:'0 0 4px' }}>NO MENU POSTED YET</p>
+              <p style={{ fontFamily:"'Playfair Display',serif",fontWeight:700,fontSize:'0.95rem',color:'#1a1a1a',margin:0,opacity:0.6 }}>No {selectedPeriod.toLowerCase()} menu for {locationLabel}</p>
             </div>
           )}
         </div>

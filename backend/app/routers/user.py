@@ -133,7 +133,7 @@ class data_request(BaseModel):
 @router.get("/get_data/")
 async def get_user_info_specific(
     body: data_request # List of column names in json string format
-    ) -> Exception|APIResponse:
+    ):
     data = supabase_client.auth.get_user()
     columns = json.loads(body.column_list)
     try:

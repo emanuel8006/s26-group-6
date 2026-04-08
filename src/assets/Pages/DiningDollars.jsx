@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import PhotoReel from '../Components/PhotoReel'
 
 const API_BASE = import.meta.env.VITE_API_URL
 
@@ -101,15 +100,14 @@ const st = {
   heroInner: { maxWidth: '1100px', margin: '0 auto', padding: '2.5rem 2rem', position: 'relative', zIndex: 2 },
   body: { maxWidth: '1100px', margin: '0 auto', padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' },
   card: { background: '#fff', border: '2px solid rgba(0,0,0,0.09)', borderRadius: '12px', padding: '1.4rem', boxShadow: '3px 4px 0 rgba(0,0,0,0.06)' },
-  label: { fontFamily: "'Bebas Neue',sans-serif", fontSize: '1.2rem', letterSpacing: '0.1em', color: '#6B7280', display: 'block', marginBottom: '4px' },
+  label: { fontFamily: "'Bebas Neue',sans-serif", fontSize: '0.8rem', letterSpacing: '0.1em', color: '#6B7280', display: 'block', marginBottom: '4px' },
   heading: { fontFamily: "'Playfair Display',serif", fontWeight: 700, fontSize: '1rem', color: '#1a1a1a', margin: '0 0 1rem' },
   bigNum: { fontFamily: "'Playfair Display',serif", fontWeight: 700, fontSize: '2.6rem', color: '#1a1a1a', lineHeight: 1, margin: '0 0 2px' },
   input: { width: '100%', padding: '10px 14px', border: '2px solid rgba(0,0,0,0.12)', borderRadius: '8px', fontSize: '0.9rem', fontFamily: "'Inter',sans-serif", background: '#fff', color: '#1a1a1a', outline: 'none', boxSizing: 'border-box', boxShadow: '2px 3px 0 rgba(0,0,0,0.07)', transition: 'border-color 0.15s' },
-  btnRed: { padding: '11px 20px', background: '#D42B2B', color: '#fff', border: '2.5px solid #1a1a1a', borderRadius: '8px', fontFamily: "'Bebas Neue',sans-serif", fontSize: '1.2rem', letterSpacing: '0.07em', cursor: 'pointer', boxShadow: '3px 3px 0 #1a1a1a', transition: 'all 0.12s' },
-  eyebrow: { fontFamily: "'Bebas Neue',sans-serif", fontSize: '1.2rem', letterSpacing: '0.14em', color: '#D42B2B', display: 'block', marginBottom: '6px' },
+  btnRed: { padding: '11px 20px', background: '#D42B2B', color: '#fff', border: '2.5px solid #1a1a1a', borderRadius: '8px', fontFamily: "'Bebas Neue',sans-serif", fontSize: '0.9rem', letterSpacing: '0.07em', cursor: 'pointer', boxShadow: '3px 3px 0 #1a1a1a', transition: 'all 0.12s' },
+  eyebrow: { fontFamily: "'Bebas Neue',sans-serif", fontSize: '0.8rem', letterSpacing: '0.14em', color: '#D42B2B', display: 'block', marginBottom: '6px' },
   twoCol: { display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1.5rem' },
-  threeCol: { display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1.2rem' },
-  hint: { fontFamily: "'Bebas Neue',sans-serif", fontSize: '1.2rem', letterSpacing: '0.04em', color: '#9CA3AF', marginTop: '4px' },
+  hint: { fontFamily: "'Bebas Neue',sans-serif", fontSize: '0.78rem', letterSpacing: '0.04em', color: '#9CA3AF', marginTop: '4px' },
   paceBadge: (pace) => {
     const map = { on_track:{ bg:'#f0f7eb',color:'#2d6a1f',border:'#c8deba',label:'On Pace' }, over:{ bg:'#FFF0EE',color:'#D42B2B',border:'#f0b8b8',label:'Spending Fast' }, under:{ bg:'#e6f0ff',color:'#1a4fa0',border:'#b8d0f0',label:'Ahead' } }
     const p = map[pace] || map.on_track
@@ -288,7 +286,7 @@ function LogModal({ onClose, onSave }) {
   return (
     <div style={{ position:'fixed',inset:0,background:'rgba(0,0,0,0.5)',backdropFilter:'blur(4px)',zIndex:1000,display:'flex',alignItems:'center',justifyContent:'center',padding:'1rem' }} onClick={onClose}>
       <div style={{ background:'#fff',border:'2.5px solid #1a1a1a',borderRadius:'14px',padding:'1.8rem',maxWidth:'400px',width:'100%',boxShadow:'5px 6px 0 #1a1a1a' }} onClick={e=>e.stopPropagation()}>
-        <p style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:'1.2rem',letterSpacing:'0.12em',color:'#9CA3AF',margin:'0 0 4px' }}>NEW TRANSACTION</p>
+        <p style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:'0.8rem',letterSpacing:'0.12em',color:'#9CA3AF',margin:'0 0 4px' }}>NEW TRANSACTION</p>
         <p style={{ fontFamily:"'Playfair Display',serif",fontWeight:700,fontSize:'1.4rem',color:'#1a1a1a',margin:'0 0 1.4rem' }}>Log Dining Dollars</p>
         <div style={{ display:'flex',flexDirection:'column',gap:'1rem' }}>
           <div>
@@ -308,7 +306,7 @@ function LogModal({ onClose, onSave }) {
                   if (parts[1] && parts[1].length > 2) return
                   set('amount', val)
                 }}
-                style={{ ...st.input,paddingLeft:'28px' }}
+                style={{ ...st.input, paddingLeft:'28px' }}
               />
             </div>
           </div>
@@ -328,8 +326,8 @@ function LogModal({ onClose, onSave }) {
           </div>
         </div>
         <div style={{ display:'flex',gap:'8px',marginTop:'1.4rem' }}>
-          <button onClick={onClose} style={{ flex:1,padding:'10px',border:'2px solid rgba(0,0,0,0.12)',borderRadius:'8px',fontFamily:"'Bebas Neue',sans-serif",fontSize:'1.2rem',letterSpacing:'0.06em',cursor:'pointer',background:'#fff',color:'#9CA3AF' }}>CANCEL</button>
-          <button onClick={()=>{ if(form.amount) { onSave(form); onClose() } }} style={{ flex:2,padding:'10px',background:'#D42B2B',border:'2px solid #1a1a1a',borderRadius:'8px',fontFamily:"'Bebas Neue',sans-serif",fontSize:'1.2rem',letterSpacing:'0.06em',cursor:'pointer',color:'#fff',boxShadow:'2px 3px 0 #1a1a1a' }}>SAVE TRANSACTION</button>
+          <button onClick={onClose} style={{ flex:1,padding:'10px',border:'2px solid rgba(0,0,0,0.12)',borderRadius:'8px',fontFamily:"'Bebas Neue',sans-serif",fontSize:'0.85rem',letterSpacing:'0.06em',cursor:'pointer',background:'#fff',color:'#9CA3AF' }}>CANCEL</button>
+          <button onClick={()=>{ if(form.amount) { onSave(form); onClose() } }} style={{ flex:2,padding:'10px',background:'#D42B2B',border:'2px solid #1a1a1a',borderRadius:'8px',fontFamily:"'Bebas Neue',sans-serif",fontSize:'0.85rem',letterSpacing:'0.06em',cursor:'pointer',color:'#fff',boxShadow:'2px 3px 0 #1a1a1a' }}>SAVE TRANSACTION</button>
         </div>
       </div>
     </div>
@@ -346,7 +344,6 @@ export default function DiningDollars() {
 
   useEffect(() => {
     const stored = localStorage.getItem('nomnom_profile')
-    if (!stored) { navigate('/onboarding'); return }
     if (stored) try { setProfile(JSON.parse(stored)) } catch {}
   }, [])
 
@@ -411,7 +408,6 @@ export default function DiningDollars() {
   return (
     <div style={st.page}>
       <div style={st.hero}>
-        <PhotoReel />
         <div style={{ position:'absolute',inset:0,backgroundImage:'radial-gradient(circle at 80% 50%,rgba(212,43,43,0.1),transparent 55%)',zIndex:1 }} />
         <div style={{ position:'absolute',inset:0,opacity:0.03,backgroundImage:'radial-gradient(circle,#fff 1px,transparent 1px)',backgroundSize:'22px 22px',zIndex:1 }} />
         <div style={st.heroInner}>
@@ -419,7 +415,7 @@ export default function DiningDollars() {
             <div>
               <span style={st.eyebrow}>DINING DOLLARS · {semLabel}</span>
               <h1 style={{ fontFamily:"'Playfair Display',serif",fontWeight:700,fontSize:'clamp(1.8rem,4vw,2.8rem)',color:'#fff',margin:'0 0 6px',lineHeight:1.1 }}>Your Balance</h1>
-              <p style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:'1.2rem',letterSpacing:'0.04em',color:'rgba(255,255,255,0.45)',margin:0 }}>
+              <p style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:'0.88rem',letterSpacing:'0.04em',color:'rgba(255,255,255,0.45)',margin:0 }}>
                 {plan?.name || 'No plan'} · ${totalDD} starting balance
               </p>
             </div>
@@ -430,7 +426,7 @@ export default function DiningDollars() {
               <p style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:'1.2rem',letterSpacing:'0.12em',color:'rgba(255,255,255,0.35)',margin:'0 0 4px' }}>CURRENT BALANCE</p>
               <p style={{ fontFamily:"'Playfair Display',serif",fontWeight:700,fontSize:'clamp(2.8rem,6vw,4.5rem)',color:'#fff',lineHeight:1,margin:'0 0 4px' }}>${current.toFixed(0)}</p>
               <div style={{ display:'flex',alignItems:'center',gap:'10px',flexWrap:'wrap' }}>
-                <p style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:'1.2rem',letterSpacing:'0.06em',color:'rgba(255,255,255,0.35)',margin:0 }}>OF ${totalDD} · {pct}% REMAINING</p>
+                <p style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:'0.8rem',letterSpacing:'0.06em',color:'rgba(255,255,255,0.35)',margin:0 }}>OF ${totalDD} · {pct}% REMAINING</p>
                 {pace && <span style={st.paceBadge(pace)}>{({ on_track:'On Pace',over:'Spending Fast',under:'Ahead' })[pace]}</span>}
               </div>
             </div>
@@ -446,7 +442,7 @@ export default function DiningDollars() {
                 ].map(({ label, value }) => (
                   <div key={label} style={{ background:'rgba(255,255,255,0.07)',border:'1px solid rgba(255,255,255,0.1)',borderRadius:'8px',padding:'10px 12px' }}>
                     <p style={{ fontFamily:"'Playfair Display',serif",fontWeight:700,fontSize:'1.2rem',color:'#fff',margin:'0 0 2px',lineHeight:1 }}>{value}</p>
-                    <p style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:'1.2rem',letterSpacing:'0.1em',color:'rgba(255,255,255,0.35)',margin:0 }}>{label}</p>
+                    <p style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:'0.8rem',letterSpacing:'0.1em',color:'rgba(255,255,255,0.35)',margin:0 }}>{label}</p>
                   </div>
                 ))}
               </div>
@@ -464,7 +460,7 @@ export default function DiningDollars() {
           return (
             <div style={{ background: isOver ? '#FFF0EE' : '#f0f7eb', border: `2px solid ${isOver ? '#D42B2B' : '#2d6a1f'}`, borderRadius:'10px', padding:'14px 18px', boxShadow:`3px 3px 0 ${isOver ? '#D42B2B' : '#2d6a1f'}`, display:'flex',alignItems:'center',gap:'12px' }}>
               <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke={isOver ? '#D42B2B' : '#2d6a1f'} strokeWidth="2" strokeLinecap="round"><circle cx="9" cy="9" r="7"/><line x1="9" y1="6" x2="9" y2="10"/><circle cx="9" cy="13" r="0.5" fill={isOver ? '#D42B2B' : '#2d6a1f'}/></svg>
-              <p style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:'1.2rem',letterSpacing:'0.04em',color: isOver ? '#D42B2B' : '#2d6a1f',margin:0 }}>
+              <p style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:'0.82rem',letterSpacing:'0.04em',color: isOver ? '#D42B2B' : '#2d6a1f',margin:0 }}>
                 {isOver
                   ? `YOU'RE SPENDING FASTER THAN PLANNED — YOUR DAILY BUDGET IS $${dailyBudget.toFixed(2)} VS YOUR PROJECTED $${dailyProj.toFixed(2)}/DAY.`
                   : `YOU'RE AHEAD OF BUDGET — $${dailyBudget.toFixed(2)}/DAY REMAINING VS $${dailyProj.toFixed(2)}/DAY PROJECTED.`}
@@ -502,7 +498,7 @@ export default function DiningDollars() {
                       <div style={{ display:'flex',justifyContent:'space-between',marginBottom:'5px' }}>
                         <div style={{ display:'flex',alignItems:'center',gap:'8px' }}>
                           <div style={{ width:'10px',height:'10px',borderRadius:'2px',background:c.color,flexShrink:0 }} />
-                          <span style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:'1.2rem',letterSpacing:'0.06em',color:'#1a1a1a' }}>{c.label}</span>
+                          <span style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:'0.78rem',letterSpacing:'0.06em',color:'#1a1a1a' }}>{c.label}</span>
                         </div>
                         <span style={{ fontFamily:"'Playfair Display',serif",fontWeight:700,fontSize:'0.9rem',color:'#1a1a1a' }}>${c.total.toFixed(2)}</span>
                       </div>
@@ -519,7 +515,7 @@ export default function DiningDollars() {
               <p style={st.heading}>Recent Transactions</p>
               {transactions.length === 0 ? (
                 <div style={{ border:'2px dashed rgba(0,0,0,0.1)',borderRadius:'8px',padding:'2rem',textAlign:'center' }}>
-                  <p style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:'1.2rem',letterSpacing:'0.1em',color:'#9CA3AF',margin:'0 0 4px' }}>NO TRANSACTIONS YET</p>
+                  <p style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:'0.8rem',letterSpacing:'0.1em',color:'#9CA3AF',margin:'0 0 4px' }}>NO TRANSACTIONS YET</p>
                   <p style={{ fontFamily:"'Playfair Display',serif",fontWeight:700,fontSize:'0.95rem',color:'#1a1a1a',margin:0,opacity:0.4 }}>Log your first dining dollar spend above</p>
                 </div>
               ) : (
@@ -556,7 +552,7 @@ export default function DiningDollars() {
                 { label:'Weekly Budget',    value:`$${(dailyBudget*7).toFixed(2)}/wk`, muted:true },
               ].map(({ label, value, muted, red, bold }, i) => (
                 <div key={label} style={{ display:'flex',justifyContent:'space-between',alignItems:'center',padding:'8px 0',borderBottom: i < 5 ? '1px solid rgba(0,0,0,0.04)' : 'none' }}>
-                  <span style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:'1.2rem',letterSpacing:'0.06em',color: muted ? '#9CA3AF' : '#1a1a1a' }}>{label}</span>
+                  <span style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:'0.8rem',letterSpacing:'0.06em',color: muted ? '#9CA3AF' : '#1a1a1a' }}>{label}</span>
                   <span style={{ fontFamily:"'Playfair Display',serif",fontWeight: bold ? 700 : 500,fontSize: bold ? '1.1rem' : '0.9rem',color: red ? '#D42B2B' : bold ? '#1a1a1a' : '#6B7280' }}>{value}</span>
                 </div>
               ))}
@@ -570,7 +566,7 @@ export default function DiningDollars() {
                   { bg:'#FFF0EE', border:'#f0b8b8', title:'Watch the weekend spend', body:'Weekends tend to be the biggest spending days. Plan ahead to avoid burning through your balance.' },
                 ].map(({ bg, border, title, body }) => (
                   <div key={title} style={{ background:bg,border:`1.5px solid ${border}`,borderRadius:'8px',padding:'12px 14px' }}>
-                    <p style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:'1.2rem',letterSpacing:'0.06em',color:'#1a1a1a',margin:'0 0 3px' }}>{title.toUpperCase()}</p>
+                    <p style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:'0.8rem',letterSpacing:'0.06em',color:'#1a1a1a',margin:'0 0 3px' }}>{title.toUpperCase()}</p>
                     <p style={{ fontFamily:"'Inter',sans-serif",fontSize:'0.78rem',color:'#6B7280',margin:0,lineHeight:1.5 }}>{body}</p>
                   </div>
                 ))}
@@ -585,7 +581,7 @@ export default function DiningDollars() {
 
       {showModal && <LogModal onClose={() => setShowModal(false)} onSave={handleSave} />}
       {toast && (
-        <div style={{ position:'fixed',bottom:'2rem',left:'50%',transform:'translateX(-50%)',background:'#1a1a1a',color:'#fff',padding:'10px 20px',borderRadius:'99px',fontFamily:"'Bebas Neue',sans-serif",fontSize:'1.2rem',letterSpacing:'0.06em',boxShadow:'0 4px 20px rgba(0,0,0,0.3)',whiteSpace:'nowrap',zIndex:9999,border:'2px solid rgba(255,255,255,0.1)' }}>
+        <div style={{ position:'fixed',bottom:'2rem',left:'50%',transform:'translateX(-50%)',background:'#1a1a1a',color:'#fff',padding:'10px 20px',borderRadius:'99px',fontFamily:"'Bebas Neue',sans-serif",fontSize:'0.82rem',letterSpacing:'0.06em',boxShadow:'0 4px 20px rgba(0,0,0,0.3)',whiteSpace:'nowrap',zIndex:9999,border:'2px solid rgba(255,255,255,0.1)' }}>
           {toast}
         </div>
       )}

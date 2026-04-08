@@ -12,7 +12,7 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],  # Vite's default port
+    allow_origins=["http://localhost:5173"],
     # TODO: Change link above to the frontend's actual URL when deployed
     allow_credentials=True,
     allow_methods=["*"],

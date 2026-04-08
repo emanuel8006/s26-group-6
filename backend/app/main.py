@@ -12,8 +12,8 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    # TODO: Change link above to the frontend's actual URL when deployed
+    allow_origins=["s26-group-6-8qaeihtth-emanuel8006s-projects.vercel.app",
+                   "http://localhost:5173"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

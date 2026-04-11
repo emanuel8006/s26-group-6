@@ -12,7 +12,7 @@ export default function Home() {
   const navigate = useNavigate();
   const cleanupRef = useRef(null);
   const runTransRef = useRef(null);
-  const [isLoggedIn] = useState(() => !!localStorage.getItem('nomnom_profile'));
+  const [isLoggedIn] = useState(() => !!localStorage.getItem('sw_logged_in'));
 
   useEffect(() => {
     if (!wrapperRef.current) return;

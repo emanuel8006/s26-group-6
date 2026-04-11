@@ -99,10 +99,11 @@ async def get_menu(location_name: str, period_name: str) -> Dict[str, Any]:
     async with AsyncSession(impersonate="chrome") as s:
         try:
             res = await s.get(url, headers=HEADERS)
-        except httpx.HTTPStatusError as e:
-            return {"error": "DineOnCampus API failed", "status": e.response.status_code, "detail": str(e)}
-        except httpx.RequestError as e:
+        except Exception as e:
             return {"error": "DineOnCampus API request failed", "detail": str(e)}
+
+    if res.status_code != 200:
+        return {"error": "DineOnCampus API failed", "status": res.status_code}
 
     data: Dict[str, Any] = res.json()
     per_data = data.get("period") or {}

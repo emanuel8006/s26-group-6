@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import PhotoReel from '../Components/PhotoReel'
+import { updateMealPlan } from '../Components/APICalls'
 
 function parseDate(str) { return str ? new Date(str + 'T12:00:00') : null }
 function daysUntil(str) {
@@ -71,18 +72,27 @@ const st = {
 
 function LogModal({ onClose, onSave }) {
   const [venue, setVenue] = useState('iv')
+  const [date, setDate] = useState(() => new Date().toISOString().split('T')[0])
   return (
     <div style={{ position:'fixed',inset:0,background:'rgba(0,0,0,0.5)',backdropFilter:'blur(4px)',zIndex:1000,display:'flex',alignItems:'center',justifyContent:'center',padding:'1rem' }} onClick={onClose}>
       <div style={{ background:'#fff',border:'2.5px solid #1a1a1a',borderRadius:'14px',padding:'1.8rem',maxWidth:'400px',width:'100%',boxShadow:'5px 6px 0 #1a1a1a' }} onClick={e=>e.stopPropagation()}>
         <p style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:'1.2rem',letterSpacing:'0.12em',color:'#9CA3AF',margin:'0 0 4px' }}>LOG A SWIPE</p>
         <p style={{ fontFamily:"'Playfair Display',serif",fontWeight:700,fontSize:'1.4rem',color:'#1a1a1a',margin:'0 0 1.4rem' }}>Use a Swipe</p>
-        <label style={{ display:'block',fontFamily:"'Bebas Neue',sans-serif",fontSize:'1.2rem',letterSpacing:'0.1em',color:'#9CA3AF',marginBottom:'6px' }}>DINING LOCATION</label>
-        <select value={venue} onChange={e=>setVenue(e.target.value)} style={st.input}>
-          {VENUES.map(v=><option key={v.id} value={v.id}>{v.label}{v.maxPerDay ? ` (max ${v.maxPerDay}/day)` : ''}</option>)}
-        </select>
+        <div style={{ display:'flex',flexDirection:'column',gap:'1rem' }}>
+          <div>
+            <label style={{ display:'block',fontFamily:"'Bebas Neue',sans-serif",fontSize:'1.2rem',letterSpacing:'0.1em',color:'#9CA3AF',marginBottom:'6px' }}>DINING LOCATION</label>
+            <select value={venue} onChange={e=>setVenue(e.target.value)} style={st.input}>
+              {VENUES.map(v=><option key={v.id} value={v.id}>{v.label}{v.maxPerDay ? ` (max ${v.maxPerDay}/day)` : ''}</option>)}
+            </select>
+          </div>
+          <div>
+            <label style={{ display:'block',fontFamily:"'Bebas Neue',sans-serif",fontSize:'1.2rem',letterSpacing:'0.1em',color:'#9CA3AF',marginBottom:'6px' }}>DATE</label>
+            <input type="date" value={date} max={new Date().toISOString().split('T')[0]} onChange={e=>setDate(e.target.value)} style={st.input} />
+          </div>
+        </div>
         <div style={{ display:'flex',gap:'8px',marginTop:'1.4rem' }}>
           <button onClick={onClose} style={{ flex:1,padding:'10px',border:'2px solid rgba(0,0,0,0.12)',borderRadius:'8px',fontFamily:"'Bebas Neue',sans-serif",fontSize:'1.2rem',letterSpacing:'0.06em',cursor:'pointer',background:'#fff',color:'#9CA3AF' }}>CANCEL</button>
-          <button onClick={()=>{ onSave(venue); onClose() }} style={{ flex:2,padding:'10px',background:'#D42B2B',border:'2px solid #1a1a1a',borderRadius:'8px',fontFamily:"'Bebas Neue',sans-serif",fontSize:'1.2rem',letterSpacing:'0.06em',cursor:'pointer',color:'#fff',boxShadow:'2px 3px 0 #1a1a1a' }}>LOG SWIPE</button>
+          <button onClick={()=>{ onSave(venue, date); onClose() }} style={{ flex:2,padding:'10px',background:'#D42B2B',border:'2px solid #1a1a1a',borderRadius:'8px',fontFamily:"'Bebas Neue',sans-serif",fontSize:'1.2rem',letterSpacing:'0.06em',cursor:'pointer',color:'#fff',boxShadow:'2px 3px 0 #1a1a1a' }}>LOG SWIPE</button>
         </div>
       </div>
     </div>
@@ -97,9 +107,19 @@ export default function Swipes() {
   const [toast, setToast] = useState(null)
 
   useEffect(() => {
-    const stored = localStorage.getItem('nomnom_profile')
-    if (!stored) { navigate('/onboarding'); return }
-    if (stored) try { setProfile(JSON.parse(stored)) } catch {}
+    if (!localStorage.getItem('sw_logged_in')) { navigate('/login'); return }
+    setProfile({
+      planData: {
+        name:          localStorage.getItem('oasis_plan_name'),
+        swipes:        localStorage.getItem('oasis_swipes_start') ? parseInt(localStorage.getItem('oasis_swipes_start')) : null,
+        diningDollars: parseFloat(localStorage.getItem('oasis_dining_dollars_start')) || 0,
+      },
+      swipesLeft:    localStorage.getItem('oasis_swipes_current'),
+      semesterStart: localStorage.getItem('oasis_start_date'),
+      semesterEnd:   localStorage.getItem('oasis_end_date'),
+      customOffDays: JSON.parse(localStorage.getItem('oasis_offdays') || '[]'),
+      swipesPerWeek: localStorage.getItem('oasis_swipes_per_week'),
+    })
   }, [])
 
   const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(null), 3000) }
@@ -111,7 +131,7 @@ export default function Swipes() {
   const current = Math.max(0, startingSwipes - used)
   const pct = totalSwipes ? Math.round((current / totalSwipes) * 100) : null
 
-  const breaks = profile?.semesterBreaks || []
+  const breaks = []
   const customOff = profile?.customOffDays || []
   const semEnd = profile?.semesterEnd
   const semStart = profile?.semesterStart
@@ -121,8 +141,8 @@ export default function Swipes() {
   const dailyRate = activeDaysLeft > 0 && current > 0 ? current / activeDaysLeft : 0
 
   // Pace
-  const projSwipesPerDay = profile?.swipesAmt
-    ? (profile.swipesPeriod === 'week' ? parseInt(profile.swipesAmt) / 7 : parseInt(profile.swipesAmt))
+  const projSwipesPerDay = profile?.swipesPerWeek
+    ? parseInt(profile.swipesPerWeek) / 7
     : null
   const pctTimeLeft = totalActiveDays > 0 ? (activeDaysLeft || 0) / totalActiveDays : 0
   const expectedRemaining = totalSwipes ? totalSwipes * pctTimeLeft : null
@@ -147,19 +167,27 @@ export default function Swipes() {
     ...v, count: swipeLog.filter(s => s.venue === v.id).length
   })).filter(v => v.count > 0)
 
-  const handleLogSwipe = (venueId) => {
+  const handleLogSwipe = (venueId, dateStr) => {
+    const newVal = Math.max(0, (parseInt(localStorage.getItem('oasis_swipes_current') || '0')) - 1)
+    localStorage.setItem('oasis_swipes_current', newVal)
+    setProfile(p => ({ ...p, swipesLeft: String(newVal) }))
+    updateMealPlan({ swipesCurrent: newVal })
+    const entryDate = new Date(dateStr + 'T12:00:00')
+    const isToday = dateStr === new Date().toISOString().split('T')[0]
     setSwipeLog(p => [...p, {
       id: Date.now(), venue: venueId,
-      timestamp: new Date().toISOString(),
-      time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
-      date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      timestamp: entryDate.toISOString(),
+      time: isToday ? new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : '',
+      date: entryDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
     }])
     const v = VENUES.find(v => v.id === venueId)
-    showToast(`Swipe logged at ${v?.label || 'dining hall'}`)
+    const label = isToday ? `Swipe logged at ${v?.label || 'dining hall'}` : `Swipe logged at ${v?.label || 'dining hall'} (${entryDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })})`
+    showToast(label)
   }
 
-  const semLabel = profile?.semesterPreset === 'spring2026' ? 'Spring 2026'
-    : profile?.semesterPreset === 'fall2026' ? 'Fall 2026' : 'This Semester'
+  const semLabel = profile?.semesterEnd
+    ? new Date(profile.semesterEnd + 'T12:00:00').toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+    : 'This Semester'
 
   return (
     <div style={st.page}>
@@ -325,8 +353,8 @@ export default function Swipes() {
                 </div>
               ) : (
                 [
-                  { label:'Starting Swipes', value: startingSwipes, muted:true },
-                  { label:'Used So Far',     value: `-${used}`,     muted:false, red:true },
+                  { label:'Starting Swipes', value: totalSwipes,              muted:true },
+                  { label:'Used So Far',     value: `-${totalSwipes - current}`, muted:false, red:true },
                   { label:'Remaining',       value: current,        muted:false, bold:true },
                   { label:'Active Days Left',value: activeDaysLeft ?? '—', muted:true },
                   { label:'Swipes/Day Left', value: dailyRate > 0 ? dailyRate.toFixed(1) : '—', muted:true },

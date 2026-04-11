@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { updateMealPlan } from '../Components/APICalls'
+import { loadAndStoreUserData } from './Login'
 
 const PLANS = [
-  { id: 'unlimited', name: 'NU – Unlimited', price: 4450, swipes: null, diningDollars: 400, guestPasses: 10, tag: 'Most Flexible' },
+  { id: 'unlimited', name: 'NU – Unlimited', price: 4450, swipes: 999, diningDollars: 400, guestPasses: 10, tag: 'Most Flexible' },
   { id: '225',       name: 'NU – 225',       price: 4450, swipes: 225,  diningDollars: 600, guestPasses: 10, tag: 'Most Popular' },
   { id: '180',       name: 'NU – 180',       price: 3935, swipes: 180,  diningDollars: 300, guestPasses: 10, tag: null },
   { id: '150',       name: 'NU – 150',       price: 3465, swipes: 150,  diningDollars: 200, guestPasses: 10, tag: null },
@@ -499,18 +501,67 @@ export default function Onboarding() {
   const projSwipes = Math.round((parseInt(answers.swipesAmt)||0) * (effDays/7))
   const selectedPlan = PLANS.find(p => p.id === answers.planId)
 
-  const finish = () => {
+  const finish = async () => {
     const planData = selectedPlan || (answers.onPlan ? {
       id: 'custom', name: 'My Dining Plan', price: 0, guestPasses: 10,
       swipes: answers.swipesLeft ? parseInt(answers.swipesLeft) : null,
       diningDollars: parseFloat(answers.diningDollarsLeft) || 0,
       tag: null,
     } : null)
+
+    const swipesStart = answers.onPlan
+      ? (selectedPlan?.swipes ?? (answers.swipesLeft ? parseInt(answers.swipesLeft) : null))
+      : (planData?.swipes ?? null)
+    const swipesCurrent = answers.onPlan
+      ? (answers.swipesLeft ? parseInt(answers.swipesLeft) : swipesStart)
+      : swipesStart
+    const ddStart = answers.onPlan
+      ? (selectedPlan?.diningDollars ?? parseFloat(answers.diningDollarsLeft) ?? null)
+      : (planData?.diningDollars ?? null)
+    const ddCurrent = answers.onPlan
+      ? (parseFloat(answers.diningDollarsLeft) || ddStart)
+      : ddStart
+
+    const derivedDollarsPerWeek = answers.dollarsPerWeek
+      ? Math.round(parseFloat(answers.dollarsPerWeek) * 100) / 100
+      : ddStart && effDays > 0 ? Math.round((ddStart / (effDays / 7)) * 100) / 100 : null
+
+    const allOffDays = [...new Set([...getBreakOffDays(answers.semesterBreaks || []), ...(answers.customOffDays || [])])]
+
+    await updateMealPlan({
+      planName:              planData?.name ?? null,
+      swipesStart,
+      diningDollarsStart:    ddStart,
+      startDate:             answers.semesterStart || null,
+      endDate:               answers.semesterEnd || null,
+      swipesCurrent,
+      diningDollarsCurrent:  ddCurrent,
+      dollarsPerWeek:        derivedDollarsPerWeek,
+      offdays:               allOffDays.length ? allOffDays : null,
+      dietaryPreferences:    answers.cuisines.length ? answers.cuisines : null,
+      dietaryRestrictions:   answers.diet.length ? answers.diet : null,
+    })
+
+    await loadAndStoreUserData()
+
+    // Write plan values directly to localStorage as a guaranteed fallback
+    // (loadAndStoreUserData may return stale data if the DB write is delayed)
+    if (planData?.name)              localStorage.setItem('oasis_plan_name',                 planData.name)
+    if (swipesStart != null)         localStorage.setItem('oasis_swipes_start',              swipesStart)
+    if (swipesCurrent != null)       localStorage.setItem('oasis_swipes_current',            swipesCurrent)
+    if (ddStart != null)             localStorage.setItem('oasis_dining_dollars_start',      ddStart)
+    if (ddCurrent != null)           localStorage.setItem('oasis_dining_dollars_current',    ddCurrent)
+    if (answers.semesterStart)       localStorage.setItem('oasis_start_date',                answers.semesterStart)
+    if (answers.semesterEnd)         localStorage.setItem('oasis_end_date',                  answers.semesterEnd)
+    if (allOffDays.length)           localStorage.setItem('oasis_offdays',                   JSON.stringify(allOffDays))
+
     localStorage.setItem('nomnom_profile', JSON.stringify({
-      ...answers,
-      planData,
-      createdAt: new Date().toISOString(),
-      projections: { effDays, projSwipes, projPlanDD: Math.round((parseFloat(answers.dollarsPerWeek)||0)*(effDays/7)) },
+      allergens:    answers.allergens,
+      diningStyle:  answers.diningStyle,
+      foodTypes:    answers.foodTypes,
+      spiceLevel:   answers.spiceLevel,
+      portionSize:  answers.portionSize,
+      createdAt:    new Date().toISOString(),
     }))
     navigate('/dashboard')
   }

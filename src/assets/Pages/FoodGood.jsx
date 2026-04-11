@@ -65,7 +65,9 @@ function NutrientRow({ label, value, unit, highlight }) {
   )
 }
 
-function DishCard({ item }) {
+const norm = s => s.toLowerCase().replace(/[\s\-\/]/g, '')
+
+function DishCard({ item, userDiet, userAllergens }) {
   const [expanded, setExpanded] = useState(false)
   const cal = (item.calories === 'N/A' || item.calories === null || item.calories === undefined) ? null : item.calories
   const portion = (item.portion && item.portion !== 'N/A') ? item.portion : null
@@ -73,11 +75,23 @@ function DishCard({ item }) {
   const color = calColor(cal)
   const n = item.nutrients || {}
   const hasNutrients = Object.keys(n).length > 0
-  const tags = item.tags || []
+  const tags = (item.tags || []).filter(t => t !== 'Good Friendly')
   const allergens = [...(item.allergens || []), ...(item.allergens_major || [])]
 
+  const itemAllergenNorms = allergens.map(a => norm(a.replace('*', '')))
+  const hasRestriction = userAllergens.some(ua => itemAllergenNorms.some(ia => ia.includes(norm(ua)) || norm(ua).includes(ia)))
+  const hasPreference = !hasRestriction && userDiet.some(d => tags.some(t => norm(t) === norm(d)))
+
+  const cardBg = hasRestriction ? '#FFF5F5' : hasPreference ? '#F0F7EB' : '#fff'
+  const cardBorderColor = expanded
+    ? (hasRestriction ? '#D42B2B' : hasPreference ? '#2d6a1f' : '#1a1a1a')
+    : (hasRestriction ? 'rgba(212,43,43,0.35)' : hasPreference ? 'rgba(45,106,31,0.3)' : 'rgba(0,0,0,0.07)')
+  const cardShadow = expanded
+    ? `3px 3px 0 ${hasRestriction ? '#D42B2B' : hasPreference ? '#2d6a1f' : '#1a1a1a'}`
+    : '1px 2px 0 rgba(0,0,0,0.04)'
+
   return (
-    <div style={{ background:'#fff',border:`1.5px solid ${expanded ? '#1a1a1a' : 'rgba(0,0,0,0.07)'}`,borderRadius:'8px',boxShadow: expanded ? '3px 3px 0 #1a1a1a' : '1px 2px 0 rgba(0,0,0,0.04)',transition:'all 0.15s',overflow:'hidden' }}>
+    <div style={{ background: cardBg, border:`1.5px solid ${cardBorderColor}`,borderRadius:'8px',boxShadow: cardShadow,transition:'all 0.15s',overflow:'hidden' }}>
       <div
         style={{ padding:'10px 12px',cursor: hasNutrients ? 'pointer' : 'default' }}
         onClick={() => hasNutrients && setExpanded(e => !e)}
@@ -164,7 +178,7 @@ function DishCard({ item }) {
   )
 }
 
-function StationSection({ station }) {
+function StationSection({ station, userDiet, userAllergens }) {
   const [collapsed, setCollapsed] = useState(false)
   const items = station.items || []
   if (!items.length) return null
@@ -185,7 +199,7 @@ function StationSection({ station }) {
       </div>
       {!collapsed && (
         <div style={{ display:'grid',gridTemplateColumns:'repeat(auto-fill, minmax(210px,1fr))',gap:'7px',animation:'fadeIn 0.2s ease' }}>
-          {items.map((item, i) => <DishCard key={i} item={item} />)}
+          {items.map((item, i) => <DishCard key={i} item={item} userDiet={userDiet} userAllergens={userAllergens} />)}
         </div>
       )}
     </div>
@@ -223,6 +237,9 @@ export default function FoodGood() {
   const [backendDown, setBackendDown] = useState(false)
   const [error, setError] = useState(null)
   const [query, setQuery] = useState('')
+
+  const userDiet = JSON.parse(localStorage.getItem('oasis_dietary_restrictions') || '[]')
+  const userAllergens = JSON.parse(localStorage.getItem('nomnom_profile') || '{}')?.allergens || []
 
   const stations = menu?.stations || []
   const filteredStations = useMemo(() => {
@@ -375,7 +392,7 @@ export default function FoodGood() {
 
           {!menuLoading && !error && filteredStations.length > 0 && (
             <div style={{ animation:'fadeIn 0.3s ease' }}>
-              {filteredStations.map((station, i) => <StationSection key={i} station={station} />)}
+              {filteredStations.map((station, i) => <StationSection key={i} station={station} userDiet={userDiet} userAllergens={userAllergens} />)}
             </div>
           )}
 

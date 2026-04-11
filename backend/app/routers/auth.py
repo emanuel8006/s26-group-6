@@ -24,8 +24,10 @@ def _extract_bearer_token(authorization: str) -> str:
     return token
 
 
-def get_current_user(authorization: str = Header(...)):
+def get_current_user(authorization: str | None = Header(default=None)):
     """Reusable dependency to resolve the logged-in user from a Bearer token."""
+    if not authorization:
+        raise HTTPException(status_code=401, detail="Missing authorization header")
     token = _extract_bearer_token(authorization)
     response = supabase_client.auth.get_user(token)
     if response.user is None:

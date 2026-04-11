@@ -1,6 +1,43 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { login, register } from '../Components/APICalls'
+import { login, register, getData, updateMealPlan } from '../Components/APICalls'
+
+export async function loadAndStoreUserData() {
+  const mealPlanRes = await getData({
+    columnList: ['plan_name', 'swipes_start', 'dining_dollars_start', 'start_date', 'end_date', 'swipes_current', 'dining_dollars_current', 'dietary_preferences', 'dietary_restrictions'],
+    tableName: 'meal_plans'
+  })
+  const mealPlan = (await mealPlanRes.json())?.data?.[0] || {}
+
+  const fields = {
+    oasis_plan_name:                mealPlan.plan_name ?? null,
+    oasis_swipes_start:             mealPlan.swipes_start ?? null,
+    oasis_dining_dollars_start:     mealPlan.dining_dollars_start ?? null,
+    oasis_start_date:               mealPlan.start_date ?? null,
+    oasis_end_date:                 mealPlan.end_date ?? null,
+    oasis_swipes_current:           mealPlan.swipes_current ?? null,
+    oasis_dining_dollars_current:   mealPlan.dining_dollars_current ?? null,
+    oasis_dietary_preferences:      mealPlan.dietary_preferences ? JSON.stringify(mealPlan.dietary_preferences) : null,
+    oasis_dietary_restrictions:     mealPlan.dietary_restrictions ? JSON.stringify(mealPlan.dietary_restrictions) : null,
+  }
+
+  for (const [key, value] of Object.entries(fields)) {
+    if (value !== null) localStorage.setItem(key, value)
+  }
+
+  // New meal plan fields — in a separate call so missing DB columns don't break login
+  try {
+    const extRes = await getData({ columnList: ['swipes_per_week', 'dollars_per_week', 'offdays'], tableName: 'meal_plans' })
+    if (extRes.ok) {
+      const ext = (await extRes.json())?.data?.[0] || {}
+      if (ext.swipes_per_week != null) localStorage.setItem('oasis_swipes_per_week', ext.swipes_per_week)
+      if (ext.dollars_per_week != null) localStorage.setItem('oasis_dollars_per_week', ext.dollars_per_week)
+      if (ext.offdays) localStorage.setItem('oasis_offdays', JSON.stringify(ext.offdays))
+    }
+  } catch {}
+
+  return fields
+}
 
 const inputCls = {
   width: '100%',
@@ -90,9 +127,34 @@ export default function Login() {
         return setSignUpError('Account created! Please sign in manually.')
       }
 
+      const loginData = await loginResponse.json()
+      localStorage.setItem('oasis_token', loginData.token_str)
       localStorage.setItem('sw_logged_in', 'true')
       setSignUpSuccess('Account created! Redirecting...')
-      setTimeout(() => navigate('/onboarding'), 1000)
+
+      // If the user already completed onboarding before signing up, push that
+      // data to the DB and go straight to the dashboard instead of re-onboarding.
+      const hasOnboardingData = !!localStorage.getItem('oasis_end_date')
+      if (hasOnboardingData) {
+        const ls = (key) => localStorage.getItem(key)
+        await updateMealPlan({
+          planName:             ls('oasis_plan_name'),
+          swipesStart:          ls('oasis_swipes_start') ? parseInt(ls('oasis_swipes_start')) : null,
+          swipesCurrent:        ls('oasis_swipes_current') ? parseInt(ls('oasis_swipes_current')) : null,
+          diningDollarsStart:   ls('oasis_dining_dollars_start') ? parseFloat(ls('oasis_dining_dollars_start')) : null,
+          diningDollarsCurrent: ls('oasis_dining_dollars_current') ? parseFloat(ls('oasis_dining_dollars_current')) : null,
+          startDate:            ls('oasis_start_date'),
+          endDate:              ls('oasis_end_date'),
+          swipesPerWeek:        ls('oasis_swipes_per_week') ? parseInt(ls('oasis_swipes_per_week')) : null,
+          dollarsPerWeek:       ls('oasis_dollars_per_week') ? parseFloat(ls('oasis_dollars_per_week')) : null,
+          offdays:              ls('oasis_offdays') ? JSON.parse(ls('oasis_offdays')) : null,
+          dietaryPreferences:   ls('oasis_dietary_preferences') ? JSON.parse(ls('oasis_dietary_preferences')) : null,
+          dietaryRestrictions:  ls('oasis_dietary_restrictions') ? JSON.parse(ls('oasis_dietary_restrictions')) : null,
+        }).catch(() => {})
+        setTimeout(() => navigate('/dashboard'), 1000)
+      } else {
+        setTimeout(() => navigate('/onboarding'), 1000)
+      }
     } catch (err) {
       setSignUpError('You already have an account with this email. Sign in instead.')
     } finally {
@@ -117,12 +179,23 @@ export default function Login() {
       if (!loginResponse || !loginResponse.ok) {
         return setSignInError("Incorrect email or password. If you don't have an account yet, sign up first.")
       }
+      const loginData = await loginResponse.json()
+      localStorage.setItem('oasis_token', loginData.token_str)
       localStorage.setItem('sw_logged_in', 'true')
-      navigate('/onboarding')
     } catch (err) {
-      setSignInError("Incorrect email or password. If you don't have an account yet, sign up first.")
+      return setSignInError("Incorrect email or password. If you don't have an account yet, sign up first.")
     } finally {
       setLoading(false)
+    }
+
+    try {
+      const profile = await loadAndStoreUserData()
+      if (!profile.oasis_end_date) {
+        return navigate('/onboarding')
+      }
+      navigate('/dashboard')
+    } catch (err) {
+      navigate('/dashboard')
     }
   }
 

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import PhotoReel from '../Components/PhotoReel'
-import { updateMealPlan, getData } from '../Components/APICalls'
+import { updateMealPlan } from '../Components/APICalls'
 
 const API_BASE = import.meta.env.VITE_API_URL
 
@@ -346,7 +346,6 @@ export default function DiningDollars() {
 
   useEffect(() => {
     if (!localStorage.getItem('sw_logged_in')) { navigate('/login'); return }
-    const nomnom = JSON.parse(localStorage.getItem('nomnom_profile') || '{}')
     setProfile({
       planData: {
         name:          localStorage.getItem('oasis_plan_name'),
@@ -356,10 +355,8 @@ export default function DiningDollars() {
       diningDollarsLeft: localStorage.getItem('oasis_dining_dollars_current'),
       semesterStart:     localStorage.getItem('oasis_start_date'),
       semesterEnd:       localStorage.getItem('oasis_end_date'),
-      semesterBreaks:    nomnom.semesterBreaks || [],
-      customOffDays:     nomnom.customOffDays  || [],
-      semesterPreset:    nomnom.semesterPreset || null,
-      dollarsPerWeek:    nomnom.dollarsPerWeek || null,
+      customOffDays:     JSON.parse(localStorage.getItem('oasis_offdays') || '[]'),
+      dollarsPerWeek:    localStorage.getItem('oasis_dollars_per_week'),
     })
   }, [])
 
@@ -386,12 +383,10 @@ export default function DiningDollars() {
 
   const plan = profile?.planData
   const totalDD = plan?.diningDollars || 0
-  const startingDD = parseFloat(profile?.diningDollarsLeft) || totalDD
-  const spent = transactions.reduce((s, t) => s + parseFloat(t.amount || 0), 0)
-  const current = Math.max(0, startingDD - spent)
+  const current = parseFloat(profile?.diningDollarsLeft) || 0
   const pct = totalDD ? Math.round((current / totalDD) * 100) : 0
 
-  const breaks = profile?.semesterBreaks || []
+  const breaks = []
   const customOff = profile?.customOffDays || []
   const semEnd = profile?.semesterEnd
   const semStart = profile?.semesterStart
@@ -411,15 +406,21 @@ export default function DiningDollars() {
   })).filter(c => c.total > 0)
 
   const handleSave = (form) => {
+    const spent = parseFloat(form.amount) || 0
+    const newVal = Math.max(0, (parseFloat(localStorage.getItem('oasis_dining_dollars_current') || '0')) - spent)
+    localStorage.setItem('oasis_dining_dollars_current', newVal.toFixed(2))
+    setProfile(p => ({ ...p, diningDollarsLeft: String(newVal) }))
+    updateMealPlan({ diningDollarsCurrent: newVal })
     setTransactions(p => [{
       ...form, id: Date.now(),
       date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }),
     }, ...p])
-    showToast(`$${parseFloat(form.amount).toFixed(2)} logged`)
+    showToast(`$${spent.toFixed(2)} logged`)
   }
 
-  const semLabel = profile?.semesterPreset === 'spring2026' ? 'Spring 2026'
-    : profile?.semesterPreset === 'fall2026' ? 'Fall 2026' : 'This Semester'
+  const semLabel = profile?.semesterEnd
+    ? new Date(profile.semesterEnd + 'T12:00:00').toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+    : 'This Semester'
 
   return (
     <div style={st.page}>

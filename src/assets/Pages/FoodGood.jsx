@@ -238,7 +238,7 @@ export default function FoodGood() {
   const [error, setError] = useState(null)
   const [query, setQuery] = useState('')
 
-  const userDiet = (localStorage.getItem('oasis_dietary_restrictions') || '').split(', ').filter(Boolean)
+  const userDiet = JSON.parse(localStorage.getItem('oasis_dietary_restrictions') || '[]')
   const userAllergens = JSON.parse(localStorage.getItem('nomnom_profile') || '{}')?.allergens || []
 
   const stations = menu?.stations || []

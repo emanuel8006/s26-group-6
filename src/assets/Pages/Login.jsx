@@ -3,18 +3,11 @@ import { useNavigate } from 'react-router-dom'
 import { login, register, getData } from '../Components/APICalls'
 
 export async function loadAndStoreUserData() {
-  const [mealPlanRes, userRes] = await Promise.all([
-    getData({
-      columnList: ['plan_name', 'swipes_start', 'dining_dollars_start', 'start_date', 'end_date', 'swipes_current', 'dining_dollars_current'],
-      tableName: 'meal_plans'
-    }),
-    getData({
-      columnList: ['dietary_preferences', 'dietary_restrictions'],
-      tableName: 'users'
-    })
-  ])
+  const mealPlanRes = await getData({
+    columnList: ['plan_name', 'swipes_start', 'dining_dollars_start', 'start_date', 'end_date', 'swipes_current', 'dining_dollars_current', 'dietary_preferences', 'dietary_restrictions'],
+    tableName: 'meal_plans'
+  })
   const mealPlan = (await mealPlanRes.json())?.data?.[0] || {}
-  const user = (await userRes.json())?.data?.[0] || {}
 
   const fields = {
     oasis_plan_name:                mealPlan.plan_name ?? null,
@@ -24,13 +17,24 @@ export async function loadAndStoreUserData() {
     oasis_end_date:                 mealPlan.end_date ?? null,
     oasis_swipes_current:           mealPlan.swipes_current ?? null,
     oasis_dining_dollars_current:   mealPlan.dining_dollars_current ?? null,
-    oasis_dietary_preferences:      user.dietary_preferences ? JSON.stringify(user.dietary_preferences) : null,
-    oasis_dietary_restrictions:     user.dietary_restrictions ?? null,
+    oasis_dietary_preferences:      mealPlan.dietary_preferences ? JSON.stringify(mealPlan.dietary_preferences) : null,
+    oasis_dietary_restrictions:     mealPlan.dietary_restrictions ? JSON.stringify(mealPlan.dietary_restrictions) : null,
   }
 
   for (const [key, value] of Object.entries(fields)) {
     if (value !== null) localStorage.setItem(key, value)
   }
+
+  // New meal plan fields — in a separate call so missing DB columns don't break login
+  try {
+    const extRes = await getData({ columnList: ['swipes_per_week', 'dollars_per_week', 'offdays'], tableName: 'meal_plans' })
+    if (extRes.ok) {
+      const ext = (await extRes.json())?.data?.[0] || {}
+      if (ext.swipes_per_week != null) localStorage.setItem('oasis_swipes_per_week', ext.swipes_per_week)
+      if (ext.dollars_per_week != null) localStorage.setItem('oasis_dollars_per_week', ext.dollars_per_week)
+      if (ext.offdays) localStorage.setItem('oasis_offdays', JSON.stringify(ext.offdays))
+    }
+  } catch {}
 
   return fields
 }

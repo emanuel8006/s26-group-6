@@ -26,6 +26,7 @@ export default function Nav() {
       'oasis_dining_dollars_start', 'oasis_dining_dollars_current',
       'oasis_start_date', 'oasis_end_date',
       'oasis_dietary_preferences', 'oasis_dietary_restrictions',
+      'oasis_swipes_per_week', 'oasis_dollars_per_week', 'oasis_offdays',
     ].forEach(k => localStorage.removeItem(k))
     setLoggedIn(false)
     navigate('/login')

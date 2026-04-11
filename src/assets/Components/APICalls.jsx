@@ -50,7 +50,12 @@ export async function updateMealPlan({
     startDate = null,
     endDate = null,
     swipesCurrent = null,
-    diningDollarsCurrent = null }) {
+    diningDollarsCurrent = null,
+    swipesPerWeek = null,
+    dollarsPerWeek = null,
+    offdays = null,
+    dietaryPreferences = null,
+    dietaryRestrictions = null }) {
     const response = await fetch(`${API_BASE}/user/update_meal_plan` , {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...authHeader() },
@@ -61,7 +66,12 @@ export async function updateMealPlan({
             start_date: startDate,
             end_date: endDate,
             swipes_current: swipesCurrent,
-            dining_dollars_current: diningDollarsCurrent
+            dining_dollars_current: diningDollarsCurrent,
+            swipes_per_week: swipesPerWeek,
+            dollars_per_week: dollarsPerWeek,
+            offdays: offdays,
+            dietary_preferences: dietaryPreferences,
+            dietary_restrictions: dietaryRestrictions,
         })
     });
     await responseCheck({response})
@@ -71,18 +81,15 @@ export async function updateMealPlan({
 export async function updateUserInfo({
     username = null,
     email = null,
-    dietaryPreferences = null,
-    dietaryRestrictions = null
 }) {
-    const params = new URLSearchParams();
-    if (username) params.append('username', username);
-    if (email) params.append('email', email);
-    if (dietaryPreferences) dietaryPreferences.forEach(p => params.append('dietary_preferences', p));
-    if (dietaryRestrictions) params.append('diet_restrictions', dietaryRestrictions);
-    if (!params.toString()) return null;  // nothing to update, skip the call
-    const response = await fetch(`${API_BASE}/user/update_user_info?${params.toString()}`, {
+    const body = {};
+    if (username) body.username = username;
+    if (email) body.email = email;
+    if (!Object.keys(body).length) return null;  // nothing to update, skip the call
+    const response = await fetch(`${API_BASE}/user/update_user_info`, {
         method: 'PUT',
-        headers: authHeader(),
+        headers: { 'Content-Type': 'application/json', ...authHeader() },
+        body: JSON.stringify(body),
     });
     await responseCheck({response})
     return response;

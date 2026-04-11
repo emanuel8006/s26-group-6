@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import PhotoReel from '../Components/PhotoReel'
-import { updateMealPlan, getData } from '../Components/APICalls'
+import { updateMealPlan } from '../Components/APICalls'
 
 function parseDate(str) { return str ? new Date(str + 'T12:00:00') : null }
 function daysUntil(str) {
@@ -99,21 +99,17 @@ export default function Swipes() {
 
   useEffect(() => {
     if (!localStorage.getItem('sw_logged_in')) { navigate('/login'); return }
-    const nomnom = JSON.parse(localStorage.getItem('nomnom_profile') || '{}')
     setProfile({
       planData: {
         name:          localStorage.getItem('oasis_plan_name'),
         swipes:        localStorage.getItem('oasis_swipes_start') ? parseInt(localStorage.getItem('oasis_swipes_start')) : null,
         diningDollars: parseFloat(localStorage.getItem('oasis_dining_dollars_start')) || 0,
       },
-      swipesLeft:     localStorage.getItem('oasis_swipes_current'),
-      semesterStart:  localStorage.getItem('oasis_start_date'),
-      semesterEnd:    localStorage.getItem('oasis_end_date'),
-      semesterBreaks: nomnom.semesterBreaks || [],
-      customOffDays:  nomnom.customOffDays  || [],
-      semesterPreset: nomnom.semesterPreset || null,
-      swipesAmt:      nomnom.swipesAmt      || null,
-      swipesPeriod:   nomnom.swipesPeriod   || 'week',
+      swipesLeft:    localStorage.getItem('oasis_swipes_current'),
+      semesterStart: localStorage.getItem('oasis_start_date'),
+      semesterEnd:   localStorage.getItem('oasis_end_date'),
+      customOffDays: JSON.parse(localStorage.getItem('oasis_offdays') || '[]'),
+      swipesPerWeek: localStorage.getItem('oasis_swipes_per_week'),
     })
   }, [])
 
@@ -126,7 +122,7 @@ export default function Swipes() {
   const current = Math.max(0, startingSwipes - used)
   const pct = totalSwipes ? Math.round((current / totalSwipes) * 100) : null
 
-  const breaks = profile?.semesterBreaks || []
+  const breaks = []
   const customOff = profile?.customOffDays || []
   const semEnd = profile?.semesterEnd
   const semStart = profile?.semesterStart
@@ -136,8 +132,8 @@ export default function Swipes() {
   const dailyRate = activeDaysLeft > 0 && current > 0 ? current / activeDaysLeft : 0
 
   // Pace
-  const projSwipesPerDay = profile?.swipesAmt
-    ? (profile.swipesPeriod === 'week' ? parseInt(profile.swipesAmt) / 7 : parseInt(profile.swipesAmt))
+  const projSwipesPerDay = profile?.swipesPerWeek
+    ? parseInt(profile.swipesPerWeek) / 7
     : null
   const pctTimeLeft = totalActiveDays > 0 ? (activeDaysLeft || 0) / totalActiveDays : 0
   const expectedRemaining = totalSwipes ? totalSwipes * pctTimeLeft : null
@@ -163,6 +159,10 @@ export default function Swipes() {
   })).filter(v => v.count > 0)
 
   const handleLogSwipe = (venueId) => {
+    const newVal = Math.max(0, (parseInt(localStorage.getItem('oasis_swipes_current') || '0')) - 1)
+    localStorage.setItem('oasis_swipes_current', newVal)
+    setProfile(p => ({ ...p, swipesLeft: String(newVal) }))
+    updateMealPlan({ swipesCurrent: newVal })
     setSwipeLog(p => [...p, {
       id: Date.now(), venue: venueId,
       timestamp: new Date().toISOString(),
@@ -173,8 +173,9 @@ export default function Swipes() {
     showToast(`Swipe logged at ${v?.label || 'dining hall'}`)
   }
 
-  const semLabel = profile?.semesterPreset === 'spring2026' ? 'Spring 2026'
-    : profile?.semesterPreset === 'fall2026' ? 'Fall 2026' : 'This Semester'
+  const semLabel = profile?.semesterEnd
+    ? new Date(profile.semesterEnd + 'T12:00:00').toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+    : 'This Semester'
 
   return (
     <div style={st.page}>

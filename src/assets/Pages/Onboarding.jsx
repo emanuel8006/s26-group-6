@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { updateMealPlan, updateUserInfo } from '../Components/APICalls'
+import { updateMealPlan } from '../Components/APICalls'
 import { loadAndStoreUserData } from './Login'
 
 const PLANS = [
@@ -524,29 +524,37 @@ export default function Onboarding() {
       ? (parseFloat(answers.diningDollarsLeft) || null)
       : (planData?.diningDollars ?? null)
 
-    await Promise.all([
-      updateMealPlan({
-        planName:              planData?.name ?? null,
-        swipesStart,
-        diningDollarsStart:    ddStart,
-        startDate:             answers.semesterStart || null,
-        endDate:               answers.semesterEnd || null,
-        swipesCurrent:         swipesStart,
-        diningDollarsCurrent:  ddStart,
-      }),
-      updateUserInfo({
-        dietaryPreferences: answers.cuisines.length ? answers.cuisines : null,
-        dietaryRestrictions: answers.diet.length ? answers.diet.join(', ') : null,
-      }),
-    ])
+    await updateMealPlan({
+      planName:              planData?.name ?? null,
+      swipesStart,
+      diningDollarsStart:    ddStart,
+      startDate:             answers.semesterStart || null,
+      endDate:               answers.semesterEnd || null,
+      swipesCurrent:         swipesStart,
+      diningDollarsCurrent:  ddStart,
+      dietaryPreferences:    answers.cuisines.length ? answers.cuisines : null,
+      dietaryRestrictions:   answers.diet.length ? answers.diet : null,
+    })
 
     await loadAndStoreUserData()
 
+    // Write plan values directly to localStorage as a guaranteed fallback
+    // (loadAndStoreUserData may return stale data if the DB write is delayed)
+    if (planData?.name)              localStorage.setItem('oasis_plan_name',                 planData.name)
+    if (swipesStart != null)         localStorage.setItem('oasis_swipes_start',              swipesStart)
+    if (swipesStart != null)         localStorage.setItem('oasis_swipes_current',            swipesStart)
+    if (ddStart != null)             localStorage.setItem('oasis_dining_dollars_start',      ddStart)
+    if (ddStart != null)             localStorage.setItem('oasis_dining_dollars_current',    ddStart)
+    if (answers.semesterStart)       localStorage.setItem('oasis_start_date',                answers.semesterStart)
+    if (answers.semesterEnd)         localStorage.setItem('oasis_end_date',                  answers.semesterEnd)
+
     localStorage.setItem('nomnom_profile', JSON.stringify({
-      ...answers,
-      planData,
-      createdAt: new Date().toISOString(),
-      projections: { effDays, projSwipes, projPlanDD: Math.round((parseFloat(answers.dollarsPerWeek)||0)*(effDays/7)) },
+      allergens:    answers.allergens,
+      diningStyle:  answers.diningStyle,
+      foodTypes:    answers.foodTypes,
+      spiceLevel:   answers.spiceLevel,
+      portionSize:  answers.portionSize,
+      createdAt:    new Date().toISOString(),
     }))
     navigate('/dashboard')
   }

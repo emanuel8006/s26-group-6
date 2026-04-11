@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import PhotoReel from '../Components/PhotoReel'
+import { updateMealPlan } from '../Components/APICalls'
 
 // ── Helpers ───────────────────────────────────────────────────────
 function today() { return new Date() }
@@ -241,14 +242,11 @@ export default function Dashboard() {
   const navigate = useNavigate()
   const [profile, setProfile] = useState(null)
   const [logModal, setLogModal] = useState(null)
-  const [swipesUsed, setSwipesUsed] = useState(0)
-  const [ddSpent, setDdSpent] = useState(0)
   const [toast, setToast] = useState(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     if (!localStorage.getItem('sw_logged_in')) { navigate('/login'); return }
-    const nomnom = JSON.parse(localStorage.getItem('nomnom_profile') || '{}')
     setProfile({
       planData: {
         name:          localStorage.getItem('oasis_plan_name'),
@@ -259,11 +257,9 @@ export default function Dashboard() {
       diningDollarsLeft: localStorage.getItem('oasis_dining_dollars_current'),
       semesterStart:     localStorage.getItem('oasis_start_date'),
       semesterEnd:       localStorage.getItem('oasis_end_date'),
-      semesterBreaks:    nomnom.semesterBreaks  || [],
-      customOffDays:     nomnom.customOffDays   || [],
-      semesterPreset:    nomnom.semesterPreset  || null,
-      dollarsPerWeek:    nomnom.dollarsPerWeek  || null,
-      projections:       nomnom.projections     || null,
+      customOffDays:     JSON.parse(localStorage.getItem('oasis_offdays') || '[]'),
+      dollarsPerWeek:    localStorage.getItem('oasis_dollars_per_week'),
+      swipesPerWeek:     localStorage.getItem('oasis_swipes_per_week'),
     })
     setLoading(false)
   }, [navigate])
@@ -274,7 +270,7 @@ export default function Dashboard() {
   const plan = profile.planData
   const semStart = profile.semesterStart
   const semEnd = profile.semesterEnd
-  const breaks = profile.semesterBreaks || []
+  const breaks = []
   const customOff = profile.customOffDays || []
 
   const daysLeft = daysUntil(semEnd)
@@ -283,30 +279,22 @@ export default function Dashboard() {
   const pctElapsed = totalActiveDays > 0 ? Math.min(1, (totalActiveDays - (activeDaysLeft || 0)) / totalActiveDays) : 0
 
   // Swipes
-  const totalSwipes = plan?.swipes
-  const startingSwipes = parseInt(profile.swipesLeft) || totalSwipes || 0
-  const currentSwipes = Math.max(0, startingSwipes - swipesUsed)
+  const totalSwipes = profile.planData.swipes
+  const currentSwipes = profile.swipesLeft ? parseInt(profile.swipesLeft) : null
   const swipePct = totalSwipes ? Math.round((currentSwipes / totalSwipes) * 100) : null
   const swipePace = totalSwipes ? calcPace(currentSwipes, totalSwipes, activeDaysLeft, totalActiveDays) : null
 
   // Dining dollars
   const totalDD = plan?.diningDollars || 0
-  const startingDD = parseFloat(profile.diningDollarsLeft) || totalDD
-  const currentDD = Math.max(0, startingDD - ddSpent)
+  const currentDD = parseFloat(profile.diningDollarsLeft) || 0
   const ddPct = totalDD ? Math.round((currentDD / totalDD) * 100) : 0
   const ddPace = calcPace(currentDD, totalDD, activeDaysLeft, totalActiveDays)
 
   // Projected weekly dining dollars
-  const projWeeklyDD = profile.dollarsPerWeek
-    ? parseFloat(profile.dollarsPerWeek)
-    : profile.projections?.projPlanDD
-      ? Math.round(profile.projections.projPlanDD / (totalActiveDays / 7))
-      : 0
+  const projWeeklyDD = profile.dollarsPerWeek ? parseFloat(profile.dollarsPerWeek) : 0
 
   // Semester label
-  const semLabel = profile.semesterPreset === 'spring2026' ? 'Spring 2026'
-    : profile.semesterPreset === 'fall2026' ? 'Fall 2026'
-    : semEnd ? new Date(semEnd + 'T12:00:00').toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+  const semLabel = semEnd ? new Date(semEnd + 'T12:00:00').toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
     : 'This Semester'
 
   const greeting = (() => {
@@ -322,11 +310,18 @@ export default function Dashboard() {
 
   const handleLog = ({ type, val, loc }) => {
     if (type === 'swipe') {
-      setSwipesUsed(s => s + 1)
+      const newVal = Math.max(0, (parseInt(localStorage.getItem('oasis_swipes_current') || '0')) - 1)
+      localStorage.setItem('oasis_swipes_current', newVal)
+      setProfile(p => ({ ...p, swipesLeft: String(newVal) }))
+      updateMealPlan({ swipesCurrent: newVal })
       showToast(`Swipe logged${loc ? ` at ${loc}` : ''}`)
     } else {
-      setDdSpent(s => s + (parseFloat(val) || 0))
-      showToast(`$${parseFloat(val || 0).toFixed(2)} logged`)
+      const spent = parseFloat(val) || 0
+      const newVal = Math.max(0, (parseFloat(localStorage.getItem('oasis_dining_dollars_current') || '0')) - spent)
+      localStorage.setItem('oasis_dining_dollars_current', newVal.toFixed(2))
+      setProfile(p => ({ ...p, diningDollarsLeft: String(newVal) }))
+      updateMealPlan({ diningDollarsCurrent: newVal })
+      showToast(`$${spent.toFixed(2)} logged`)
     }
   }
 
@@ -460,11 +455,6 @@ export default function Dashboard() {
             <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '1.5rem', letterSpacing: '0.06em', color: '#9CA3AF' }}>${projWeeklyDD}/wk projected</span>
           </div>
           <PaceChart projWeekly={projWeeklyDD} activeDays={totalActiveDays} />
-          {profile.outOfPocket && parseFloat(profile.outOfPocket) > 0 && (
-            <div style={{ marginTop: '12px', padding: '8px 12px', background: '#FBF2D8', border: '1px solid rgba(0,0,0,0.08)', borderRadius: '6px', fontFamily: "'Bebas Neue', sans-serif", fontSize: '1.5rem', letterSpacing: '0.04em', color: '#6B7280' }}>
-              + ~${Math.round(parseFloat(profile.outOfPocket) * (totalActiveDays / 7))}/sem projected out-of-pocket
-            </div>
-          )}
         </div>
 
         {/* ── Today's Menu ── */}

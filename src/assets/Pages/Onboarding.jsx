@@ -453,7 +453,7 @@ function HabitsStep({ answers, set, onBack, onNext, step }) {
       <div style={{marginBottom:'1.4rem'}}>
         <label style={st.label}>EXPECTED SWIPES PER WEEK</label>
         <input type="text" inputMode="numeric" placeholder="e.g. 10" value={answers.swipesAmt}
-          onChange={e=>{ const val=e.target.value; if(val===''||/^\d+$/.test(val)) set('swipesAmt',val) }}
+          onChange={e=>{ const val=e.target.value; if(val===''||/^\d+$/.test(val)){ if(val!==''&&parseInt(val)>50){ set('swipesAmt','50'); return } set('swipesAmt',val) } }}
           style={st.input}/>
         <p style={st.hint}>Includes dining halls, Outtakes, and Market @ 60.</p>
       </div>
@@ -462,7 +462,7 @@ function HabitsStep({ answers, set, onBack, onNext, step }) {
         <div style={{position:'relative'}}>
           <span style={{position:'absolute',left:'12px',top:'50%',transform:'translateY(-50%)',color:'#9CA3AF',fontSize:'0.9rem'}}>$</span>
           <input type="text" inputMode="decimal" placeholder="e.g. 35" value={answers.dollarsPerWeek}
-            onChange={e=>{ const val=e.target.value; if(val===''||/^\d*\.?\d*$/.test(val)) set('dollarsPerWeek',val) }}
+            onChange={e=>{ const val=e.target.value; if(val===''||/^\d*\.?\d*$/.test(val)){ const parts=val.split('.'); if(parts[1]&&parts[1].length>2) return; if(val!==''&&parseFloat(val)>100){ set('dollarsPerWeek','100'); return } set('dollarsPerWeek',val) } }}
             style={{...st.input,paddingLeft:'28px'}}/>
         </div>
         <p style={st.hint}>Money you plan to spend at dining-plan restaurants per week.</p>
@@ -476,9 +476,6 @@ export default function Onboarding() {
   const navigate = useNavigate()
 
   // Always start with yes/no question — onPlan starts as null
-  const maxSwipes = 999
-  const maxDD = 9999
-
   const [step, setStep] = useState(1)
   const [answers, setAnswers] = useState({
     onPlan: null, planId: null,
@@ -493,6 +490,11 @@ export default function Onboarding() {
   const set = (key, val) => setAnswers(a => ({ ...a, [key]: val }))
   const toggleArr = (key, val) => setAnswers(a => ({ ...a, [key]: a[key].includes(val) ? a[key].filter(x => x !== val) : [...a[key], val] }))
   const toggleOffDay = (dateStr) => setAnswers(a => ({ ...a, customOffDays: a.customOffDays.includes(dateStr) ? a.customOffDays.filter(d => d !== dateStr) : [...a.customOffDays, dateStr] }))
+
+  // Caps derived from selected plan (yes-path); fixed caps for no-path habits
+  const selectedPlanForCap = PLANS.find(p => p.id === answers.planId)
+  const maxSwipes = selectedPlanForCap ? (selectedPlanForCap.swipes ?? 999) : 999
+  const maxDD = selectedPlanForCap ? selectedPlanForCap.diningDollars : 9999
 
   // null = showing yes/no (no progress bar), true = yes path (4 steps), false = no path (5 steps)
   const totalSteps = answers.onPlan === null ? 0 : answers.onPlan ? 4 : 5
@@ -574,48 +576,61 @@ export default function Onboarding() {
           <div>
             <span style={st.eyebrow}>YOUR CURRENT BALANCES</span>
             <h2 style={st.heading}>How much do you have left?</h2>
-            <p style={st.sub}>Enter your remaining balances so we can calculate your spending pace for the rest of the semester.</p>
+            <p style={st.sub}>Select your dining plan first so we can set the right limits, then enter your remaining balances.</p>
             <div style={{display:'flex',flexDirection:'column',gap:'1.4rem'}}>
               <div>
-                <label style={st.label}>SWIPES REMAINING</label>
-                <input type="text" inputMode="numeric"
-                  placeholder={maxSwipes < 999 ? `e.g. ${Math.floor(maxSwipes * 0.6)}` : 'e.g. 80'}
-                  value={answers.swipesLeft}
-                  onChange={e=>{
-                    const val=e.target.value
-                    if(val===''||/^\d+$/.test(val)){
-                      if(val!==''&&parseInt(val)>maxSwipes){ set('swipesLeft',String(maxSwipes)); return }
-                      set('swipesLeft',val)
-                    }
-                  }}
-                  style={st.input}/>
-                <p style={st.hint}>
-                  {maxSwipes < 999 ? `Your plan has ${maxSwipes} swipes total.` : 'Leave blank if you have an unlimited swipes plan.'}
-                </p>
-              </div>
-              <div>
-                <label style={st.label}>DINING DOLLARS REMAINING</label>
-                <div style={{position:'relative'}}>
-                  <span style={{position:'absolute',left:'12px',top:'50%',transform:'translateY(-50%)',color:'#9CA3AF',fontSize:'0.9rem'}}>$</span>
-                  <input type="text" inputMode="decimal"
-                    placeholder={maxDD < 9999 ? `e.g. ${Math.floor(maxDD * 0.6)}` : 'e.g. 250.00'}
-                    value={answers.diningDollarsLeft}
-                    onChange={e=>{
-                      const val=e.target.value
-                      if(val===''||/^\d*\.?\d*$/.test(val)){
-                        const parts=val.split('.'); if(parts[1]&&parts[1].length>2) return
-                        if(val!==''&&parseFloat(val)>maxDD){ set('diningDollarsLeft',String(maxDD)); return }
-                        set('diningDollarsLeft',val)
-                      }
-                    }}
-                    style={{...st.input,paddingLeft:'28px'}}/>
+                <label style={st.label}>YOUR DINING PLAN</label>
+                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'8px'}}>
+                  {PLANS.map(plan=>(
+                    <button key={plan.id} type="button" onClick={()=>{ set('planId', plan.id); set('swipesLeft',''); set('diningDollarsLeft','') }} style={{...st.card(answers.planId===plan.id),padding:'10px 12px'}}>
+                      <p style={{fontFamily:"'Playfair Display',serif",fontWeight:700,fontSize:'0.88rem',color:'#1a1a1a',margin:'0 0 3px'}}>{plan.name}</p>
+                      <p style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:'0.65rem',letterSpacing:'0.05em',color:'#9CA3AF',margin:0}}>
+                        {plan.swipes===null?'UNLIMITED':plan.swipes+' SWIPES'} · ${plan.diningDollars} DD
+                      </p>
+                    </button>
+                  ))}
                 </div>
-                <p style={st.hint}>
-                  {maxDD < 9999 ? `Your plan has $${maxDD} dining dollars total. Check the GET app for your current balance.` : 'Check the GET app or Dining portal for your current balance.'}
-                </p>
               </div>
+              {answers.planId && (
+                <>
+                  <div>
+                    <label style={st.label}>SWIPES REMAINING</label>
+                    <input type="text" inputMode="numeric"
+                      placeholder={maxSwipes < 999 ? `Max ${maxSwipes}` : 'Leave blank if unlimited'}
+                      value={answers.swipesLeft}
+                      onChange={e=>{
+                        const val=e.target.value
+                        if(val===''||/^\d+$/.test(val)){
+                          if(val!==''&&parseInt(val)>maxSwipes){ set('swipesLeft',String(maxSwipes)); return }
+                          set('swipesLeft',val)
+                        }
+                      }}
+                      style={st.input}/>
+                    <p style={st.hint}>Leave blank if you have an unlimited swipes plan.</p>
+                  </div>
+                  <div>
+                    <label style={st.label}>DINING DOLLARS REMAINING</label>
+                    <div style={{position:'relative'}}>
+                      <span style={{position:'absolute',left:'12px',top:'50%',transform:'translateY(-50%)',color:'#9CA3AF',fontSize:'0.9rem'}}>$</span>
+                      <input type="text" inputMode="decimal"
+                        placeholder={`Max $${maxDD}`}
+                        value={answers.diningDollarsLeft}
+                        onChange={e=>{
+                          const val=e.target.value
+                          if(val===''||/^\d*\.?\d*$/.test(val)){
+                            const parts=val.split('.'); if(parts[1]&&parts[1].length>2) return
+                            if(val!==''&&parseFloat(val)>maxDD){ set('diningDollarsLeft',String(maxDD)); return }
+                            set('diningDollarsLeft',val)
+                          }
+                        }}
+                        style={{...st.input,paddingLeft:'28px'}}/>
+                    </div>
+                    <p style={st.hint}>Check the GET app or Dining portal for your current balance.</p>
+                  </div>
+                </>
+              )}
             </div>
-            <NavButtons step={step} onBack={back} onNext={next} nextDisabled={!answers.diningDollarsLeft}/>
+            <NavButtons step={step} onBack={back} onNext={next} nextDisabled={!answers.planId || !answers.diningDollarsLeft}/>
           </div>
         )}
 

@@ -85,3 +85,38 @@ def logout():
 def me(user=Depends(get_current_user)):
     """Return the user associated with the Authorization: Bearer token."""
     return {"user": user}
+
+
+class ForgotPasswordRequest(BaseModel):
+    email: str
+    redirect_to: str | None = None
+
+class ResetPasswordRequest(BaseModel):
+    access_token: str
+    refresh_token: str
+    new_password: str
+
+
+@router.post("/forgot_password")
+def forgot_password(body: ForgotPasswordRequest):
+    """Send a password-reset email via Supabase."""
+    try:
+        redirect_url = body.redirect_to or "https://swipewise-neu.vercel.app/reset-password"
+        supabase_client.auth.reset_password_for_email(
+            body.email,
+            {"redirect_to": redirect_url}
+        )
+    except Exception:
+        pass  # never reveal whether email exists
+    return {"message": "If an account exists, a reset email has been sent."}
+
+
+@router.post("/reset_password")
+def reset_password(body: ResetPasswordRequest):
+    """Set a new password using the recovery tokens from the email link."""
+    try:
+        supabase_client.auth.set_session(body.access_token, body.refresh_token)
+        supabase_client.auth.update_user({"password": body.new_password})
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    return {"message": "Password updated successfully."}

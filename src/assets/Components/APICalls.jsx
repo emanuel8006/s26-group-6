@@ -101,6 +101,24 @@ export async function updateUserInfo({
     return response;
 };
 
+export async function forgotPassword(email) {
+    const response = await fetch(`${API_BASE}/auth/forgot_password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, redirect_to: `${window.location.origin}/reset-password` }),
+    })
+    return response
+}
+
+export async function resetPassword({ accessToken, refreshToken, newPassword }) {
+    const response = await fetch(`${API_BASE}/auth/reset_password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ access_token: accessToken, refresh_token: refreshToken, new_password: newPassword }),
+    })
+    return response
+}
+
 export async function getData({ columnList, tableName }) {
     const params = new URLSearchParams();
     columnList.forEach(col => params.append('column_list', col));

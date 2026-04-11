@@ -1,4 +1,5 @@
 import FoodGood from './assets/Pages/FoodGood'
+import ResetPassword from './assets/Pages/ResetPassword'
 import React from 'react'
 import Onboarding from './assets/Pages/Onboarding'
 import { Routes, Route, useLocation } from 'react-router-dom'
@@ -12,7 +13,7 @@ import Swipes from './assets/Pages/Swipes'
 
 export default function App() {
   const location = useLocation()
-  const isHome = location.pathname === '/' || location.pathname === '/onboarding' || location.pathname === '/login' //add all path names to this bool
+  const isHome = location.pathname === '/' || location.pathname === '/onboarding' || location.pathname === '/login' || location.pathname === '/reset-password' //add all path names to this bool
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -33,6 +34,7 @@ export default function App() {
           <Route path="/dining-dollars" element={<DiningDollars />} />
           <Route path="/swipes" element={<Swipes />} />
           <Route path="/onboarding" element={<Onboarding />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
         </Routes>
       </main>
       {!isHome && <Footer />}

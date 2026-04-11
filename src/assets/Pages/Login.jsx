@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { login, register, getData, updateMealPlan } from '../Components/APICalls'
+import { login, register, getData, updateMealPlan, forgotPassword } from '../Components/APICalls'
 
 export async function loadAndStoreUserData() {
   const mealPlanRes = await getData({
@@ -92,6 +92,9 @@ export default function Login() {
   const [signUpError, setSignUpError] = useState('')
   const [signUpSuccess, setSignUpSuccess] = useState('')
   const [loading, setLoading] = useState(false)
+  const [showForgot, setShowForgot] = useState(false)
+  const [forgotEmail, setForgotEmail] = useState('')
+  const [forgotStatus, setForgotStatus] = useState(null) // null | 'loading' | 'sent'
 
   const handleSignUp = async (e) => {
     e.preventDefault()
@@ -267,7 +270,7 @@ export default function Login() {
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         padding: '2rem',
       }}>
-        <div style={{ width: '100%', maxWidth: '420px' }}>
+        <div style={{ width: '100%', maxWidth: '420px', position: 'relative' }}>
           <div style={{ marginBottom: '2rem' }}>
             <p style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '1.1rem', letterSpacing: '0.14em', color: '#D42B2B', margin: '0 0 6px' }}>
               {tab === 'signin' ? 'WELCOME BACK' : 'GET STARTED'}
@@ -299,7 +302,7 @@ export default function Login() {
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
                   <label style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '1.1rem', letterSpacing: '0.1em', color: '#9CA3AF' }}>PASSWORD</label>
-                  <a href="#" style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '1.1rem', letterSpacing: '0.06em', color: '#D42B2B', textDecoration: 'none' }}>FORGOT PASSWORD?</a>
+                  <button type="button" onClick={() => { setShowForgot(true); setForgotStatus(null) }} style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '1.1rem', letterSpacing: '0.06em', color: '#D42B2B', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>FORGOT PASSWORD?</button>
                 </div>
                 <input name="password" type="password" placeholder="••••••••" style={inputCls} />
               </div>
@@ -318,6 +321,33 @@ export default function Login() {
                 <button type="button" onClick={() => { setTab('signup'); setSignInError('') }} style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '1.1rem', letterSpacing: '0.06em', color: '#D42B2B', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textDecoration: 'underline' }}>SIGN UP FREE</button>
               </p>
             </form>
+          )}
+
+          {tab === 'signin' && showForgot && (
+            <div style={{ position: 'absolute', inset: 0, background: '#FAF9F6', borderRadius: '16px', padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1rem', justifyContent: 'center' }}>
+              <button type="button" onClick={() => { setShowForgot(false); setForgotStatus(null) }} style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.8rem', letterSpacing: '0.08em', color: '#6B7280', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textAlign: 'left', marginBottom: '4px' }}>← BACK TO SIGN IN</button>
+              <h2 style={{ fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: '1.6rem', color: '#1a1a1a', margin: 0 }}>Reset Password</h2>
+              <p style={{ fontFamily: "'Inter', sans-serif", fontSize: '0.88rem', color: '#6B7280', margin: 0 }}>Enter your email and we'll send a reset link.</p>
+              {forgotStatus === 'sent' ? (
+                <div style={{ background: '#f0f7eb', border: '2px solid #2d6a1f', borderRadius: '8px', padding: '14px 16px' }}>
+                  <p style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.9rem', letterSpacing: '0.05em', color: '#2d6a1f', margin: 0 }}>CHECK YOUR INBOX — A RESET LINK IS ON ITS WAY.</p>
+                </div>
+              ) : (
+                <>
+                  <div>
+                    <label style={{ display: 'block', fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.8rem', letterSpacing: '0.1em', color: '#6B7280', marginBottom: '6px' }}>EMAIL</label>
+                    <input type="email" placeholder="you@northeastern.edu" value={forgotEmail} onChange={e => setForgotEmail(e.target.value)} style={inputCls} />
+                  </div>
+                  <button type="button" disabled={forgotStatus === 'loading' || !forgotEmail} onClick={async () => {
+                    setForgotStatus('loading')
+                    await forgotPassword(forgotEmail).catch(() => {})
+                    setForgotStatus('sent')
+                  }} style={{ padding: '13px', background: (forgotStatus === 'loading' || !forgotEmail) ? 'rgba(0,0,0,0.15)' : '#D42B2B', color: '#fff', border: '2.5px solid #1a1a1a', borderRadius: '8px', fontFamily: "'Bebas Neue', sans-serif", fontSize: '1.1rem', letterSpacing: '0.08em', cursor: (forgotStatus === 'loading' || !forgotEmail) ? 'not-allowed' : 'pointer', boxShadow: '4px 4px 0 #1a1a1a' }}>
+                    {forgotStatus === 'loading' ? 'SENDING...' : 'SEND RESET LINK →'}
+                  </button>
+                </>
+              )}
+            </div>
           )}
 
           {tab === 'signup' && (

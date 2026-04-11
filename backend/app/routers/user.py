@@ -96,7 +96,7 @@ async def create_meal_plan(body: meal_plan_request, user=Depends(get_current_use
     if body.swipes_per_week is not None:
         update_dict["swipes_per_week"] = body.swipes_per_week
     if body.dollars_per_week is not None:
-        update_dict["dollars_per_week"] = body.dollars_per_week
+        update_dict["dollars_per_week"] = round(body.dollars_per_week, 2)
     if body.offdays is not None:
         update_dict["offdays"] = body.offdays
     if body.dietary_preferences is not None:

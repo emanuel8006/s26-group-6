@@ -27,7 +27,7 @@ async def update_user_info(
         update_dict["email"] = email
     if dietary_preferences is not None:
         prefs = dietary_preferences if isinstance(dietary_preferences, list) else [dietary_preferences]
-        update_dict["dietary_preferences"] = "{" + ",".join(prefs) + "}"
+        update_dict["dietary_preferences"] = "{" + ",".join(f'"{p}"' for p in prefs) + "}"
     if diet_restrictions is not None:
         update_dict["dietary_restrictions"] = diet_restrictions
 

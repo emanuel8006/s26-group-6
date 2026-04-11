@@ -42,10 +42,11 @@ async def get_periods(location_id: str) -> List[Dict[str, str]]:
     async with AsyncSession(impersonate="chrome") as s:
         try:
             res = await s.get(url, headers=HEADERS)
-        except httpx.HTTPStatusError as e:
-            return {"error": "DineOnCampus API failed", "status": e.response.status_code, "detail": str(e)}
-        except httpx.RequestError as e:
+        except Exception as e:
             return {"error": "DineOnCampus API request failed", "detail": str(e)}
+
+    if res.status_code != 200:
+        return {"error": "DineOnCampus API failed", "status": res.status_code}
 
     data = res.json()
     periods: List[Dict[str, str]] = [
@@ -64,7 +65,7 @@ async def get_period_id_by_name(location_id: str, period_name: str) -> Optional[
     """Finds the period ID for a given location and period name."""
     periods = await get_periods(location_id)
     if isinstance(periods, dict) and "error" in periods:
-        return "error"
+        return None
     for period in periods:
         if period.get("name", "").lower() == period_name.lower().strip():
             return period["id"]

@@ -118,46 +118,11 @@ const S = {
     fontFamily: "'Bebas Neue', sans-serif", fontSize: '1.5rem', letterSpacing: '0.06em',
     transition: 'all 0.12s ease', marginBottom: '8px',
   }),
-  comingSoon: { background: '#FAF9F6', border: '2px dashed rgba(0,0,0,0.1)', borderRadius: '10px', padding: '2rem', textAlign: 'center' },
   logModal: { position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' },
   logCard: { background: '#fff', border: '2px solid #1a1a1a', borderRadius: '14px', padding: '1.8rem', maxWidth: '400px', width: '100%', boxShadow: '5px 6px 0px #1a1a1a' },
   input: { width: '100%', padding: '10px 14px', border: '2px solid rgba(0,0,0,0.12)', borderRadius: '8px', fontSize: '0.9rem', fontFamily: "'Inter', sans-serif", background: '#fff', color: '#1a1a1a', outline: 'none', boxSizing: 'border-box', boxShadow: '2px 3px 0px rgba(0,0,0,0.07)', marginBottom: '10px' },
 }
 
-// ── Projected pace chart (projected only, no fake actuals) ────────
-function PaceChart({ projWeekly, activeDays }) {
-  const weeks = Math.min(Math.ceil(activeDays / 7), 16)
-  const maxVal = Math.max(projWeekly * 1.4, 20)
-
-  return (
-    <div>
-      <div style={{ display: 'flex', alignItems: 'flex-end', gap: '3px', height: '100px', marginBottom: '6px' }}>
-        {Array.from({ length: weeks }, (_, i) => (
-          <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', height: '100%', justifyContent: 'flex-end' }}>
-            <div style={{ width: '100%', background: '#FBF2D8', border: '1px solid rgba(0,0,0,0.08)', borderRadius: '3px 3px 0 0', height: `${(projWeekly / maxVal) * 100}%`, minHeight: '4px' }} />
-          </div>
-        ))}
-      </div>
-      <div style={{ display: 'flex', gap: '3px' }}>
-        {Array.from({ length: weeks }, (_, i) => (
-          <div key={i} style={{ flex: 1, textAlign: 'center', fontFamily: "'Bebas Neue', sans-serif", fontSize: '1.5rem', letterSpacing: '0.04em', color: (i + 1) % 4 === 0 ? '#9CA3AF' : 'transparent' }}>
-            {(i + 1) % 4 === 0 ? `W${i + 1}` : '.'}
-          </div>
-        ))}
-      </div>
-      <div style={{ display: 'flex', gap: '14px', marginTop: '8px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-          <div style={{ width: '10px', height: '10px', background: '#FBF2D8', border: '1px solid rgba(0,0,0,0.1)', borderRadius: '2px' }} />
-          <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '1.5rem', letterSpacing: '0.04em', color: '#9CA3AF' }}>Projected (${projWeekly}/wk)</span>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-          <div style={{ width: '10px', height: '10px', background: '#E5E7EB', border: '1px dashed #9CA3AF', borderRadius: '2px' }} />
-          <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '1.5rem', letterSpacing: '0.04em', color: '#9CA3AF' }}>Actual — coming soon</span>
-        </div>
-      </div>
-    </div>
-  )
-}
 
 // ── Log modal ─────────────────────────────────────────────────────
 function LogModal({ type, onClose, onSave }) {
@@ -227,15 +192,6 @@ function LogModal({ type, onClose, onSave }) {
   )
 }
 
-// ── Coming Soon placeholder ───────────────────────────────────────
-function ComingSoon({ label }) {
-  return (
-    <div style={S.comingSoon}>
-      <p style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '1.5rem', letterSpacing: '0.1em', color: '#9CA3AF', margin: '0 0 4px' }}>COMING SOON</p>
-      <p style={{ fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: '0.95rem', color: '#1a1a1a', margin: 0, opacity: 0.4 }}>{label}</p>
-    </div>
-  )
-}
 
 // ── Main Dashboard ────────────────────────────────────────────────
 export default function Dashboard() {
@@ -290,8 +246,35 @@ export default function Dashboard() {
   const ddPct = totalDD ? Math.round((currentDD / totalDD) * 100) : 0
   const ddPace = calcPace(currentDD, totalDD, activeDaysLeft, totalActiveDays)
 
-  // Projected weekly dining dollars
-  const projWeeklyDD = profile.dollarsPerWeek ? parseFloat(profile.dollarsPerWeek) : 0
+  // Max sustainable daily rate (exhaust exactly at end date)
+  const maxDailyDD = activeDaysLeft > 0 ? currentDD / activeDaysLeft : 0
+
+  // ── Analysis ────────────────────────────────────────────────────
+  const swipesUsed = totalSwipes ? totalSwipes - currentSwipes : null
+  const ddSpent = totalDD - currentDD
+  const daysSoFar = Math.max(1, daysSince(semStart))
+
+  const actualDailySwipes = (swipesUsed > 0 && daysSoFar > 0) ? swipesUsed / daysSoFar : null
+  const actualDailyDD = (ddSpent > 0 && daysSoFar > 0) ? ddSpent / daysSoFar : null
+
+  const projDailySwipes = profile.swipesPerWeek
+    ? parseInt(profile.swipesPerWeek) / 7
+    : actualDailySwipes
+  const projDailyDD = profile.dollarsPerWeek
+    ? parseFloat(profile.dollarsPerWeek) / 7
+    : actualDailyDD
+
+  const projEndSwipes = (currentSwipes !== null && projDailySwipes && activeDaysLeft)
+    ? Math.round(currentSwipes - projDailySwipes * activeDaysLeft)
+    : null
+  const projEndDD = (projDailyDD && activeDaysLeft)
+    ? currentDD - projDailyDD * activeDaysLeft
+    : null
+
+  const swipeDepletionDays = (projEndSwipes !== null && projEndSwipes < 0 && projDailySwipes > 0)
+    ? Math.floor(currentSwipes / projDailySwipes) : null
+  const ddDepletionDays = (projEndDD !== null && projEndDD < 0 && projDailyDD > 0)
+    ? Math.floor(currentDD / projDailyDD) : null
 
   // Semester label
   const semLabel = semEnd ? new Date(semEnd + 'T12:00:00').toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
@@ -359,8 +342,8 @@ export default function Dashboard() {
           <div style={S.statGrid}>
             {[
               { label: 'CALENDAR DAYS LEFT', value: daysLeft ?? '—' },
-              { label: 'ACTIVE DAYS LEFT',   value: activeDaysLeft ?? '—' },
-              { label: 'TOTAL ACTIVE DAYS',  value: totalActiveDays },
+              { label: 'SWIPES USED',        value: swipesUsed ?? '—' },
+              { label: 'DINING $ SPENT',     value: ddSpent > 0 ? `$${ddSpent.toFixed(0)}` : '—' },
             ].map(({ label, value }) => (
               <div key={label} style={S.miniStat}>
                 <p style={S.miniStatVal}>{value}</p>
@@ -404,6 +387,13 @@ export default function Dashboard() {
                     ~{activeDaysLeft > 0 ? (currentSwipes / activeDaysLeft).toFixed(1) : '—'}/day left to use
                   </span>
                 </div>
+                {projEndSwipes !== null && (
+                  <div style={{ marginTop: '6px', fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.9rem', letterSpacing: '0.05em', color: projEndSwipes >= 0 ? '#2d6a1f' : '#D42B2B' }}>
+                    {projEndSwipes >= 0
+                      ? `↗ Projected end: +${projEndSwipes} swipes remaining`
+                      : `↘ Runs out in ~${swipeDepletionDays} day${swipeDepletionDays !== 1 ? 's' : ''}`}
+                  </div>
+                )}
               </>
             )}
             <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
@@ -435,6 +425,13 @@ export default function Dashboard() {
                 ${activeDaysLeft > 0 ? (currentDD / activeDaysLeft).toFixed(2) : '—'}/day left to spend
               </span>
             </div>
+            {projEndDD !== null && (
+              <div style={{ marginTop: '6px', fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.9rem', letterSpacing: '0.05em', color: projEndDD >= 0 ? '#2d6a1f' : '#D42B2B' }}>
+                {projEndDD >= 0
+                  ? `↗ Projected end: $${projEndDD.toFixed(0)} remaining`
+                  : `↘ Runs out in ~${ddDepletionDays} day${ddDepletionDays !== 1 ? 's' : ''}`}
+              </div>
+            )}
             <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
               <button style={{ ...S.actionBtn('yellow'), flex: 1, width: 'auto', marginBottom: 0, marginTop: 0 }} onClick={() => setLogModal('dollars')}>
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="8" cy="8" r="6"/><path d="M8 5v6M6 6.5h3a1 1 0 010 2H7a1 1 0 000 2h3"/></svg>
@@ -447,15 +444,32 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* ── Pace chart ── */}
+        {/* ── Daily spend pace ── */}
+        {totalDD > 0 && (
         <div style={S.card}>
-          <span style={S.cardLabel}>WEEKLY SPENDING PACE — DINING DOLLARS</span>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-            <p style={{ fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: '1rem', color: '#1a1a1a', margin: 0 }}>Projected Spend Over Semester</p>
-            <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '1.5rem', letterSpacing: '0.06em', color: '#9CA3AF' }}>${projWeeklyDD}/wk projected</span>
-          </div>
-          <PaceChart projWeekly={projWeeklyDD} activeDays={totalActiveDays} />
+          <span style={S.cardLabel}>DINING DOLLAR DAILY PACE</span>
+          <p style={{ fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: '1rem', color: '#1a1a1a', margin: '0 0 1rem' }}>Daily Spend vs Max Sustainable Rate</p>
+          {(() => {
+            const fillPct = maxDailyDD > 0 && actualDailyDD ? Math.min((actualDailyDD / maxDailyDD) * 100, 100) : 0
+            const barColor = fillPct >= 100 ? '#D42B2B' : fillPct >= 80 ? '#F57F17' : '#2d6a1f'
+            return (
+              <>
+                <div style={{ height: '10px', background: 'rgba(0,0,0,0.06)', borderRadius: '99px', overflow: 'hidden' }}>
+                  <div style={{ height: '100%', width: `${fillPct}%`, background: barColor, borderRadius: '99px', transition: 'width 0.6s ease' }} />
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '6px' }}>
+                  <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '1.5rem', letterSpacing: '0.06em', color: '#9CA3AF' }}>
+                    {actualDailyDD ? `$${actualDailyDD.toFixed(2)}/DAY ACTUAL` : 'NO SPEND YET'}
+                  </span>
+                  <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '1.5rem', letterSpacing: '0.06em', color: '#9CA3AF' }}>
+                    ${maxDailyDD.toFixed(2)}/DAY MAX
+                  </span>
+                </div>
+              </>
+            )
+          })()}
         </div>
+        )}
 
         {/* ── Today's Menu ── */}
         <div style={{ ...S.card, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
@@ -469,11 +483,70 @@ export default function Dashboard() {
           </button>
         </div>
 
-        {/* ── Recent activity — coming soon ── */}
+        {/* ── Semester Insights ── */}
         <div style={S.card}>
-          <span style={S.cardLabel}>RECENT ACTIVITY</span>
-          <p style={{ fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: '1rem', color: '#1a1a1a', margin: '0 0 1rem' }}>Transaction History</p>
-          <ComingSoon label="Transaction history will sync once backend is connected"  />
+          <span style={S.cardLabel}>SEMESTER INSIGHTS</span>
+          <p style={{ fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: '1rem', color: '#1a1a1a', margin: '0 0 1rem' }}>What the numbers say</p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+
+            {/* Swipe pace insight */}
+            {totalSwipes && actualDailySwipes !== null && projDailySwipes && activeDaysLeft > 0 && (() => {
+              const needed = currentSwipes / activeDaysLeft
+              const color = swipePace === 'over_budget' ? '#D42B2B' : swipePace === 'under_budget' ? '#1a4fa0' : '#2d6a1f'
+              const bg    = swipePace === 'over_budget' ? '#FFF0EE' : swipePace === 'under_budget' ? '#e6f0ff' : '#f0f7eb'
+              const trail = projEndSwipes >= 0
+                ? `On track to finish with ${projEndSwipes} to spare.`
+                : `May run out in ~${swipeDepletionDays} days.`
+              return (
+                <div style={{ borderLeft: `3px solid ${color}`, background: bg, borderRadius: '0 8px 8px 0', padding: '10px 14px' }}>
+                  <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.85rem', letterSpacing: '0.08em', color, display: 'block', marginBottom: '2px' }}>MEAL SWIPES</span>
+                  <span style={{ fontFamily: "'Inter', sans-serif", fontSize: '0.88rem', color: '#1a1a1a', lineHeight: 1.5 }}>
+                    Using <strong>{actualDailySwipes.toFixed(1)}</strong> swipes/day — need <strong>{needed.toFixed(1)}</strong>/day to last the semester. {trail}
+                  </span>
+                </div>
+              )
+            })()}
+
+            {/* Dining dollars pace insight */}
+            {actualDailyDD !== null && projDailyDD && activeDaysLeft > 0 && (() => {
+              const needed = currentDD / activeDaysLeft
+              const color = ddPace === 'over_budget' ? '#D42B2B' : ddPace === 'under_budget' ? '#1a4fa0' : '#2d6a1f'
+              const bg    = ddPace === 'over_budget' ? '#FFF0EE' : ddPace === 'under_budget' ? '#e6f0ff' : '#f0f7eb'
+              const trail = projEndDD >= 0
+                ? `Projected $${projEndDD.toFixed(0)} surplus at semester end.`
+                : `May run out in ~${ddDepletionDays} days.`
+              return (
+                <div style={{ borderLeft: `3px solid ${color}`, background: bg, borderRadius: '0 8px 8px 0', padding: '10px 14px' }}>
+                  <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.85rem', letterSpacing: '0.08em', color, display: 'block', marginBottom: '2px' }}>DINING DOLLARS</span>
+                  <span style={{ fontFamily: "'Inter', sans-serif", fontSize: '0.88rem', color: '#1a1a1a', lineHeight: 1.5 }}>
+                    Spending <strong>${actualDailyDD.toFixed(2)}</strong>/day — need <strong>${needed.toFixed(2)}</strong>/day to last. {trail}
+                  </span>
+                </div>
+              )
+            })()}
+
+            {/* Balance health cross-check */}
+            {(() => {
+              const semPct = Math.round(pctElapsed * 100)
+              const swipePctUsed = totalSwipes ? Math.round(((totalSwipes - currentSwipes) / totalSwipes) * 100) : null
+              const ddPctUsed = totalDD ? Math.round(((totalDD - currentDD) / totalDD) * 100) : null
+              const delta = swipePctUsed !== null ? swipePctUsed - semPct : ddPctUsed - semPct
+              const color = Math.abs(delta) <= 5 ? '#2d6a1f' : delta > 5 ? '#D42B2B' : '#1a4fa0'
+              const bg    = Math.abs(delta) <= 5 ? '#f0f7eb'  : delta > 5 ? '#FFF0EE'  : '#e6f0ff'
+              const parts = []
+              if (swipePctUsed !== null) parts.push(`${swipePctUsed}% of swipes`)
+              if (ddPctUsed !== null)    parts.push(`${ddPctUsed}% of dining dollars`)
+              return (
+                <div style={{ borderLeft: `3px solid ${color}`, background: bg, borderRadius: '0 8px 8px 0', padding: '10px 14px' }}>
+                  <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '0.85rem', letterSpacing: '0.08em', color, display: 'block', marginBottom: '2px' }}>BALANCE HEALTH</span>
+                  <span style={{ fontFamily: "'Inter', sans-serif", fontSize: '0.88rem', color: '#1a1a1a', lineHeight: 1.5 }}>
+                    Semester is <strong>{semPct}%</strong> elapsed. You've used {parts.join(' and ')}.
+                  </span>
+                </div>
+              )
+            })()}
+
+          </div>
         </div>
 
       </div>

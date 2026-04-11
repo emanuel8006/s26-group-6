@@ -7,6 +7,12 @@ function authHeader() {
 
 export async function responseCheck({ response }) {
     if (!response.ok) {
+        if (response.status === 401) {
+            localStorage.removeItem('oasis_token')
+            localStorage.removeItem('sw_logged_in')
+            window.location.href = '/login'
+            return
+        }
         const errorData = await response.json();
         const detail = errorData.detail;
         alert(typeof detail === 'string' ? detail : JSON.stringify(detail));

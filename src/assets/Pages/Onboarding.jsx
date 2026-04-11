@@ -524,6 +524,8 @@ export default function Onboarding() {
       ? (parseFloat(answers.diningDollarsLeft) || null)
       : (planData?.diningDollars ?? null)
 
+    const derivedDollarsPerWeek = ddStart && effDays > 0 ? ddStart / (effDays / 7) : null
+
     await updateMealPlan({
       planName:              planData?.name ?? null,
       swipesStart,
@@ -532,6 +534,7 @@ export default function Onboarding() {
       endDate:               answers.semesterEnd || null,
       swipesCurrent:         swipesStart,
       diningDollarsCurrent:  ddStart,
+      dollarsPerWeek:        derivedDollarsPerWeek,
       dietaryPreferences:    answers.cuisines.length ? answers.cuisines : null,
       dietaryRestrictions:   answers.diet.length ? answers.diet : null,
     })

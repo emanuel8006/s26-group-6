@@ -127,27 +127,36 @@ const st = {
 
 // ── Vendor Map ────────────────────────────────────────────────────
 function VendorMap({ vendors, profile }) {
-  const mapRef = useRef(null)
+  const mapDivRef = useRef(null)
   const mapInstanceRef = useRef(null)
   const markersRef = useRef([])
   const [catFilter, setCatFilter] = useState('all')
   const [locFilter, setLocFilter] = useState('all')
   const [isFullscreen, setIsFullscreen] = useState(false)
+  const [leafletReady, setLeafletReady] = useState(() => !!window.L)
 
-  // Use callback ref so we know exactly when the div is mounted
-  const setMapRef = (node) => {
-    if (!node || mapInstanceRef.current) return
-    mapRef.current = node
-    if (!window.L) return
+  // Lazy-load Leaflet JS only when the map section is rendered
+  useEffect(() => {
+    if (window.L) { setLeafletReady(true); return }
+    const script = document.createElement('script')
+    script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'
+    script.onload = () => setLeafletReady(true)
+    document.body.appendChild(script)
+  }, [])
+
+  // Initialize map once Leaflet is available AND the div is in the DOM.
+  // vendors is included so this re-runs when vendors arrive (which causes the div to render).
+  useEffect(() => {
+    if (!leafletReady || !mapDivRef.current || mapInstanceRef.current) return
     const L = window.L
-    const map = L.map(node, { zoomControl: true, scrollWheelZoom: false })
+    const map = L.map(mapDivRef.current, { zoomControl: true, scrollWheelZoom: false })
     map.setView([42.3397, -71.0893], 15)
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '© OpenStreetMap contributors', maxZoom: 19,
     }).addTo(map)
     mapInstanceRef.current = map
     setTimeout(() => map.invalidateSize(), 200)
-  }
+  }, [leafletReady, vendors])
 
   useEffect(() => {
     if (!mapInstanceRef.current || !vendors.length) return
@@ -182,7 +191,7 @@ function VendorMap({ vendors, profile }) {
       const marker = L.marker([v.latitude, v.longitude], { icon }).addTo(map).bindPopup(popup, { maxWidth: 240 })
       markersRef.current.push(marker)
     })
-  }, [vendors, catFilter, locFilter])
+  }, [vendors, catFilter, locFilter, leafletReady])
 
   if (!vendors.length) return null
 
@@ -231,7 +240,7 @@ function VendorMap({ vendors, profile }) {
 
       {/* Map */}
       <div style={{ borderRadius: '10px', overflow: 'hidden', border: '2px solid rgba(0,0,0,0.09)', height: isFullscreen ? '80vh' : '480px', position: 'relative', transition: 'height 0.3s ease' }}>
-        <div ref={setMapRef} style={{ width: '100%', height: '100%' }} />
+        <div ref={mapDivRef} style={{ width: '100%', height: '100%' }} />
         <button onClick={() => { setIsFullscreen(f => !f); setTimeout(() => mapInstanceRef.current?.invalidateSize(), 350) }}
           style={{ position: 'absolute', top: '10px', right: '10px', zIndex: 1000, background: '#fff', border: '2px solid rgba(0,0,0,0.15)', borderRadius: '6px', width: '34px', height: '34px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 6px rgba(0,0,0,0.15)' }}>
           {isFullscreen
@@ -283,7 +292,7 @@ function VendorMap({ vendors, profile }) {
 }
 
 function LogModal({ onClose, onSave }) {
-  const [form, setForm] = useState({ amount: '', category: 'restaurants', location: '', note: '' })
+  const [form, setForm] = useState({ amount: '', category: 'restaurants', location: '', note: '', date: new Date().toISOString().split('T')[0] })
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
   return (
     <div style={{ position:'fixed',inset:0,background:'rgba(0,0,0,0.5)',backdropFilter:'blur(4px)',zIndex:1000,display:'flex',alignItems:'center',justifyContent:'center',padding:'1rem' }} onClick={onClose}>
@@ -326,6 +335,10 @@ function LogModal({ onClose, onSave }) {
             <label style={st.label}>NOTE (OPTIONAL)</label>
             <input type="text" placeholder="Any notes..." value={form.note} onChange={e=>set('note',e.target.value)} style={st.input} />
           </div>
+          <div>
+            <label style={st.label}>DATE</label>
+            <input type="date" value={form.date} max={new Date().toISOString().split('T')[0]} onChange={e=>set('date',e.target.value)} style={st.input} />
+          </div>
         </div>
         <div style={{ display:'flex',gap:'8px',marginTop:'1.4rem' }}>
           <button onClick={onClose} style={{ flex:1,padding:'10px',border:'2px solid rgba(0,0,0,0.12)',borderRadius:'8px',fontFamily:"'Bebas Neue',sans-serif",fontSize:'1.2rem',letterSpacing:'0.06em',cursor:'pointer',background:'#fff',color:'#9CA3AF' }}>CANCEL</button>
@@ -361,6 +374,11 @@ export default function DiningDollars() {
   }, [])
 
   useEffect(() => {
+    const cached = sessionStorage.getItem('oasis_vendors')
+    if (cached) {
+      setVendors(JSON.parse(cached))
+      return
+    }
     async function fetchVendors() {
       try {
         const res = await fetch(`${API_BASE}/vendors/`)
@@ -373,6 +391,7 @@ export default function DiningDollars() {
           seen.add(key)
           return true
         })
+        sessionStorage.setItem('oasis_vendors', JSON.stringify(deduped))
         setVendors(deduped)
       } catch {}
     }
@@ -384,6 +403,7 @@ export default function DiningDollars() {
   const plan = profile?.planData
   const totalDD = plan?.diningDollars || 0
   const current = parseFloat(profile?.diningDollarsLeft) || 0
+  const spent = totalDD - current
   const pct = totalDD ? Math.round((current / totalDD) * 100) : 0
 
   const breaks = []
@@ -393,8 +413,12 @@ export default function DiningDollars() {
   const totalActiveDays = calcTotalActiveDays(semStart, semEnd, breaks, customOff)
   const activeDaysLeft = calcActiveDaysLeft(semEnd, breaks, customOff)
   const daysLeft = daysUntil(semEnd)
-  const projWeekly = profile?.dollarsPerWeek ? parseFloat(profile.dollarsPerWeek) : 0
+  const projWeekly = Math.round(profile?.dollarsPerWeek
+    ? parseFloat(profile.dollarsPerWeek)
+    : totalDD && totalActiveDays > 0 ? totalDD / (totalActiveDays / 7) : 0)
   const dailyBudget = activeDaysLeft > 0 ? current / activeDaysLeft : 0
+  const daysSoFar = semStart ? Math.max(1, Math.ceil((new Date() - parseDate(semStart)) / 86400000)) : 1
+  const actualDailyDD = spent > 0 ? spent / daysSoFar : 0
 
   const pctTimeLeft = totalActiveDays > 0 ? (activeDaysLeft || 0) / totalActiveDays : 0
   const expectedRemaining = totalDD * pctTimeLeft
@@ -411,9 +435,10 @@ export default function DiningDollars() {
     localStorage.setItem('oasis_dining_dollars_current', newVal.toFixed(2))
     setProfile(p => ({ ...p, diningDollarsLeft: String(newVal) }))
     updateMealPlan({ diningDollarsCurrent: newVal })
+    const entryDate = new Date(form.date + 'T12:00:00')
     setTransactions(p => [{
       ...form, id: Date.now(),
-      date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }),
+      date: entryDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
     }, ...p])
     showToast(`$${spent.toFixed(2)} logged`)
   }
@@ -489,21 +514,29 @@ export default function DiningDollars() {
 
         <div style={st.twoCol}>
           <div style={{ display:'flex',flexDirection:'column',gap:'1.2rem' }}>
-            {projWeekly > 0 && (
+            {totalDD > 0 && (
               <div style={st.card}>
-                <span style={st.label}>WEEKLY DINING DOLLAR PACE</span>
-                <p style={st.heading}>Projected Spend Per Week</p>
-                <div style={{ display:'flex',alignItems:'flex-end',gap:'4px',height:'80px',marginBottom:'6px' }}>
-                  {Array.from({ length: Math.min(Math.ceil(totalActiveDays / 7), 16) }, (_, i) => (
-                    <div key={i} style={{ flex:1,display:'flex',flexDirection:'column',alignItems:'center',height:'100%',justifyContent:'flex-end' }}>
-                      <div style={{ width:'100%',background:'#FBF2D8',border:'1px solid rgba(0,0,0,0.07)',borderRadius:'3px 3px 0 0',height:`${(projWeekly / (projWeekly * 1.4)) * 100}%`,minHeight:'4px' }} />
-                    </div>
-                  ))}
-                </div>
-                <div style={{ display:'flex',justifyContent:'space-between' }}>
-                  <span style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:'1.2rem',letterSpacing:'0.06em',color:'#9CA3AF' }}>${projWeekly}/WK PROJECTED</span>
-                  <span style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:'1.2rem',letterSpacing:'0.06em',color:'#9CA3AF' }}>ACTUAL TRACKING — COMING SOON</span>
-                </div>
+                <span style={st.label}>DINING DOLLAR DAILY PACE</span>
+                <p style={st.heading}>Daily Spend vs Max Sustainable Rate</p>
+                {(() => {
+                  const fillPct = dailyBudget > 0 && actualDailyDD ? Math.min((actualDailyDD / dailyBudget) * 100, 100) : 0
+                  const barColor = fillPct >= 100 ? '#D42B2B' : fillPct >= 80 ? '#F57F17' : '#2d6a1f'
+                  return (
+                    <>
+                      <div style={{ height:'10px',background:'rgba(0,0,0,0.06)',borderRadius:'99px',overflow:'hidden' }}>
+                        <div style={{ height:'100%',width:`${fillPct}%`,background:barColor,borderRadius:'99px',transition:'width 0.6s ease' }} />
+                      </div>
+                      <div style={{ display:'flex',justifyContent:'space-between',marginTop:'6px' }}>
+                        <span style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:'1.2rem',letterSpacing:'0.06em',color:'#9CA3AF' }}>
+                          {actualDailyDD > 0 ? `$${actualDailyDD.toFixed(2)}/DAY ACTUAL` : 'NO SPEND YET'}
+                        </span>
+                        <span style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:'1.2rem',letterSpacing:'0.06em',color:'#9CA3AF' }}>
+                          ${dailyBudget.toFixed(2)}/DAY MAX
+                        </span>
+                      </div>
+                    </>
+                  )
+                })()}
               </div>
             )}
             {catTotals.length > 0 && (
@@ -562,7 +595,7 @@ export default function DiningDollars() {
             <div style={st.card}>
               <span style={st.label}>BALANCE OVERVIEW</span>
               {[
-                { label:'Starting Balance', value:`$${startingDD.toFixed(0)}`, muted:true },
+                { label:'Starting Balance', value:`$${totalDD.toFixed(0)}`, muted:true },
                 { label:'Spent So Far',     value:`-$${spent.toFixed(2)}`,     muted:false, red:true },
                 { label:'Remaining',        value:`$${current.toFixed(2)}`,    muted:false, bold:true },
                 { label:'Active Days Left', value: activeDaysLeft ?? '—',      muted:true },

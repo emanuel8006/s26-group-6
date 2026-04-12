@@ -528,7 +528,35 @@ export default function Onboarding() {
 
     const allOffDays = [...new Set([...getBreakOffDays(answers.semesterBreaks || []), ...(answers.customOffDays || [])])]
 
-    await updateMealPlan({
+    // Write to localStorage first — synchronous, guaranteed before any async that could be
+    // interrupted by a 401 redirect if the user isn't logged in yet.
+    if (planData?.name)              localStorage.setItem('oasis_plan_name',                 planData.name)
+    if (swipesStart != null)         localStorage.setItem('oasis_swipes_start',              swipesStart)
+    if (swipesCurrent != null)       localStorage.setItem('oasis_swipes_current',            swipesCurrent)
+    if (ddStart != null)             localStorage.setItem('oasis_dining_dollars_start',      ddStart)
+    if (ddCurrent != null)           localStorage.setItem('oasis_dining_dollars_current',    ddCurrent)
+    if (answers.semesterStart)       localStorage.setItem('oasis_start_date',                answers.semesterStart)
+    if (answers.semesterEnd)         localStorage.setItem('oasis_end_date',                  answers.semesterEnd)
+    if (allOffDays.length)           localStorage.setItem('oasis_offdays',                   JSON.stringify(allOffDays))
+    localStorage.setItem('nomnom_profile', JSON.stringify({
+      allergens:    answers.allergens,
+      diningStyle:  answers.diningStyle,
+      foodTypes:    answers.foodTypes,
+      spiceLevel:   answers.spiceLevel,
+      portionSize:  answers.portionSize,
+      createdAt:    new Date().toISOString(),
+    }))
+
+    // Only attempt backend save if the user is logged in
+    const token = localStorage.getItem('oasis_token')
+    if (!token) {
+      // Not logged in — data is in localStorage, navigate to login so they can sign up/in.
+      // The login page will detect the localStorage data and skip onboarding after auth.
+      navigate('/login')
+      return
+    }
+
+    const mealPlanPayload = {
       planName:              planData?.name ?? null,
       swipesStart,
       diningDollarsStart:    ddStart,
@@ -540,29 +568,15 @@ export default function Onboarding() {
       offdays:               allOffDays.length ? allOffDays : null,
       dietaryPreferences:    answers.cuisines.length ? answers.cuisines : null,
       dietaryRestrictions:   answers.diet.length ? answers.diet : null,
-    })
+    }
+    try {
+      await updateMealPlan(mealPlanPayload)
+    } catch (err) {}
 
-    await loadAndStoreUserData()
+    try {
+      await loadAndStoreUserData()
+    } catch (err) {}
 
-    // Write plan values directly to localStorage as a guaranteed fallback
-    // (loadAndStoreUserData may return stale data if the DB write is delayed)
-    if (planData?.name)              localStorage.setItem('oasis_plan_name',                 planData.name)
-    if (swipesStart != null)         localStorage.setItem('oasis_swipes_start',              swipesStart)
-    if (swipesCurrent != null)       localStorage.setItem('oasis_swipes_current',            swipesCurrent)
-    if (ddStart != null)             localStorage.setItem('oasis_dining_dollars_start',      ddStart)
-    if (ddCurrent != null)           localStorage.setItem('oasis_dining_dollars_current',    ddCurrent)
-    if (answers.semesterStart)       localStorage.setItem('oasis_start_date',                answers.semesterStart)
-    if (answers.semesterEnd)         localStorage.setItem('oasis_end_date',                  answers.semesterEnd)
-    if (allOffDays.length)           localStorage.setItem('oasis_offdays',                   JSON.stringify(allOffDays))
-
-    localStorage.setItem('nomnom_profile', JSON.stringify({
-      allergens:    answers.allergens,
-      diningStyle:  answers.diningStyle,
-      foodTypes:    answers.foodTypes,
-      spiceLevel:   answers.spiceLevel,
-      portionSize:  answers.portionSize,
-      createdAt:    new Date().toISOString(),
-    }))
     navigate('/dashboard')
   }
 

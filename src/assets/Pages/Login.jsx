@@ -7,7 +7,8 @@ export async function loadAndStoreUserData() {
     columnList: ['plan_name', 'swipes_start', 'dining_dollars_start', 'start_date', 'end_date', 'swipes_current', 'dining_dollars_current', 'dietary_preferences', 'dietary_restrictions'],
     tableName: 'meal_plans'
   })
-  const mealPlan = (await mealPlanRes.json())?.data?.[0] || {}
+  const mealPlanJson = await mealPlanRes.json()
+  const mealPlan = mealPlanJson?.data?.[0] || {}
 
   const fields = {
     oasis_plan_name:                mealPlan.plan_name ?? null,
@@ -137,7 +138,7 @@ export default function Login() {
 
       // If the user already completed onboarding before signing up, push that
       // data to the DB and go straight to the dashboard instead of re-onboarding.
-      const hasOnboardingData = !!localStorage.getItem('oasis_end_date')
+      const hasOnboardingData = !!localStorage.getItem('oasis_swipes_start') || !!localStorage.getItem('nomnom_profile')
       if (hasOnboardingData) {
         const ls = (key) => localStorage.getItem(key)
         await updateMealPlan({
@@ -193,7 +194,14 @@ export default function Login() {
 
     try {
       const profile = await loadAndStoreUserData()
-      if (!profile.oasis_end_date) {
+      const lsSwipes = localStorage.getItem('oasis_swipes_start')
+      const lsNomnom = localStorage.getItem('nomnom_profile')
+      const hasCompletedOnboarding =
+        profile.oasis_swipes_start != null ||
+        profile.oasis_dining_dollars_start != null ||
+        lsSwipes != null ||
+        lsNomnom != null
+      if (!hasCompletedOnboarding) {
         return navigate('/onboarding')
       }
       navigate('/dashboard')

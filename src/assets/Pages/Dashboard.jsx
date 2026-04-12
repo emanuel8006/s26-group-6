@@ -342,8 +342,8 @@ export default function Dashboard() {
           <div style={S.statGrid}>
             {[
               { label: 'CALENDAR DAYS LEFT', value: daysLeft ?? '—' },
-              { label: 'SWIPES USED',        value: swipesUsed ?? '—' },
-              { label: 'DINING $ SPENT',     value: ddSpent > 0 ? `$${ddSpent.toFixed(0)}` : '—' },
+              { label: 'SWIPES',        value: currentSwipes ?? '—' },
+              { label: 'DINING DOLLARS',     value: currentDD > 0 ? `$${currentDD.toFixed(0)}` : '—' },
             ].map(({ label, value }) => (
               <div key={label} style={S.miniStat}>
                 <p style={S.miniStatVal}>{value}</p>

@@ -108,10 +108,10 @@ async def create_meal_plan(body: meal_plan_request, user=Depends(get_current_use
         raise HTTPException(status_code=400, detail="No fields to update")
 
     try:
+        update_dict["id"] = user.id
         response = (
             supabase_client.table("meal_plans")
-            .update(update_dict)
-            .eq("id", user.id)
+            .upsert(update_dict)
             .execute()
         )
         return response
